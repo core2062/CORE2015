@@ -9,13 +9,15 @@ class CORE2015: public SampleRobot {
 
 	CORERobot robot;
 	DriveSubsystem drive;
-
+	LiftSubsystem lift;
 public:
 	CORE2015() :
 		robot(),
-		drive(robot)
+		drive(robot),
+		lift(robot)
 	{
 		robot.add(drive);
+		robot.add(lift);
 	}
 
 	void RobotInit() {

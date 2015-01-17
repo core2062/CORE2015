@@ -15,10 +15,12 @@ using namespace CORE;
 
 class LiftSubsystem : public CORESubsystem{
 
-	Talon leftMotor;
-	Talon rightMotor;
-	DigitalInput topLimit;
-	DigitalInput bottomLimit;
+	CANJaguar leftMotor;
+	CANJaguar rightMotor;
+//	DigitalInput topLimit;
+//	DigitalInput bottomLimit;
+	bool liftUpButton;
+	bool liftDownButton;
 public:
 	std::string name(void){
 		return "lift";
@@ -26,11 +28,18 @@ public:
 }
 	LiftSubsystem(CORERobot& robot):
 			CORESubsystem(robot),
-			leftMotor(-1),
-			rightMotor(-1),
-			topLimit(-1),
-			bottomLimit(-1)
-{}
+			leftMotor(21),
+			rightMotor(20)//,
+			//topLimit(-1),
+			//bottomLimit(-1)
+{
+		leftMotor.SetSafetyEnabled(true);
+		leftMotor.SetSafetyEnabled(false);
+		leftMotor.SetExpiration(0.1);
+		rightMotor.SetSafetyEnabled(true);
+		rightMotor.SetSafetyEnabled(false);
+		rightMotor.SetExpiration(0.1);
+}
 
 	void robotInit(void);
 	void teleopInit(void);

@@ -12,14 +12,11 @@ class DriveSubsystem : public CORESubsystem{
 	Jaguar backLeft;
 	Jaguar frontRight;
 	Jaguar backRight;
-	Victor liftMotor;
 	RobotDrive driveMotors;
 	
 	float drive_x;
 	float drive_rotation;
 	float drive_y;
-	bool liftUpButton;
-	bool liftDownButton;
 	
 public:
 	
@@ -30,7 +27,6 @@ public:
 		backLeft(8),
 		frontRight(9),
 		backRight(7),
-		liftMotor(4),
 		driveMotors(frontLeft,backLeft,frontRight,backRight)
 		{
 			driveMotors.SetExpiration(0.1);
@@ -39,7 +35,7 @@ public:
 			//	driveMotors.SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
 			driveMotors.SetInvertedMotor(RobotDrive::kFrontRightMotor, true);
 			driveMotors.SetInvertedMotor(RobotDrive::kRearRightMotor, true);
-			driveMotors.SetSafetyEnabled(false);
+			driveMotors.SetSafetyEnabled(true);
 		}
 	void robotInit(void);
 	// Called before loop at start of Teleop period
