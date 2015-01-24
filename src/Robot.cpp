@@ -9,15 +9,15 @@ class CORE2015: public SampleRobot {
 
 	CORERobot robot;
 	DriveSubsystem drive;
-	LiftSubsystem lift;
+//	LiftSubsystem lift;
 public:
 	CORE2015() :
 		robot(),
-		drive(robot),
-		lift(robot)
+		drive(robot)//,
+//		lift(robot)
 	{
 		robot.add(drive);
-		robot.add(lift);
+//		robot.add(lift);
 	}
 
 	void RobotInit() {
@@ -32,7 +32,7 @@ public:
 //			wd.Feed();
 			while (IsAutonomous() and !IsDisabled()) {
 //				wd.Feed();
-				Wait(0.05); // wait for a motor update time
+				Wait(0.005); // wait for a motor update time
 			}
 
 	}
@@ -46,7 +46,7 @@ public:
 		while (IsOperatorControl() && !IsDisabled()) {
 //			wd.Feed();
 			robot.teleop();
-			Wait(0.05); // wait for a motor update time
+			Wait(0.005); // wait for a motor update time
 		}
 	}
 
@@ -62,7 +62,7 @@ public:
 		while(IsTest() && !IsDisabled()){
 //			wd.Feed();
 //			robot.compressor->Start();
-			Wait(0.05);
+			Wait(0.005);
 		}
 //		robot.compressor->Stop();
 	}

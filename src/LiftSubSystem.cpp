@@ -69,6 +69,15 @@ void LiftSubsystem::teleop(void){
 	}
 
 }
-
-
+double LiftSubsystem::getLiftHeight(void)
+{
+	return liftEncoder.Get();
+}
+double LiftSubsystem::getBufferValue(void){
+	return buffer;
+}
+void LiftSubsystem::setLiftSpeed(double speed){
+	rightMotor.Set(speed);
+	leftMotor.Set(speed);
+}
 

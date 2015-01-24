@@ -11,6 +11,7 @@
 #include "CORERobot/CORERobot.h"
 #include "WPILib.h"
 #include <cmath>
+
 using namespace CORE;
 
 class LiftSubsystem : public CORESubsystem{
@@ -41,11 +42,11 @@ public:
 			CORESubsystem(robot),
 			leftMotor(21),
 			rightMotor(20),
+			liftEncoder(-1,-1),
 			bottomLimit(-1),
 			topLimit(-1),
 			toteHeightButton(-1),
-			twoToteHeightButton(-1),
-			liftEncoder(-1,-1)
+			twoToteHeightButton(-1)
 {
 		leftMotor.SetSafetyEnabled(true);
 		leftMotor.SetSafetyEnabled(false);
@@ -58,20 +59,53 @@ public:
 	void robotInit(void);
 	void teleopInit(void);
 	void teleop(void);
-
-
-
-
-
-
-
-
-
-
-
-
-
+	double getLiftHeight(void);
+	double getBufferValue(void);
+	void setLiftSpeed(double speed);
 };
+
+	class LiftAction : public Action{
+		LiftSubsystem* lift;
+		double speed;
+		double targetHeight;
+		double currentHeight;
+	public:
+		LiftAction(LiftSubsystem& lift, double speed, double targetHeight):
+			lift(&lift),
+			speed(speed),
+			targetHeight(targetHeight){
+
+		}
+		void init(void){
+			currentHeight = lift->getLiftHeight();
+		}
+		ControlFlow call(void){
+			currentHeight = lift->getLiftHeight();
+			if(currentHeight<targetHeight- lift->getBufferValue()){
+				lift->setLiftSpeed(speed);
+				return CONTINUE;
+			}else if(currentHeight>targetHeight + lift->getBufferValue()){
+				lift->setLiftSpeed(-speed);
+				return CONTINUE;
+			}else{
+				lift->setLiftSpeed(0.0);
+				return END;
+			}
+		}
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
