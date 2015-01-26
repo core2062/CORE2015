@@ -12,6 +12,7 @@ void DriveSubsystem::robotInit(void){
 //	robot.outLog.throwLog("DriveRobotInit");
 }
 void DriveSubsystem::teleopInit(void){
+	driveMotors.SetSafetyEnabled(true);
 	robot.joystick.register_axis("drive_x", 1, 0);
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
@@ -43,18 +44,25 @@ void DriveSubsystem::teleop(void)
 	SmartDashboard::PutNumber("BR", backRight.Get());
 }
 
-//
-//double DriveSubsystem::getDistance(void)
-//{
-//	double distance = (fabs(frontLeftEnc.GetDistance())+fabs(frontRightEnc.GetDistance())+fabs(backRightEnc.GetDistance())+fabs(backLeftEnc.GetDistance()))/4;
-//	return distance;
-//}
-//
-//void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
-//{
-//driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, rotation);
-//}
-//double DriveSubsystem::getRot(void)
-//{
-//	return gyro.GetAngle();
-//}
+void DriveSubsystem::teleopEnd(void){
+	driveMotors.SetSafetyEnabled(false);
+}
+
+double DriveSubsystem::getDistance(void)
+{
+	double distance = (fabs(frontLeftEnc.GetDistance())+fabs(frontRightEnc.GetDistance())+fabs(backRightEnc.GetDistance())+fabs(backLeftEnc.GetDistance()))/4;
+	return distance;
+}
+
+void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
+{
+driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, rotation);
+}
+double DriveSubsystem::getRot(void)
+{
+	return gyro.GetAngle();
+}
+void DriveSubsystem::resetRot(void)
+{
+	gyro.Reset();
+}

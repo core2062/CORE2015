@@ -36,6 +36,14 @@ void CORERobot::teleop(){
 		(*it)->teleop();
 	}
 }
+void CORERobot::teleopEnd(){
+	std::vector<CORESubsystem*>::iterator it;
+	joystick.update_cache();
+	for (it = subsystems.begin(); it != subsystems.end(); ++it){
+//		cout << "teleop " << (*it)->name() << endl;
+		(*it)->teleopEnd();
+	}
+}
 
 std::string CORESubsystem::name(void){
 	return "undefined";

@@ -16,8 +16,7 @@ using namespace CORE;
 
 class LiftSubsystem : public CORESubsystem{
 
-	CANJaguar leftMotor;
-	CANJaguar rightMotor;
+	CANJaguar liftMotor;
 	Encoder liftEncoder;
 	DigitalInput bottomLimit;
 	DigitalInput topLimit;
@@ -40,20 +39,16 @@ public:
 }
 	LiftSubsystem(CORERobot& robot):
 			CORESubsystem(robot),
-			leftMotor(21),
-			rightMotor(20),
+			liftMotor(21),
 			liftEncoder(-1,-1),
 			bottomLimit(-1),
 			topLimit(-1),
 			toteHeightButton(-1),
 			twoToteHeightButton(-1)
 {
-		leftMotor.SetSafetyEnabled(true);
-		leftMotor.SetSafetyEnabled(false);
-		leftMotor.SetExpiration(0.1);
-		rightMotor.SetSafetyEnabled(true);
-		rightMotor.SetSafetyEnabled(false);
-		rightMotor.SetExpiration(0.1);
+		liftMotor.SetSafetyEnabled(true);
+		liftMotor.SetSafetyEnabled(false);
+		liftMotor.SetExpiration(0.1);
 }
 
 	void robotInit(void);

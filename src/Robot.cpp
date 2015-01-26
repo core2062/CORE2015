@@ -38,6 +38,7 @@ public:
 	}
 
 	void OperatorControl() {
+		SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 		robot.teleopInit();
 //		Watchdog& wd = GetWatchdog();
 //		wd.SetExpiration(.5);
@@ -46,8 +47,13 @@ public:
 		while (IsOperatorControl() && !IsDisabled()) {
 //			wd.Feed();
 			robot.teleop();
+			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 			Wait(0.005); // wait for a motor update time
+
 		}
+		drive.driveMotors.SetSafetyEnabled(false);
+		SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
+		robot.teleopEnd();
 	}
 
 	/**

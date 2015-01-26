@@ -34,6 +34,7 @@ public:
 	void robotInit(void);
 	void teleopInit(void);
 	void teleop(void);
+	void teleopEnd(void);
 	
 	~CORERobot(){
 		delete compressor;
@@ -60,6 +61,9 @@ class CORESubsystem{
 	
 	//Called sequentially during loop, interleaved with other subsystems
 	virtual void teleop(void) = 0;
+	virtual void teleopEnd(void){
+		//nothing
+	}
 };
 
 }

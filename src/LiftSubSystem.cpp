@@ -36,36 +36,27 @@ void LiftSubsystem::teleop(void){
 		liftEncoder.Reset();
 	}
 	if (liftUpButton == true && topLimit.Get() != true){
-		rightMotor.Set(1.0);
-		leftMotor.Set(1.0);
+		liftMotor.Set(1.0);
 	}else if (liftDownButton == true && bottomLimit.Get() != true){
-		rightMotor.Set(-1.0);
-		leftMotor.Set(-1.0);
+		liftMotor.Set(-1.0);
 	}else if (twoToteHeightButton == true){
 			if(liftValue > twoToteHeight + buffer){
-				rightMotor.Set(-1.0);
-				leftMotor.Set(-1.0);
+				liftMotor.Set(-1.0);
 			}else if(liftValue < twoToteHeight - buffer){
-				rightMotor.Set(1.0);
-				leftMotor.Set(1.0);
+				liftMotor.Set(1.0);
 			}else{
-				rightMotor.Set(0.0);
-				leftMotor.Set(0.0);
+				liftMotor.Set(0.0);
 			}
 	}else if (toteHeightButton == true){
 			if(liftValue > toteHeight + buffer){
-				rightMotor.Set(-1.0);
-				leftMotor.Set(-1.0);
+				liftMotor.Set(-1.0);
 			}else if(liftValue < toteHeight - buffer){
-				rightMotor.Set(1.0);
-				leftMotor.Set(1.0);
+				liftMotor.Set(1.0);
 			}else{
-				rightMotor.Set(0.0);
-				leftMotor.Set(0.0);
+				liftMotor.Set(0.0);
 			}
 	}else{
-		rightMotor.Set(0.0);
-		leftMotor.Set(0.0);
+		liftMotor.Set(0.0);
 	}
 
 }
@@ -77,7 +68,6 @@ double LiftSubsystem::getBufferValue(void){
 	return buffer;
 }
 void LiftSubsystem::setLiftSpeed(double speed){
-	rightMotor.Set(speed);
-	leftMotor.Set(speed);
+	liftMotor.Set(speed);
 }
 
