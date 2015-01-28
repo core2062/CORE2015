@@ -20,18 +20,23 @@ class LiftSubsystem : public CORESubsystem{
 	Encoder liftEncoder;
 	DigitalInput bottomLimit;
 	DigitalInput topLimit;
-
+	AnalogInput IRSensor;
+	SendableChooser autoChoose;
 
 	bool liftUpButton;
 	bool liftDownButton;
 	bool toteHeightButton;
 	bool twoToteHeightButton;
 	double liftValue;
+	double IRliftValue;
 	double topHeight = -1.0;
 	double bottomHeight = 0.0;
 	double toteHeight;
 	double twoToteHeight;
 	double buffer;
+	double ticksPerRotation = 200;
+	double IRtoteHeight;
+	double IRtwoToteHeight;
 public:
 	std::string name(void){
 		return "lift";
@@ -43,8 +48,11 @@ public:
 			liftEncoder(-1,-1),
 			bottomLimit(-1),
 			topLimit(-1),
+			IRSensor(-1),
+			autoChoose(),
 			toteHeightButton(-1),
 			twoToteHeightButton(-1)
+
 {
 		liftMotor.SetSafetyEnabled(true);
 		liftMotor.SetSafetyEnabled(false);

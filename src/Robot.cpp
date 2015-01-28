@@ -13,7 +13,7 @@ class CORE2015: public SampleRobot {
 public:
 	CORE2015() :
 		robot(),
-		drive(robot)//,
+		drive(robot)
 //		lift(robot)
 	{
 		robot.add(drive);
@@ -22,7 +22,6 @@ public:
 
 	void RobotInit() {
 		robot.robotInit();
-
 	}
 	void Autonomous() {
 //		Watchdog& wd = GetWatchdog();
