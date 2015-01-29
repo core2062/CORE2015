@@ -31,16 +31,22 @@ void LiftSubsystem::teleop(void){
 	IRliftValue = IRSensor.GetVoltage();
 	liftUpButton = robot.joystick.button("liftUpButton");
 	liftDownButton = robot.joystick.button("liftDownButton");
+
 	std::string liftMode = *(std::string*)autoChoose.GetSelected();
+
 	double toteHeight = SmartDashboard::GetNumber("toteHeight");
 	double twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
 	double IRtoteHeight = SmartDashboard::GetNumber("IRtoteHeight");
 	double IRtwoToteHeight = SmartDashboard::GetNumber("IRtwoToteHeight");
-	double buffer = SmartDashboard::GetNumber("buffer");
 	double liftPValue = SmartDashboard::GetNumber("Lift-P-Value");
 	double liftIValue = SmartDashboard::GetNumber("Lift-I-Value");
 	double liftDValue = SmartDashboard::GetNumber("Lift-D-Value");
+	double IRliftPValue = SmartDashboard::GetNumber("IR-Lift-P-Value");
+	double IRliftIValue = SmartDashboard::GetNumber("IR-Lift-I-Value");
+	double IRliftDValue = SmartDashboard::GetNumber("IR-Lift-D-Value");
 	SmartDashboard::PutNumber("liftEncoderValue", liftValue);
+	SmartDashboard::PutNumber("IR-Sensor-Value", IRliftValue);
+
 	if(liftMode == "use-Encoder-Lift"){
 		if(bottomLimit.Get()){
 			liftEncoder.Reset();
@@ -52,28 +58,31 @@ void LiftSubsystem::teleop(void){
 			liftMotor.SetVoltageMode();
 			liftMotor.Set(-1.0);
 		}else if (twoToteHeightButton == true){
-				liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, liftPValue, liftIValue, liftDValue);
-				if(liftValue > twoToteHeight + buffer){
-					liftMotor.Set(-1.0);
-				}else if(liftValue < twoToteHeight - buffer){
-					liftMotor.Set(1.0);
-				}else{
-					liftMotor.Set(0.0);
-				}
+			liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, liftPValue, liftIValue, liftDValue);
+			liftMotor.Set(twoToteHeight);
 		}else if (toteHeightButton == true){
-				liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, liftPValue, liftIValue, liftDValue);
-				if(liftValue > toteHeight + buffer){
-					liftMotor.Set(-1.0);
-				}else if(liftValue < toteHeight - buffer){
-					liftMotor.Set(1.0);
-				}else{
-					liftMotor.Set(0.0);
-				}
+			liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, liftPValue, liftIValue, liftDValue);
+			liftMotor.Set(toteHeight);
 		}else{
 			liftMotor.Set(0.0);
 		}
 	}else if (liftMode == "use-IR-Lift"){
 
+			if (liftUpButton == true && topLimit.Get() != true){
+				liftMotor.SetVoltageMode();
+				liftMotor.Set(1.0);
+			}else if (liftDownButton == true && bottomLimit.Get() != true){
+				liftMotor.SetVoltageMode();
+				liftMotor.Set(-1.0);
+			}else if (twoToteHeightButton == true){
+				liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, IRliftPValue, IRliftIValue, IRliftDValue);
+				liftMotor.Set(IRtwoToteHeight);
+			}else if (toteHeightButton == true){
+				liftMotor.SetPositionMode(CANJaguar::QuadEncoder,ticksPerRotation, IRliftPValue, IRliftIValue, IRliftDValue);
+				liftMotor.Set(IRtoteHeight);
+			}else{
+				liftMotor.Set(0.0);
+			}
 	}
 }
 double LiftSubsystem::getLiftHeight(void)

@@ -37,6 +37,13 @@ class LiftSubsystem : public CORESubsystem{
 	double ticksPerRotation = 200;
 	double IRtoteHeight;
 	double IRtwoToteHeight;
+	double liftPValue;
+	double liftIValue;
+	double liftDValue;
+	double IRliftPValue;
+	double IRliftIValue;
+	double IRliftDValue;
+
 public:
 	std::string name(void){
 		return "lift";
