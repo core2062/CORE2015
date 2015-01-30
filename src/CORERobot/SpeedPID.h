@@ -1,7 +1,7 @@
 #ifndef SPEEDPID_H
 #define SPEEDPID_H
 
-#import "WPILib.h"
+#include "WPILib.h"
 
 // This class is a PIDController that can be attached to a RobotDrive like a SpeedController 
 // and still retain certain inherent functionality like inversion, scaling and limit checking

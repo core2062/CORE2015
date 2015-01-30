@@ -9,19 +9,32 @@ class CORE2015: public SampleRobot {
 
 	CORERobot robot;
 	DriveSubsystem drive;
-//	LiftSubsystem lift;
+	LiftSubsystem lift;
 public:
 	CORE2015() :
 		robot(),
-		drive(robot)
-//		lift(robot)
+		drive(robot),
+		lift(robot)
 	{
 		robot.add(drive);
-//		robot.add(lift);
+		robot.add(lift);
 	}
 
 	void RobotInit() {
 		robot.robotInit();
+		SmartDashboard::PutNumber("FLP",0.0);
+		SmartDashboard::PutNumber("FLI",0.0);
+		SmartDashboard::PutNumber("FLD",0.0);
+		SmartDashboard::PutNumber("BLP",0.0);
+		SmartDashboard::PutNumber("BLI",0.0);
+		SmartDashboard::PutNumber("BLD",0.0);
+		SmartDashboard::PutNumber("FRP",0.0);
+		SmartDashboard::PutNumber("FRI",0.0);
+		SmartDashboard::PutNumber("FRD",0.0);
+		SmartDashboard::PutNumber("BRP",0.0);
+		SmartDashboard::PutNumber("BRI",0.0);
+		SmartDashboard::PutNumber("BRD",0.0);
+		SmartDashboard::PutNumber("JoystickMultipier",8);
 	}
 	void Autonomous() {
 //		Watchdog& wd = GetWatchdog();
@@ -31,13 +44,12 @@ public:
 //			wd.Feed();
 			while (IsAutonomous() and !IsDisabled()) {
 //				wd.Feed();
-				Wait(0.005); // wait for a motor update time
+				Wait(0.05); // wait for a motor update time
 			}
 
 	}
 
 	void OperatorControl() {
-		SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 		robot.teleopInit();
 //		Watchdog& wd = GetWatchdog();
 //		wd.SetExpiration(.5);
@@ -46,13 +58,8 @@ public:
 		while (IsOperatorControl() && !IsDisabled()) {
 //			wd.Feed();
 			robot.teleop();
-			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
-			Wait(0.005); // wait for a motor update time
-
+			Wait(0.05); // wait for a motor update time
 		}
-		drive.driveMotors.SetSafetyEnabled(false);
-		SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
-		robot.teleopEnd();
 	}
 
 	/**
@@ -67,7 +74,7 @@ public:
 		while(IsTest() && !IsDisabled()){
 //			wd.Feed();
 //			robot.compressor->Start();
-			Wait(0.005);
+			Wait(0.05);
 		}
 //		robot.compressor->Stop();
 	}

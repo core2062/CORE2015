@@ -12,20 +12,26 @@ void DriveSubsystem::robotInit(void){
 //	robot.outLog.throwLog("DriveRobotInit");
 }
 void DriveSubsystem::teleopInit(void){
-	driveMotors.SetSafetyEnabled(true);
-	robot.joystick.register_axis("drive_x", 1, 0);
-	robot.joystick.register_axis("drive_rotation", 1, 2);
-	robot.joystick.register_axis("drive_y", 1, 1);
+	frontLeft.SetSafetyEnabled(true);
+	backLeft.SetSafetyEnabled(true);
+	frontRight.SetSafetyEnabled(true);
+	backRight.SetSafetyEnabled(true);
+	robot.joystick.register_axis("drive_x", 1, 1);
+	robot.joystick.register_axis("drive_rotation", 1, 4);
+	robot.joystick.register_axis("drive_y", 1, 2);
 //	robot.outLog.throwLog("DriveTeleInit");
 }
 	
-void DriveSubsystem::teleop(void)
-{
+void DriveSubsystem::teleop(void){
+	frontLeft.SetPID(SmartDashboard::GetNumber("FLP"), SmartDashboard::GetNumber("FLI"), SmartDashboard::GetNumber("FLD"));
+	backLeft.SetPID(SmartDashboard::GetNumber("BLP"), SmartDashboard::GetNumber("BLI"), SmartDashboard::GetNumber("BLD"));
+	frontRight.SetPID(SmartDashboard::GetNumber("FRP"), SmartDashboard::GetNumber("FRI"), SmartDashboard::GetNumber("FRD"));
+	backRight.SetPID(SmartDashboard::GetNumber("BRP"), SmartDashboard::GetNumber("BRI"), SmartDashboard::GetNumber("BRD"));
 	drive_x = robot.joystick.axis("drive_x");
 	if (drive_x < .2 && drive_x > -.2){
 		drive_x = 0;
 	}
-	drive_rotation =robot.joystick.axis("drive_rotation");
+	drive_rotation = robot.joystick.axis("drive_rotation");
 	if (drive_rotation < .2 && drive_rotation > -.2){
 		drive_rotation = 0;
 	}
@@ -34,18 +40,26 @@ void DriveSubsystem::teleop(void)
 		drive_y = 0;		
 	}
 
+
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
 	SmartDashboard::PutNumber("drive rot", drive_rotation);
-	driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, drive_rotation);
-	SmartDashboard::PutNumber("FL", frontLeft.Get());
-	SmartDashboard::PutNumber("FR", frontRight.Get());
-	SmartDashboard::PutNumber("BL", backLeft.Get());
-	SmartDashboard::PutNumber("BR", backRight.Get());
-}
-
+//	driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, drive_rotation);
+	frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backRightSet = ((drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	SmartDashboard::PutNumber("Front Left Set", frontLeftSet);
+	SmartDashboard::PutNumber("Front Right Set", frontRightSet);
+	SmartDashboard::PutNumber("Back Left Set", backLeftSet);
+	SmartDashboard::PutNumber("Back Right Set", backRightSet);
+	frontLeft.Set(frontLeftSet);
+	frontRight.Set(frontRightSet);
+	backLeft.Set(backLeftSet);
+	backRight.Set(backRightSet);
+	}
 void DriveSubsystem::teleopEnd(void){
-	driveMotors.SetSafetyEnabled(false);
+//	driveMotors.SetSafetyEnabled(false);
 }
 
 double DriveSubsystem::getDistance(void)
@@ -56,7 +70,7 @@ double DriveSubsystem::getDistance(void)
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 {
-driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, rotation);
+//driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, rotation);
 }
 double DriveSubsystem::getRot(void)
 {
@@ -66,3 +80,4 @@ void DriveSubsystem::resetRot(void)
 {
 	gyro.Reset();
 }
+

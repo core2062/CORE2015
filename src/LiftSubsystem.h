@@ -23,26 +23,26 @@ class LiftSubsystem : public CORESubsystem{
 	AnalogInput IRSensor;
 	SendableChooser autoChoose;
 
-	bool liftUpButton;
-	bool liftDownButton;
+	bool liftUpButton = false;
+	bool liftDownButton = false;
 	bool toteHeightButton;
 	bool twoToteHeightButton;
-	double liftValue;
-	double IRliftValue;
+	double liftValue = 0.0;
+	double IRliftValue = 0.0;
 	double topHeight = -1.0;
 	double bottomHeight = 0.0;
-	double toteHeight;
-	double twoToteHeight;
-	double buffer;
+	double toteHeight = 0.0;
+	double twoToteHeight = 0.0;
+	double buffer = 0.0;
 	double ticksPerRotation = 200;
-	double IRtoteHeight;
-	double IRtwoToteHeight;
-	double liftPValue;
-	double liftIValue;
-	double liftDValue;
-	double IRliftPValue;
-	double IRliftIValue;
-	double IRliftDValue;
+	double IRtoteHeight = 0.0;
+	double IRtwoToteHeight = 0.0;
+	double liftPValue = 0.0;
+	double liftIValue = 0.0;
+	double liftDValue = 0.0;
+	double IRliftPValue = 0.0;
+	double IRliftIValue = 0.0;
+	double IRliftDValue= 0.0;
 
 public:
 	std::string name(void){
@@ -78,7 +78,7 @@ public:
 		LiftSubsystem* lift;
 		double speed;
 		double targetHeight;
-		double currentHeight;
+		double currentHeight =0.0;
 	public:
 		LiftAction(LiftSubsystem& lift, double speed, double targetHeight):
 			lift(&lift),
