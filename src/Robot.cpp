@@ -1,12 +1,11 @@
 #include "WPILib.h"
 #include "CORERobot/CORERobot.h"
 #include "Subsystems.h"
-
+const double MOTORUPDATEFREQUENCY = 0.005;
 
 using namespace CORE;
 
 class CORE2015: public SampleRobot {
-
 	CORERobot robot;
 	DriveSubsystem drive;
 //	LiftSubsystem lift;
@@ -31,7 +30,7 @@ public:
 //			wd.Feed();
 			while (IsAutonomous() and !IsDisabled()) {
 //				wd.Feed();
-				Wait(0.005); // wait for a motor update time
+				Wait(MOTORUPDATEFREQUENCY); // wait for a motor update time
 			}
 
 	}
@@ -47,7 +46,7 @@ public:
 //			wd.Feed();
 			robot.teleop();
 			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
-			Wait(0.005); // wait for a motor update time
+			Wait(MOTORUPDATEFREQUENCY); // wait for a motor update time
 
 		}
 		drive.driveMotors.SetSafetyEnabled(false);
@@ -67,7 +66,7 @@ public:
 		while(IsTest() && !IsDisabled()){
 //			wd.Feed();
 //			robot.compressor->Start();
-			Wait(0.005);
+			Wait(MOTORUPDATEFREQUENCY);
 		}
 //		robot.compressor->Stop();
 	}

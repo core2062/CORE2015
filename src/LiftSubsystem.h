@@ -27,22 +27,11 @@ class LiftSubsystem : public CORESubsystem{
 	bool liftDownButton;
 	bool toteHeightButton;
 	bool twoToteHeightButton;
-	double liftValue;
-	double IRliftValue;
 	double topHeight = -1.0;
 	double bottomHeight = 0.0;
-	double toteHeight;
-	double twoToteHeight;
 	double buffer;
 	double ticksPerRotation = 200;
-	double IRtoteHeight;
-	double IRtwoToteHeight;
-	double liftPValue;
-	double liftIValue;
-	double liftDValue;
-	double IRliftPValue;
-	double IRliftIValue;
-	double IRliftDValue;
+
 
 public:
 	std::string name(void){
