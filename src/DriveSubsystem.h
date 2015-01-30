@@ -68,10 +68,10 @@ public:
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-			frontLeft.SetPID(SmartDashboard::GetNumber("FLP"), SmartDashboard::GetNumber("FLI"), SmartDashboard::GetNumber("FLD"));
-			backLeft.SetPID(SmartDashboard::GetNumber("BLP"), SmartDashboard::GetNumber("BLI"), SmartDashboard::GetNumber("BLD"));
-			frontRight.SetPID(SmartDashboard::GetNumber("FRP"), SmartDashboard::GetNumber("FRI"), SmartDashboard::GetNumber("FRD"));
-			backRight.SetPID(SmartDashboard::GetNumber("BRP"), SmartDashboard::GetNumber("BRI"), SmartDashboard::GetNumber("BRD"));
+			frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
+			backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
+			frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
+			backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
 //			driveMotors.SetExpiration(0.1);
 			// Motor Invertions
 			//	driveMotors.SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
@@ -87,11 +87,17 @@ public:
 
 			//Called sequentially during loop, interleaved with other subsystems
 	void teleop(void);
-			void teleopEnd(void);
-				double getDistance(void);
-				void mec_drive(double drive_x, double drive_y, double rotation);
-				double getRot(void);
-				void resetRot(void);
+	void teleopEnd(void);
+	double getDistance(void);
+	void mec_drive(double drive_x, double drive_y, double rotation);
+	double getRot(void);
+	void resetRot(void);
+	void setPositionMode(void);
+	void setVoltageMode(void);
+	void setFrontLeftMotor(double value);
+	void setFrontRightMotor(double value);
+	void setBackLeftMotor(double value);
+	void setBackRightMotor(double value);
 };
 class DriveAction : public Action{
 	DriveSubsystem* drive;
@@ -107,6 +113,7 @@ public:
 
 	}
 	void init(void){
+		drive->setVoltageMode();
 		currentDistance = drive->getDistance();
 		rotation = drive->getRot();
 		rotation = rotation/-100.0;
@@ -137,6 +144,7 @@ public:
 
 		}
 		void init(void){
+			drive->setVoltageMode();
 			currentDistance = drive->getDistance();
 			rotation = drive->getRot();
 			rotation = rotation/-100.0;
@@ -167,6 +175,7 @@ public:
 	}
 
 	void init(void){
+		drive->setVoltageMode();
 		drive->resetRot();
 	}
 	ControlFlow call(void){
@@ -190,4 +199,25 @@ public:
 				}
 	}
 };
+class PIDDriveAction : public Action{
+	DriveSubsystem* drive;
+	double targetDistance = 0.0;
+public:
+	PIDDriveAction(DriveSubsystem& drive, double targetDistance):
+		drive(&drive),
+		targetDistance(targetDistance){
+
+	}
+	void init(void){
+		drive->setPositionMode();
+	}
+	ControlFlow call(void){
+		drive->setBackLeftMotor(targetDistance);
+		drive->setBackRightMotor(targetDistance);
+		drive->setFrontLeftMotor(targetDistance);
+		drive->setFrontRightMotor(targetDistance);
+		return END;
+	}
+};
 #endif
+

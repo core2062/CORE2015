@@ -19,14 +19,18 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_axis("drive_x", 1, 1);
 	robot.joystick.register_axis("drive_rotation", 1, 4);
 	robot.joystick.register_axis("drive_y", 1, 2);
+	frontLeft.SetControlMode(CANSpeedController::kSpeed);
+	backLeft.SetControlMode(CANSpeedController::kSpeed);
+	frontRight.SetControlMode(CANSpeedController::kSpeed);
+	backRight.SetControlMode(CANSpeedController::kSpeed);
 //	robot.outLog.throwLog("DriveTeleInit");
 }
 	
 void DriveSubsystem::teleop(void){
-	frontLeft.SetPID(SmartDashboard::GetNumber("FLP"), SmartDashboard::GetNumber("FLI"), SmartDashboard::GetNumber("FLD"));
-	backLeft.SetPID(SmartDashboard::GetNumber("BLP"), SmartDashboard::GetNumber("BLI"), SmartDashboard::GetNumber("BLD"));
-	frontRight.SetPID(SmartDashboard::GetNumber("FRP"), SmartDashboard::GetNumber("FRI"), SmartDashboard::GetNumber("FRD"));
-	backRight.SetPID(SmartDashboard::GetNumber("BRP"), SmartDashboard::GetNumber("BRI"), SmartDashboard::GetNumber("BRD"));
+	frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
+	backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
+	frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
+	backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
 	drive_x = robot.joystick.axis("drive_x");
 	if (drive_x < .2 && drive_x > -.2){
 		drive_x = 0;
@@ -80,4 +84,27 @@ void DriveSubsystem::resetRot(void)
 {
 	gyro.Reset();
 }
-
+void DriveSubsystem::setPositionMode(void){
+	frontLeft.SetControlMode(CANSpeedController::kPosition);
+	backLeft.SetControlMode(CANSpeedController::kPosition);
+	frontRight.SetControlMode(CANSpeedController::kPosition);
+	backRight.SetControlMode(CANSpeedController::kPosition);
+}
+void DriveSubsystem::setVoltageMode(void){
+	frontLeft.SetControlMode(CANSpeedController::kSpeed);
+	backLeft.SetControlMode(CANSpeedController::kSpeed);
+	frontRight.SetControlMode(CANSpeedController::kSpeed);
+	backRight.SetControlMode(CANSpeedController::kSpeed);
+}
+void DriveSubsystem::setFrontLeftMotor(double value){
+	frontLeft.Set(value);
+}
+void DriveSubsystem::setFrontRightMotor(double value){
+	frontRight.Set(value);
+}
+void DriveSubsystem::setBackLeftMotor(double value){
+	backLeft.Set(value);
+}
+void DriveSubsystem::setBackRightMotor(double value){
+	backRight.Set(value);
+}

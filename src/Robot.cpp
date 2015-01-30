@@ -22,18 +22,18 @@ public:
 
 	void RobotInit() {
 		robot.robotInit();
-		SmartDashboard::PutNumber("FLP",0.0);
-		SmartDashboard::PutNumber("FLI",0.0);
-		SmartDashboard::PutNumber("FLD",0.0);
-		SmartDashboard::PutNumber("BLP",0.0);
-		SmartDashboard::PutNumber("BLI",0.0);
-		SmartDashboard::PutNumber("BLD",0.0);
-		SmartDashboard::PutNumber("FRP",0.0);
-		SmartDashboard::PutNumber("FRI",0.0);
-		SmartDashboard::PutNumber("FRD",0.0);
-		SmartDashboard::PutNumber("BRP",0.0);
-		SmartDashboard::PutNumber("BRI",0.0);
-		SmartDashboard::PutNumber("BRD",0.0);
+		SmartDashboard::PutNumber("FrontLeftPValue",0.0);
+		SmartDashboard::PutNumber("FrontLeftIValue",0.0);
+		SmartDashboard::PutNumber("FrontLeftDValue",0.0);
+		SmartDashboard::PutNumber("BackLeftPValue",0.0);
+		SmartDashboard::PutNumber("BackLeftIValue",0.0);
+		SmartDashboard::PutNumber("BackLeftDValue",0.0);
+		SmartDashboard::PutNumber("FrontRightPValue",0.0);
+		SmartDashboard::PutNumber("FrontRightIValue",0.0);
+		SmartDashboard::PutNumber("FrontRightDValue",0.0);
+		SmartDashboard::PutNumber("BackRightPValue",0.0);
+		SmartDashboard::PutNumber("BackRightIValue",0.0);
+		SmartDashboard::PutNumber("BackRightDValue",0.0);
 		SmartDashboard::PutNumber("JoystickMultipier",8);
 	}
 	void Autonomous() {
