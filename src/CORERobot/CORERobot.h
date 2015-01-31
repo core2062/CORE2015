@@ -18,13 +18,13 @@ class CORERobot {
 public:
 	JoystickCache joystick;
 	Compressor* compressor;
-	//log outLog;
+	OutLog outLog;
 	
 	CORERobot():
 		subsystems(),
 		joystick(),
-		compressor(0)//,
-		//outLog()
+		compressor(0),
+		outLog()
 	{}
 	
 	void add(CORESubsystem& subsystem);

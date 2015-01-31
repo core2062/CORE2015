@@ -8,29 +8,50 @@ std::string DriveSubsystem::name(void){
 
 
 void DriveSubsystem::robotInit(void){
-	std::cout << "                                                  drive robo init" << std::endl;
-//	robot.outLog.throwLog("DriveRobotInit");
+
 }
 void DriveSubsystem::teleopInit(void){
 	frontLeft.SetSafetyEnabled(true);
 	backLeft.SetSafetyEnabled(true);
 	frontRight.SetSafetyEnabled(true);
 	backRight.SetSafetyEnabled(true);
+
 	robot.joystick.register_axis("drive_x", 1, 1);
 	robot.joystick.register_axis("drive_rotation", 1, 4);
 	robot.joystick.register_axis("drive_y", 1, 2);
+
 	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 	backLeft.SetControlMode(CANSpeedController::kSpeed);
 	frontRight.SetControlMode(CANSpeedController::kSpeed);
 	backRight.SetControlMode(CANSpeedController::kSpeed);
-//	robot.outLog.throwLog("DriveTeleInit");
+	oldFrontRight = frontRight.GetEncPosition();
+	oldFrontLeft = frontLeft.GetEncPosition();
+	oldBackRight = backRight.GetEncPosition();
+	oldBackLeft = backLeft.GetEncPosition();
+	timer.Start();
 }
 	
 void DriveSubsystem::teleop(void){
+	SmartDashboard::PutNumber("drive x", drive_x);
+	SmartDashboard::PutNumber("drive y", drive_y);
+	SmartDashboard::PutNumber("drive rot", drive_rotation);
+	SmartDashboard::PutBoolean("Encoders-Status", isBroken);
+	SmartDashboard::PutNumber("Front Left Set", frontLeftSet);
+	SmartDashboard::PutNumber("Front Right Set", frontRightSet);
+	SmartDashboard::PutNumber("Back Left Set", backLeftSet);
+	SmartDashboard::PutNumber("Back Right Set", backRightSet);
+
+
+	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
+
 	frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
 	backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
 	frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
 	backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
+	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
+	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
+	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+//Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
 	if (drive_x < .2 && drive_x > -.2){
 		drive_x = 0;
@@ -44,26 +65,73 @@ void DriveSubsystem::teleop(void){
 		drive_y = 0;		
 	}
 
+//Testing for broken encoders
+	if(isTested == false){
+			if(5 < timer.Get() && timer.Get() < 5.5){
+				if(oldFrontRight == frontRight.GetEncPosition()){
+					frontRight.SetControlMode(CANSpeedController::kVoltage);
+					frontLeft.SetControlMode(CANSpeedController::kVoltage);
+					backRight.SetControlMode(CANSpeedController::kVoltage);
+					backLeft.SetControlMode(CANSpeedController::kVoltage);
+				}
+				if(oldFrontLeft == frontLeft.GetEncPosition()){
+					frontRight.SetControlMode(CANSpeedController::kVoltage);
+					frontLeft.SetControlMode(CANSpeedController::kVoltage);
+					backRight.SetControlMode(CANSpeedController::kVoltage);
+					backLeft.SetControlMode(CANSpeedController::kVoltage);
+				}
+				if(oldBackRight == backRight.GetEncPosition()){
+					frontRight.SetControlMode(CANSpeedController::kVoltage);
+					frontLeft.SetControlMode(CANSpeedController::kVoltage);
+					backRight.SetControlMode(CANSpeedController::kVoltage);
+					backLeft.SetControlMode(CANSpeedController::kVoltage);
+				}
+				if(oldBackLeft == backLeft.GetEncPosition()){
+					frontRight.SetControlMode(CANSpeedController::kVoltage);
+					frontLeft.SetControlMode(CANSpeedController::kVoltage);
+					backRight.SetControlMode(CANSpeedController::kVoltage);
+					backLeft.SetControlMode(CANSpeedController::kVoltage);
+				}
+				isTested = true;
+			}
+			isBroken = true;
+		}
+//Gyro PID
+	if(drive_rotation!=0){
+		//Disable Brake
+				gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
+				gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
+				gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
+				double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+				output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+				drive_rotation = output;
+				gyroPID.lastError = gyroPID.mistake;
 
-	SmartDashboard::PutNumber("drive x", drive_x);
-	SmartDashboard::PutNumber("drive y", drive_y);
-	SmartDashboard::PutNumber("drive rot", drive_rotation);
-//	driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, drive_rotation);
-	frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backRightSet = ((drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	SmartDashboard::PutNumber("Front Left Set", frontLeftSet);
-	SmartDashboard::PutNumber("Front Right Set", frontRightSet);
-	SmartDashboard::PutNumber("Back Left Set", backLeftSet);
-	SmartDashboard::PutNumber("Back Right Set", backRightSet);
-	frontLeft.Set(frontLeftSet);
-	frontRight.Set(frontRightSet);
-	backLeft.Set(backLeftSet);
-	backRight.Set(backRightSet);
+
 	}
+
+//Deciding which drive mode to use
+	if(isBroken == false || switchEncoderMode == true){
+		frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		backRightSet = ((drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		frontLeft.Set(frontLeftSet);
+		frontRight.Set(frontRightSet);
+		backLeft.Set(backLeftSet);
+		backRight.Set(backRightSet);
+	}else{
+		frontLeftSet = (drive_x+drive_y+drive_rotation);
+		frontRightSet = (-drive_x+drive_y-drive_rotation);
+		backLeftSet = (-drive_x+drive_y+drive_rotation);
+		backRightSet = (drive_x+drive_y-drive_rotation);
+	}
+}
 void DriveSubsystem::teleopEnd(void){
-//	driveMotors.SetSafetyEnabled(false);
+	frontLeft.SetSafetyEnabled(false);
+	frontRight.SetSafetyEnabled(false);
+	backLeft.SetSafetyEnabled(false);
+	backRight.SetSafetyEnabled(false);
 }
 
 double DriveSubsystem::getDistance(void)
@@ -74,7 +142,10 @@ double DriveSubsystem::getDistance(void)
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 {
-//driveMotors.MecanumDrive_Cartesian(drive_x, drive_y, rotation);
+	frontLeftSet = ((drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	frontRightSet = ((-drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backLeftSet = ((-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backRightSet = ((drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 }
 double DriveSubsystem::getRot(void)
 {
@@ -91,6 +162,12 @@ void DriveSubsystem::setPositionMode(void){
 	backRight.SetControlMode(CANSpeedController::kPosition);
 }
 void DriveSubsystem::setVoltageMode(void){
+	frontLeft.SetControlMode(CANSpeedController::kVoltage);
+	backLeft.SetControlMode(CANSpeedController::kVoltage);
+	frontRight.SetControlMode(CANSpeedController::kVoltage);
+	backRight.SetControlMode(CANSpeedController::kVoltage);
+}
+void DriveSubsystem::setSpeedMode(void){
 	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 	backLeft.SetControlMode(CANSpeedController::kSpeed);
 	frontRight.SetControlMode(CANSpeedController::kSpeed);
@@ -107,4 +184,7 @@ void DriveSubsystem::setBackLeftMotor(double value){
 }
 void DriveSubsystem::setBackRightMotor(double value){
 	backRight.Set(value);
+}
+double DriveSubsystem::getJoystickMultiplier(void){
+	return SmartDashboard::GetNumber("joystickMultiplier");
 }

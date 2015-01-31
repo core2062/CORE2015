@@ -34,6 +34,9 @@ public:
 		SmartDashboard::PutNumber("BackRightIValue",0.0);
 		SmartDashboard::PutNumber("BackRightDValue",0.0);
 		SmartDashboard::PutNumber("JoystickMultipier",8);
+		SmartDashboard::PutNumber("gyroPValue",0.0);
+		SmartDashboard::PutNumber("gyroIValue",0.0);
+		SmartDashboard::PutNumber("gyroDValue",0.0);
 	}
 	void Autonomous() {
 //		Watchdog& wd = GetWatchdog();
@@ -45,7 +48,6 @@ public:
 //				wd.Feed();
 
 				Wait(0.05); // wait for a motor update time
-				Wait(MOTORUPDATEFREQUENCY); // wait for a motor update time
 
 			}
 
@@ -61,8 +63,7 @@ public:
 //			wd.Feed();
 			robot.teleop();
 			Wait(0.05); // wait for a motor update time
-			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
-			Wait(MOTORUPDATEFREQUENCY); // wait for a motor update time
+//			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 		}
 	}
 
@@ -79,7 +80,6 @@ public:
 //			wd.Feed();
 //			robot.compressor->Start();
 			Wait(0.05);
-			Wait(MOTORUPDATEFREQUENCY);
 		}
 //		robot.compressor->Stop();
 	}

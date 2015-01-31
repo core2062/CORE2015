@@ -1,23 +1,27 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "WPILib.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <stdio.h>
 
-class log {
+class OutLog {
 	private:
     	std::string fileName;
-//    	ofstream outFile;
+    	std::ofstream outFile;
+    	double time;
+
 	public:
-    	log(){
+    	OutLog(){
     		createFile();
+    	time = DriverStation::GetInstance()->GetMatchTime();
     	}
     	void createFile();
     	void throwLog(std::string s);
-		~log(){
-//			outFile.close();
+		~OutLog(){
+			outFile.close();
 		}
 	
 	

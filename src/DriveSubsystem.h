@@ -19,21 +19,7 @@ class DriveSubsystem : public CORESubsystem{
 	Encoder frontRightEnc;
 	Encoder backRightEnc;
 
-/*
-	struct{
-		const float Kp = 0.1;
-		const float Ki = 0.001;
-		const float Kd = 0.0;
-		float fault; // AKA Error
-		double actualPosition;
-		float lastError;
-		float integral;
-		float derivative;
-		float setPoint;
-		bool enabled = false;
-	}frontLeftPID, frontRightPID, backLeftPID, backRightPID;*/
-
-//	RobotDrive driveMotors;
+	Timer timer;
 	Gyro gyro;
 	
 	float drive_x = 0.0;
@@ -43,6 +29,26 @@ class DriveSubsystem : public CORESubsystem{
 	float frontRightSet = 0.0;
 	float backLeftSet = 0.0;
 	float backRightSet = 0.0;
+	int oldFrontRight = 0;
+	int oldFrontLeft = 0;
+	int oldBackRight = 0;
+	int oldBackLeft = 0;
+	bool isTested = false;
+	bool isBroken = false;
+	bool switchEncoderMode = false;
+
+	struct{
+		double P = 0.1;
+		double I = 0.001;
+		double D = 0.0;
+		double mistake;
+		double actualPosition;
+		double lastError;
+		double integral;
+		double derivative;
+		double setPoint = 0.0;
+		bool enabled = false;
+		}gyroPID;
 
 public:
 	
@@ -58,7 +64,6 @@ public:
 		frontRightEnc(-1,-1),
 		backRightEnc(-1,-1),
 		gyro(-1)
-//		driveMotors(frontLeft,backLeft,frontRight,backRight)
 		{
 			frontLeft.SetControlMode(CANSpeedController::kSpeed);
 			backLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -68,25 +73,15 @@ public:
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-			frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
-			backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
-			frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
-			backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
-//			driveMotors.SetExpiration(0.1);
-			// Motor Invertions
-			//	driveMotors.SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);
-			//	driveMotors.SetInvertedMotor(RobotDrive::kRearLeftMotor, true);
-//			driveMotors.SetInvertedMotor(RobotDrive::kFrontRightMotor, true);
-//			driveMotors.SetInvertedMotor(RobotDrive::kRearRightMotor, true);
-//			driveMotors.SetSafetyEnabled(true);
-
+			robot.outLog.throwLog("le (drive) constroctor has arrived");
 		}
 	void robotInit(void);
 	// Called before loop at start of Teleop period
 	void teleopInit(void);
-
-			//Called sequentially during loop, interleaved with other subsystems
+	//Called sequentially during loop, interleaved with other subsystems
 	void teleop(void);
+	//Main teleop code
+
 	void teleopEnd(void);
 	double getDistance(void);
 	void mec_drive(double drive_x, double drive_y, double rotation);
@@ -94,11 +89,15 @@ public:
 	void resetRot(void);
 	void setPositionMode(void);
 	void setVoltageMode(void);
+	void setSpeedMode(void);
 	void setFrontLeftMotor(double value);
 	void setFrontRightMotor(double value);
 	void setBackLeftMotor(double value);
 	void setBackRightMotor(double value);
+	double getJoystickMultiplier(void);
+
 };
+
 class DriveAction : public Action{
 	DriveSubsystem* drive;
 	double speed;
@@ -129,6 +128,7 @@ public:
 		}
 	}
 };
+
 	class StrafeAction : public Action{
 		DriveSubsystem* drive;
 		double speed;
@@ -160,6 +160,7 @@ public:
 			}
 		}
 	};
+
 class TurnAction : public Action{
 	DriveSubsystem* drive;
 	double speed;
@@ -199,6 +200,7 @@ public:
 				}
 	}
 };
+
 class PIDDriveAction : public Action{
 	DriveSubsystem* drive;
 	double targetDistance = 0.0;
@@ -216,6 +218,30 @@ public:
 		drive->setBackRightMotor(targetDistance);
 		drive->setFrontLeftMotor(targetDistance);
 		drive->setFrontRightMotor(targetDistance);
+		return END;
+	}
+};
+
+class PIDStrafeAction : public Action{
+	DriveSubsystem* drive;
+	double targetDistance = 0.0;
+	double gyro = 0.0;
+public:
+	PIDStrafeAction(DriveSubsystem& drive, double targetDistance):
+		drive(&drive),
+		targetDistance(targetDistance){
+
+	}
+	void init(void){
+		drive->setPositionMode();
+		gyro = drive->getRot();
+	}
+	ControlFlow call(void){
+
+		drive->setBackLeftMotor((-targetDistance+0+gyro)*drive->getJoystickMultiplier());
+		drive->setBackRightMotor((targetDistance+0-gyro)*drive->getJoystickMultiplier());
+		drive->setFrontLeftMotor((targetDistance+0+gyro)*drive->getJoystickMultiplier());
+		drive->setFrontRightMotor((-targetDistance+0-gyro)*drive->getJoystickMultiplier());
 		return END;
 	}
 };
