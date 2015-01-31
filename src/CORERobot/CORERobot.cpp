@@ -13,19 +13,23 @@ std::vector<CORESubsystem*>& CORERobot::getSubsystems(void){
 }
 
 void CORERobot::robotInit(void){
+	outLog.throwLog("---------Robot Init---------");
 	std::vector<CORESubsystem*>::iterator it;
 		for(it = subsystems.begin(); it != subsystems.end(); ++it){
 //			cout << "robot init " << (*it)->name() << endl;
 			(*it)->robotInit();
 		}
+	outLog.throwLog("\n\n\n\n\n");
 }
 
 void CORERobot::teleopInit(void){
+	outLog.throwLog("--------- Teleop Init---------");
 	std::vector<CORESubsystem*>::iterator it;
 	for(it = subsystems.begin(); it != subsystems.end(); ++it){
 //		cout << "tele init " << (*it)->name() << endl;
 		(*it)->teleopInit();
 	}
+	outLog.throwLog("\n\n\n\n\n");
 }
 
 void CORERobot::teleop(){

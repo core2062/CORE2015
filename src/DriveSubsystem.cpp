@@ -8,9 +8,11 @@ std::string DriveSubsystem::name(void){
 
 
 void DriveSubsystem::robotInit(void){
-
+	robot.outLog.throwLog("DriveSubsystem: RobotInit Success");
 }
 void DriveSubsystem::teleopInit(void){
+	robot.outLog.throwLog("DriveSubsystem: TeleopInit Success");
+
 	frontLeft.SetSafetyEnabled(true);
 	backLeft.SetSafetyEnabled(true);
 	frontRight.SetSafetyEnabled(true);
@@ -51,6 +53,7 @@ void DriveSubsystem::teleop(void){
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+
 //Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
 	if (drive_x < .2 && drive_x > -.2){
@@ -65,53 +68,40 @@ void DriveSubsystem::teleop(void){
 		drive_y = 0;		
 	}
 
+	//Gyro PID
+	if(drive_rotation!=0){
+		//Disable Brake
+		gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
+		gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
+		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
+		double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+		drive_rotation = output;
+		gyroPID.lastError = gyroPID.mistake;
+	}
+
 //Testing for broken encoders
 	if(isTested == false){
 			if(5 < timer.Get() && timer.Get() < 5.5){
 				if(oldFrontRight == frontRight.GetEncPosition()){
-					frontRight.SetControlMode(CANSpeedController::kVoltage);
-					frontLeft.SetControlMode(CANSpeedController::kVoltage);
-					backRight.SetControlMode(CANSpeedController::kVoltage);
-					backLeft.SetControlMode(CANSpeedController::kVoltage);
+					robot.outLog.throwLog("[ERROR] FrontRight Encoder stopped working!");
 				}
 				if(oldFrontLeft == frontLeft.GetEncPosition()){
-					frontRight.SetControlMode(CANSpeedController::kVoltage);
-					frontLeft.SetControlMode(CANSpeedController::kVoltage);
-					backRight.SetControlMode(CANSpeedController::kVoltage);
-					backLeft.SetControlMode(CANSpeedController::kVoltage);
+					robot.outLog.throwLog("[ERROR] FrontLeft Encoder stopped working!");
 				}
 				if(oldBackRight == backRight.GetEncPosition()){
-					frontRight.SetControlMode(CANSpeedController::kVoltage);
-					frontLeft.SetControlMode(CANSpeedController::kVoltage);
-					backRight.SetControlMode(CANSpeedController::kVoltage);
-					backLeft.SetControlMode(CANSpeedController::kVoltage);
+					robot.outLog.throwLog("[ERROR] BackRight Encoder stopped working!");
 				}
 				if(oldBackLeft == backLeft.GetEncPosition()){
-					frontRight.SetControlMode(CANSpeedController::kVoltage);
-					frontLeft.SetControlMode(CANSpeedController::kVoltage);
-					backRight.SetControlMode(CANSpeedController::kVoltage);
-					backLeft.SetControlMode(CANSpeedController::kVoltage);
+					robot.outLog.throwLog("[ERROR] BackLeft Encoder stopped working!");
 				}
 				isTested = true;
 			}
 			isBroken = true;
 		}
-//Gyro PID
-	if(drive_rotation!=0){
-		//Disable Brake
-				gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
-				gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
-				gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
-				double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
-				output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-				drive_rotation = output;
-				gyroPID.lastError = gyroPID.mistake;
-
-
-	}
 
 //Deciding which drive mode to use
-	if(isBroken == false || switchEncoderMode == true){
+	if(isBroken == false || switchEncoderMode == false){
 		frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 		frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 		backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
@@ -121,10 +111,18 @@ void DriveSubsystem::teleop(void){
 		backLeft.Set(backLeftSet);
 		backRight.Set(backRightSet);
 	}else{
+		if(flag == false){
+			frontRight.SetControlMode(CANSpeedController::kVoltage);
+			frontLeft.SetControlMode(CANSpeedController::kVoltage);
+			backRight.SetControlMode(CANSpeedController::kVoltage);
+			backLeft.SetControlMode(CANSpeedController::kVoltage);
+			flag = true;
+		}
 		frontLeftSet = (drive_x+drive_y+drive_rotation);
 		frontRightSet = (-drive_x+drive_y-drive_rotation);
 		backLeftSet = (-drive_x+drive_y+drive_rotation);
 		backRightSet = (drive_x+drive_y-drive_rotation);
+		robot.outLog.throwLog("[CHANGE] Encoders were switched to  voltageMode");
 	}
 }
 void DriveSubsystem::teleopEnd(void){
@@ -187,4 +185,7 @@ void DriveSubsystem::setBackRightMotor(double value){
 }
 double DriveSubsystem::getJoystickMultiplier(void){
 	return SmartDashboard::GetNumber("joystickMultiplier");
+}
+void DriveSubsystem::giveLog(std::string stringVar){
+	robot.outLog.throwLog(stringVar);
 }

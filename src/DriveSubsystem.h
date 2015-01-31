@@ -5,6 +5,7 @@
 #include "WPILib.h"
 #include <cmath>
 #include "CORERobot/SpeedPID.h"
+#include <iostream>
 using namespace CORE;
 
 class DriveSubsystem : public CORESubsystem{
@@ -36,6 +37,7 @@ class DriveSubsystem : public CORESubsystem{
 	bool isTested = false;
 	bool isBroken = false;
 	bool switchEncoderMode = false;
+	bool flag = false;
 
 	struct{
 		double P = 0.1;
@@ -95,6 +97,7 @@ public:
 	void setBackLeftMotor(double value);
 	void setBackRightMotor(double value);
 	double getJoystickMultiplier(void);
+	void giveLog(std::string stringVar);
 
 };
 
@@ -118,6 +121,7 @@ public:
 		rotation = rotation/-100.0;
 	}
 	ControlFlow call(void){
+		drive->giveLog("DriveAction Completed");
 		currentDistance = drive->getDistance();
 		if(currentDistance<targetDistance){
 			drive->mec_drive(0,speed,rotation);
@@ -151,6 +155,7 @@ public:
 		}
 		ControlFlow call(void){
 			currentDistance = drive->getDistance();
+			drive->giveLog("StrafeAction Completed");
 			if(currentDistance<targetDistance){
 				drive->mec_drive(speed,0,rotation);
 				return CONTINUE;
@@ -180,6 +185,7 @@ public:
 		drive->resetRot();
 	}
 	ControlFlow call(void){
+		drive->giveLog("TurnAction Completed");
 		rotation = drive->getRot();
 		if (degrees<0){
 					if (rotation>degrees){
@@ -214,6 +220,7 @@ public:
 		drive->setPositionMode();
 	}
 	ControlFlow call(void){
+		drive->giveLog("PIDDriveAction Completed");
 		drive->setBackLeftMotor(targetDistance);
 		drive->setBackRightMotor(targetDistance);
 		drive->setFrontLeftMotor(targetDistance);
@@ -237,7 +244,7 @@ public:
 		gyro = drive->getRot();
 	}
 	ControlFlow call(void){
-
+		drive->giveLog("PIDStrafeAction Completed");
 		drive->setBackLeftMotor((-targetDistance+0+gyro)*drive->getJoystickMultiplier());
 		drive->setBackRightMotor((targetDistance+0-gyro)*drive->getJoystickMultiplier());
 		drive->setFrontLeftMotor((targetDistance+0+gyro)*drive->getJoystickMultiplier());

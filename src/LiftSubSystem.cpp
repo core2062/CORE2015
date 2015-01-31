@@ -13,9 +13,11 @@ void LiftSubsystem::robotInit(void){
 	autoChoose.AddDefault("EncoderLift", new std::string ("use-Encoder-Lift"));
 	autoChoose.AddDefault("IRLift", new std::string ("use-IR-Lift"));
 	SmartDashboard::PutData("auto-chooser", &autoChoose);
+	robot.outLog.throwLog("LiftSubsystem: RobotInit Success");
+
 }
 void LiftSubsystem::teleopInit(void){
-
+	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
 
 	robot.joystick.register_button("liftUpButton", 1, 1);
 	robot.joystick.register_button("liftDownButton", 1, 2);
@@ -50,6 +52,11 @@ void LiftSubsystem::teleop(void){
 	SmartDashboard::PutNumber("IR-Sensor-Value", IRLift.location);
 
 	if(liftMode == "use-Encoder-Lift"){
+		if(logENC == false){
+			robot.outLog.throwLog("Using Encoder Lift");
+			logENC = true;
+			logIR = false;
+		}
 		if(bottomLimit.Get()){
 			liftEncoder.Reset();
 		}
@@ -76,6 +83,11 @@ void LiftSubsystem::teleop(void){
 			liftMotor.Set(0.0);
 		}
 	}else if (liftMode == "use-IR-Lift"){
+		if(logIR == false){
+			robot.outLog.throwLog("Using Encoder Lift");
+			logENC = false;
+			logIR = true;
+		}
 		if (liftUpButton == true && topLimit.Get() != true){
 			liftMotor.SetControlMode(CANSpeedController::kVoltage);
 			liftMotor.Set(0.9);
@@ -130,4 +142,7 @@ void LiftSubsystem::setVoltageMode(void){
 }
 double LiftSubsystem::getIRLiftHeight(void){
 	return IRSensor.GetVoltage();
+}
+void LiftSubsystem::giveLog(std::string stringVar){
+	robot.outLog.throwLog(stringVar);
 }

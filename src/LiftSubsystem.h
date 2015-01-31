@@ -27,6 +27,8 @@ class LiftSubsystem : public CORESubsystem{
 	bool liftDownButton = false;
 	bool toteHeightButton;
 	bool twoToteHeightButton;
+	bool logIR = false;
+	bool logENC = false;
 	double liftValue = 0.0;
 	double IRliftValue = 0.0;
 	double buffer = 0.0;
@@ -74,6 +76,7 @@ public:
 	void setPositionModeIR(void);
 	void setVoltageMode(void);
 	double getIRLiftHeight(void);
+	void giveLog(std::string stringVar);
 
 };
 
@@ -92,6 +95,7 @@ public:
 			lift->setPositionModeEnc();
 		}
 		ControlFlow call(void){
+			lift->giveLog("ENCLiftAction Completed");
 			lift->setLift(targetHeight);
 			return END;
 
@@ -114,6 +118,7 @@ public:
 
 		}
 		ControlFlow call(void){
+				lift->giveLog("IRLiftAction Completed");
 				lift->setLift(targetHeight);
 				return END;
 		}
