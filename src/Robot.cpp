@@ -9,6 +9,9 @@ class CORE2015: public SampleRobot {
 	CORERobot robot;
 	DriveSubsystem drive;
 	LiftSubsystem lift;
+
+	AutoSequencer autoSeq;
+	SendableChooser autoChoose;
 public:
 	CORE2015() :
 		robot(),
@@ -33,39 +36,77 @@ public:
 		SmartDashboard::PutNumber("BackRightPValue",0.0);
 		SmartDashboard::PutNumber("BackRightIValue",0.0);
 		SmartDashboard::PutNumber("BackRightDValue",0.0);
-		SmartDashboard::PutNumber("JoystickMultipier",8);
+		SmartDashboard::PutNumber("JoystickMultipier",1);
 		SmartDashboard::PutNumber("gyroPValue",0.0);
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);
+
+		SmartDashboard::PutNumber("toteHeight", 0.0);
+		SmartDashboard::PutNumber("twoToteHeight", 0.0);
+		SmartDashboard::PutNumber("IRtoteHeight", 0.0);
+		SmartDashboard::PutNumber("IRtwoToteHeight", 0.0);
+		SmartDashboard::PutNumber("Lift-P-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-I-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-D-Value", 0.0);
+		SmartDashboard::PutNumber("IR-Lift-P-Value", 0.0);
+		SmartDashboard::PutNumber("IR-Lift-I-Value", 0.0);
+		SmartDashboard::PutNumber("IR-Lift-D-Value", 0.0);
+
+		autoChoose.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
+		autoChoose.AddObject("Push to Zone", new std::string("Push-to-Zone"));
+		autoChoose.AddObject("Push All to Zone", new std::string("Push-All-to-Zone"));
+
+		SmartDashboard::PutData("auto-chooser", &autoChoose);
 	}
 	void Autonomous() {
 //		Watchdog& wd = GetWatchdog();
-
-
-
-//			wd.Feed();
-			while (IsAutonomous() and !IsDisabled()) {
-//				wd.Feed();
-
-				Wait(0.05); // wait for a motor update time
-
-			}
-
+//		std::string choice = *(std::string*) autoChoose.GetSelected();
+//		autoSeq.clear();
+//		std::cout<<"Auto mode:" <<choice<<std::endl;
+//
+//
+//			if(choice=="Drive-to-Zone"){
+//
+//
+//				autoSeq.init();
+//				while (IsAutonomous() and !IsDisabled()) {
+//					autoSeq.iter();
+//					Wait(0.05);
+//				}
+//			}else if(choice == "Push-to-Zone"){
+//
+//
+//				autoSeq.init();
+//				while (IsAutonomous() and !IsDisabled()) {
+//					autoSeq.iter();
+//					Wait(0.05);
+//				}
+//			}else if (choice=="Push-All-to-Zone"){
+//
+//
+//				autoSeq.init();
+//				while (IsAutonomous() and !IsDisabled()) {
+//					autoSeq.iter();
+//					Wait(0.05);
+//				}
+//			}else{
+//				std::cout<<"Bad auto type"<<std::endl;
+//			}
 	}
-
+//
 	void OperatorControl() {
 		robot.teleopInit();
-//		Watchdog& wd = GetWatchdog();
-//		wd.SetExpiration(.5);
-//		wd.SetEnabled(true);
-//
+////		Watchdog& wd = GetWatchdog();
+////		wd.SetExpiration(.5);
+////		wd.SetEnabled(true);
+////
 		while (IsOperatorControl() && !IsDisabled()) {
-//			wd.Feed();
+////			wd.Feed();
 			robot.teleop();
 			Wait(0.05); // wait for a motor update time
-//			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
-		}
-	}
+////			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
+		};
+	};
 
 	/**
 	 * Runs during test mode
