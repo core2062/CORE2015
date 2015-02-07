@@ -8,12 +8,20 @@
 #include <iostream>
 using namespace CORE;
 
+const int frontLeftInvert = 1;
+const int backLeftInvert = 1;
+const int frontRightInvert = -1;
+const int backRightInvert = -1;
+
+
 class DriveSubsystem : public CORESubsystem{
 	// Drive Motors
 	CANTalon frontLeft;
 	CANTalon backLeft;
 	CANTalon frontRight;
 	CANTalon backRight;
+
+
 
 	Encoder frontLeftEnc;
 	Encoder backLeftEnc;

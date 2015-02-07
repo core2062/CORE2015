@@ -17,11 +17,12 @@ using namespace CORE;
 class LiftSubsystem: public CORESubsystem {
 
 	CANTalon liftMotor;
-	Encoder liftEncoder;
+	Encoder encoder;
 	DigitalInput bottomLimit;
+	DigitalInput middleLimit;
 	DigitalInput topLimit;
 	AnalogInput IRSensor;
-	SendableChooser autoChoose;
+	SendableChooser liftChoose;
 
 	bool liftUpButton = false;
 	bool liftDownButton = false;
@@ -29,6 +30,8 @@ class LiftSubsystem: public CORESubsystem {
 	bool twoToteHeightButton = false;
 	bool logIR = false;
 	bool logENC = false;
+	bool logLLLE = false;
+	bool logLLLL = false;
 	double liftValue = 0.0;
 	double IRliftValue = 0.0;
 	double buffer = 0.0;
@@ -42,6 +45,19 @@ class LiftSubsystem: public CORESubsystem {
 		double location = 0.0;
 	}encoderLift, IRLift;
 
+	struct{
+		double P = 0.1;
+		double I = 0.001;
+		double D = 0.0;
+		double mistake;
+		double actualPosition;
+		double lastError;
+		double integral;
+		double derivative;
+		double setPoint = 0.0;
+		bool enabled = false;
+		}encoderPID;
+
 public:
 	std::string name(void) {
 		return "lift";
@@ -50,14 +66,14 @@ public:
 	LiftSubsystem(CORERobot& robot) :
 			CORESubsystem(robot),
 			liftMotor(13),
-			liftEncoder(9, 10),
+			encoder(9, 10),
 			bottomLimit(0),
+			middleLimit(-1),
 			topLimit(1),
 			IRSensor(1),
-			autoChoose()
+			liftChoose()
 
 	{
-		liftMotor.SetSafetyEnabled(true);
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
 	}
@@ -65,6 +81,7 @@ public:
 	void robotInit(void);
 	void teleopInit(void);
 	void teleop(void);
+	void teleopEnd(void);
 	double getLiftHeight(void);
 	double getBufferValue(void);
 	void setLift(double speed);
@@ -73,6 +90,7 @@ public:
 	void setVoltageMode(void);
 	double getIRLiftHeight(void);
 	void giveLog(std::string stringVar);
+	double liftPID(void);
 
 };
 

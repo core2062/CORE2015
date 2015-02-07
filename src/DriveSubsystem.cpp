@@ -106,29 +106,32 @@ void DriveSubsystem::teleop(void){
 //Deciding which drive mode to use
 	if(isBroken == false && switchEncoderMode == false){
 		//robot.outLog.throwLog("tried PID");
-		frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-		frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-		backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-		backRightSet = ((drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		frontLeftSet = (frontLeftInvert*(drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		frontRightSet = (frontRightInvert*(-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		backLeftSet = (backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+		backRightSet = (backRightInvert*(drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 		frontLeft.Set(frontLeftSet);
 		frontRight.Set(frontRightSet);
 		backLeft.Set(backLeftSet);
 		backRight.Set(backRightSet);
+		if(flag != false){
+			flag = false;
+		}
 	}else{
 		if(flag == false){
 			robot.outLog.throwLog("set to voltage");
-//			frontRight.SetControlMode(CANSpeedController::kVoltage);
-//			frontLeft.SetControlMode(CANSpeedController::kVoltage);
-//			backRight.SetControlMode(CANSpeedController::kVoltage);
-//			backLeft.SetControlMode(CANSpeedController::kVoltage);
-			robot.outLog.throwLog("[CHANGE] Encoders were switched to  voltageMode");
+			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
+			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
+			backRight.SetControlMode(CANSpeedController::kPercentVbus);
+			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
+			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
 			flag = true;
 		}
 		//robot.outLog.throwLog("drive motor norm");
-		frontLeft.Set((drive_x+drive_y+drive_rotation));
-		frontRight.Set(-(-drive_x+drive_y-drive_rotation));
-		backLeft.Set((-drive_x+drive_y+drive_rotation));
-		backRight.Set(-(drive_x+drive_y-drive_rotation));
+		frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation));
+		frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation));
+		backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation));
+		backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation));
 	}
 	//robot.outLog.throwLog("");
 }
