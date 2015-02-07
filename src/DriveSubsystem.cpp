@@ -18,14 +18,14 @@ void DriveSubsystem::teleopInit(void){
 	frontRight.SetSafetyEnabled(true);
 	backRight.SetSafetyEnabled(true);
 
-	robot.joystick.register_axis("drive_x", 1, 1);
-	robot.joystick.register_axis("drive_rotation", 1, 4);
-	robot.joystick.register_axis("drive_y", 1, 2);
+	robot.joystick.register_axis("drive_x", 1, 0);
+	robot.joystick.register_axis("drive_rotation", 1, 2);
+	robot.joystick.register_axis("drive_y", 1, 1);
 
-	frontLeft.SetControlMode(CANSpeedController::kSpeed);
-	backLeft.SetControlMode(CANSpeedController::kSpeed);
-	frontRight.SetControlMode(CANSpeedController::kSpeed);
-	backRight.SetControlMode(CANSpeedController::kSpeed);
+//	frontLeft.SetControlMode(CANSpeedController::kSpeed);
+//	backLeft.SetControlMode(CANSpeedController::kSpeed);
+//	frontRight.SetControlMode(CANSpeedController::kSpeed);
+//	backRight.SetControlMode(CANSpeedController::kSpeed);
 	oldFrontRight = frontRight.GetEncPosition();
 	oldFrontLeft = frontLeft.GetEncPosition();
 	oldBackRight = backRight.GetEncPosition();
@@ -34,6 +34,7 @@ void DriveSubsystem::teleopInit(void){
 }
 	
 void DriveSubsystem::teleop(void){
+	//robot.outLog.throwLog("start and smt dshbrd");
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
 	SmartDashboard::PutNumber("drive rot", drive_rotation);
@@ -46,30 +47,32 @@ void DriveSubsystem::teleop(void){
 
 	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
 
-	frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
-	backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
-	frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
-	backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
+//	frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
+//	backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
+//	frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
+//	backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
+
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
-
+	//robot.outLog.throwLog("db");
 //Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
-	if (drive_x < .2 && drive_x > -.2){
+	if (drive_x < 0.05 && drive_x > -.05){
 		drive_x = 0;
 	}
 	drive_rotation = robot.joystick.axis("drive_rotation");
-	if (drive_rotation < .2 && drive_rotation > -.2){
+	if (drive_rotation < .05 && drive_rotation > -.05){
 		drive_rotation = 0;
 	}
 	drive_y = robot.joystick.axis("drive_y");
-	if (drive_y < .2 && drive_y > -.2){
+	if (drive_y < .05 && drive_y > -.05){
 		drive_y = 0;		
 	}
-
+	drive_y *= -1;
+	//robot.outLog.throwLog("gyro pid");
 	//Gyro PID
-	if(drive_rotation!=0){
+	if((drive_rotation==0.0)){
 		//Disable Brake
 		gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
 		gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
@@ -81,27 +84,28 @@ void DriveSubsystem::teleop(void){
 	}
 
 //Testing for broken encoders
-	if(isTested == false){
-			if(5 < timer.Get() && timer.Get() < 5.5){
-				if(oldFrontRight == frontRight.GetEncPosition()){
-					robot.outLog.throwLog("[ERROR] FrontRight Encoder stopped working!");
-				}
-				if(oldFrontLeft == frontLeft.GetEncPosition()){
-					robot.outLog.throwLog("[ERROR] FrontLeft Encoder stopped working!");
-				}
-				if(oldBackRight == backRight.GetEncPosition()){
-					robot.outLog.throwLog("[ERROR] BackRight Encoder stopped working!");
-				}
-				if(oldBackLeft == backLeft.GetEncPosition()){
-					robot.outLog.throwLog("[ERROR] BackLeft Encoder stopped working!");
-				}
-				isTested = true;
-			}
-			isBroken = true;
-		}
-
+//	if(isTested == false){
+//			if(5 < timer.Get() && timer.Get() < 5.5){
+//				if(oldFrontRight == frontRight.GetEncPosition()){
+//					robot.outLog.throwLog("[ERROR] FrontRight Encoder stopped working!");
+//				}
+//				if(oldFrontLeft == frontLeft.GetEncPosition()){
+//					robot.outLog.throwLog("[ERROR] FrontLeft Encoder stopped working!");
+//				}
+//				if(oldBackRight == backRight.GetEncPosition()){
+//					robot.outLog.throwLog("[ERROR] BackRight Encoder stopped working!");
+//				}
+//				if(oldBackLeft == backLeft.GetEncPosition()){
+//					robot.outLog.throwLog("[ERROR] BackLeft Encoder stopped working!");
+//				}
+//				isTested = true;
+//			}
+//			isBroken = true;
+//		}
+	//robot.outLog.throwLog("broken test");
 //Deciding which drive mode to use
-	if(isBroken == false || switchEncoderMode == false){
+	if(isBroken == false && switchEncoderMode == false){
+		//robot.outLog.throwLog("tried PID");
 		frontLeftSet = ((drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 		frontRightSet = ((-drive_x+drive_y-drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 		backLeftSet = ((-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
@@ -112,18 +116,21 @@ void DriveSubsystem::teleop(void){
 		backRight.Set(backRightSet);
 	}else{
 		if(flag == false){
-			frontRight.SetControlMode(CANSpeedController::kVoltage);
-			frontLeft.SetControlMode(CANSpeedController::kVoltage);
-			backRight.SetControlMode(CANSpeedController::kVoltage);
-			backLeft.SetControlMode(CANSpeedController::kVoltage);
+			robot.outLog.throwLog("set to voltage");
+//			frontRight.SetControlMode(CANSpeedController::kVoltage);
+//			frontLeft.SetControlMode(CANSpeedController::kVoltage);
+//			backRight.SetControlMode(CANSpeedController::kVoltage);
+//			backLeft.SetControlMode(CANSpeedController::kVoltage);
+			robot.outLog.throwLog("[CHANGE] Encoders were switched to  voltageMode");
 			flag = true;
 		}
-		frontLeftSet = (drive_x+drive_y+drive_rotation);
-		frontRightSet = (-drive_x+drive_y-drive_rotation);
-		backLeftSet = (-drive_x+drive_y+drive_rotation);
-		backRightSet = (drive_x+drive_y-drive_rotation);
-		robot.outLog.throwLog("[CHANGE] Encoders were switched to  voltageMode");
+		//robot.outLog.throwLog("drive motor norm");
+		frontLeft.Set((drive_x+drive_y+drive_rotation));
+		frontRight.Set(-(-drive_x+drive_y-drive_rotation));
+		backLeft.Set((-drive_x+drive_y+drive_rotation));
+		backRight.Set(-(drive_x+drive_y-drive_rotation));
 	}
+	//robot.outLog.throwLog("");
 }
 void DriveSubsystem::teleopEnd(void){
 	frontLeft.SetSafetyEnabled(false);
@@ -166,10 +173,10 @@ void DriveSubsystem::setVoltageMode(void){
 	backRight.SetControlMode(CANSpeedController::kVoltage);
 }
 void DriveSubsystem::setSpeedMode(void){
-	frontLeft.SetControlMode(CANSpeedController::kSpeed);
-	backLeft.SetControlMode(CANSpeedController::kSpeed);
-	frontRight.SetControlMode(CANSpeedController::kSpeed);
-	backRight.SetControlMode(CANSpeedController::kSpeed);
+//	frontLeft.SetControlMode(CANSpeedController::kSpeed);
+//	backLeft.SetControlMode(CANSpeedController::kSpeed);
+//	frontRight.SetControlMode(CANSpeedController::kSpeed);
+//	backRight.SetControlMode(CANSpeedController::kSpeed);
 }
 void DriveSubsystem::setFrontLeftMotor(double value){
 	frontLeft.Set(value);
