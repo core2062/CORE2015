@@ -14,7 +14,7 @@
 
 using namespace CORE;
 
-class LiftSubsystem: public CORESubsystem {
+class LiftSubsystem : public CORESubsystem{
 
 	CANTalon liftMotor;
 	Encoder liftEncoder;
@@ -25,8 +25,8 @@ class LiftSubsystem: public CORESubsystem {
 
 	bool liftUpButton = false;
 	bool liftDownButton = false;
-	bool toteHeightButton = false;
-	bool twoToteHeightButton = false;
+	bool toteHeightButton;
+	bool twoToteHeightButton;
 	bool logIR = false;
 	bool logENC = false;
 	double liftValue = 0.0;
@@ -40,27 +40,31 @@ class LiftSubsystem: public CORESubsystem {
 		double toteHeight = 0.0;
 		double twoToteHeight = 0.0;
 		double location = 0.0;
-	}encoderLift, IRLift;
+	}
+
+	encoderLift, IRLift;
 
 public:
-	std::string name(void) {
+	std::string name(void){
 		return "lift";
 
-	}
-	LiftSubsystem(CORERobot& robot) :
+}
+	LiftSubsystem(CORERobot& robot):
 			CORESubsystem(robot),
-			liftMotor(13),
-			liftEncoder(9, 10),
-			bottomLimit(0),
-			topLimit(1),
-			IRSensor(1),
-			autoChoose()
+			liftMotor(21),
+			liftEncoder(-1,-1),
+			bottomLimit(-1),
+			topLimit(-1),
+			IRSensor(-1),
+			autoChoose(),
+			toteHeightButton(-1),
+			twoToteHeightButton(-1)
 
-	{
+{
 		liftMotor.SetSafetyEnabled(true);
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
-	}
+}
 
 	void robotInit(void);
 	void teleopInit(void);
@@ -76,47 +80,49 @@ public:
 
 };
 
-class LiftAction: public Action {
-	LiftSubsystem* lift;
-	double targetHeight;
-	double currentHeight = 0.0;
-public:
-	LiftAction(LiftSubsystem& lift, double targetHeight) :
-			lift(&lift), targetHeight(targetHeight) {
+	class LiftAction : public Action{
+		LiftSubsystem* lift;
+		double targetHeight;
+		double currentHeight =0.0;
+	public:
+		LiftAction(LiftSubsystem& lift, double targetHeight):
+			lift(&lift),
+			targetHeight(targetHeight){
 
-	}
-	void init(void) {
-		currentHeight = lift->getLiftHeight();
-		lift->setPositionModeEnc();
-	}
-	ControlFlow call(void) {
-		lift->giveLog("ENCLiftAction Completed");
-		lift->setLift(targetHeight);
-		return END;
+		}
+		void init(void){
+			currentHeight = lift->getLiftHeight();
+			lift->setPositionModeEnc();
+		}
+		ControlFlow call(void){
+			lift->giveLog("ENCLiftAction Completed");
+			lift->setLift(targetHeight);
+			return END;
 
-	}
-};
+		}
+	};
 
-class IRLiftAction: public Action {
-	LiftSubsystem* lift;
-	double targetHeight;
-	double currentHeight = 0.0;
-public:
-	IRLiftAction(LiftSubsystem& lift, double targetHeight) :
-			lift(&lift), targetHeight(targetHeight) {
+	class IRLiftAction : public Action{
+		LiftSubsystem* lift;
+		double targetHeight;
+		double currentHeight = 0.0;
+	public:
+		IRLiftAction(LiftSubsystem& lift, double targetHeight):
+			lift(&lift),
+			targetHeight(targetHeight){
 
-	}
-	void init(void) {
-		lift->setPositionModeIR();
-		currentHeight = lift->getIRLiftHeight();
+		}
+		void init(void){
+			lift->setPositionModeIR();
+			currentHeight = lift->getIRLiftHeight();
 
-	}
-	ControlFlow call(void) {
-		lift->giveLog("IRLiftAction Completed");
-		lift->setLift(targetHeight);
-		return END;
-	}
-};
+		}
+		ControlFlow call(void){
+				lift->giveLog("IRLiftAction Completed");
+				lift->setLift(targetHeight);
+				return END;
+		}
+	};
 
 #endif /* SRC_LIFTSUBSYSTEM_H_ */
 ;

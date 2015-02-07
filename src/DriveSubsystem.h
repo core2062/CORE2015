@@ -35,7 +35,7 @@ class DriveSubsystem : public CORESubsystem{
 	int oldBackRight = 0;
 	int oldBackLeft = 0;
 	bool isTested = false;
-	bool isBroken = true;
+	bool isBroken = false;
 	bool switchEncoderMode = false;
 	bool flag = false;
 
@@ -61,20 +61,20 @@ public:
 		backLeft(8),
 		frontRight(9),
 		backRight(7),
-		frontLeftEnc(11,2), //TODO encoder channels
-		backLeftEnc(3,4),
-		frontRightEnc(5,6),
-		backRightEnc(7,8),
-		gyro(0)
+		frontLeftEnc(-1,-1), //TODO encoder channels
+		backLeftEnc(-1,-1),
+		frontRightEnc(-1,-1),
+		backRightEnc(-1,-1),
+		gyro(-1)
 		{
-//			frontLeft.SetControlMode(CANSpeedController::kSpeed);
-//			backLeft.SetControlMode(CANSpeedController::kSpeed);
-//			frontRight.SetControlMode(CANSpeedController::kSpeed);
-//			backRight.SetControlMode(CANSpeedController::kSpeed);
-//			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontLeft.SetControlMode(CANSpeedController::kSpeed);
+			backLeft.SetControlMode(CANSpeedController::kSpeed);
+			frontRight.SetControlMode(CANSpeedController::kSpeed);
+			backRight.SetControlMode(CANSpeedController::kSpeed);
+			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			robot.outLog.throwLog("le (drive) constroctor has arrived");
 		}
 	void robotInit(void);
