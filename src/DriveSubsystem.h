@@ -75,6 +75,14 @@ public:
 		backRightEnc(7,8),
 		gyro(0)
 		{
+			frontLeft.SetSafetyEnabled(false);
+			frontRight.SetSafetyEnabled(false);
+			backLeft.SetSafetyEnabled(false);
+			backRight.SetSafetyEnabled(false);
+			frontLeft.Set(0.0);
+			frontRight.Set(0.0);
+			backLeft.Set(0.0);
+			backRight.Set(0.0);
 //			frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //			backLeft.SetControlMode(CANSpeedController::kSpeed);
 //			frontRight.SetControlMode(CANSpeedController::kSpeed);
@@ -106,6 +114,7 @@ public:
 	void setBackRightMotor(double value);
 	double getJoystickMultiplier(void);
 	void giveLog(std::string stringVar);
+	double gyroPIDCalc(double rot);
 
 };
 
@@ -126,18 +135,31 @@ public:
 		drive->setVoltageMode();
 		currentDistance = drive->getDistance();
 		rotation = drive->getRot();
-		rotation = rotation/-100.0;
 	}
 	ControlFlow call(void){
-		drive->giveLog("DriveAction Completed");
+		rotation = drive->getRot();
+		rotation = drive->gyroPIDCalc(rotation);
 		currentDistance = drive->getDistance();
-		if(currentDistance<targetDistance){
-			drive->mec_drive(0,speed,rotation);
-			return CONTINUE;
+		if(targetDistance>0){
+			if(currentDistance<targetDistance){
+				drive->mec_drive(0,speed,rotation);
+				return CONTINUE;
+			}else{
+				drive->mec_drive(0,0,0);
+				drive->giveLog("DriveAction Completed");
+				return END;
+			}
 		}else{
-			drive->mec_drive(0,0,0);
-			return END;
+			if(currentDistance>targetDistance){
+				drive->mec_drive(0,speed,rotation);
+				return CONTINUE;
+			}else{
+				drive->mec_drive(0,0,0);
+				drive->giveLog("DriveAction Completed");
+				return END;
+			}
 		}
+
 	}
 };
 
@@ -162,15 +184,29 @@ public:
 			rotation = rotation/-100.0;
 		}
 		ControlFlow call(void){
+			rotation = drive->getRot();
+			rotation = drive->gyroPIDCalc(rotation);
 			currentDistance = drive->getDistance();
-			drive->giveLog("StrafeAction Completed");
-			if(currentDistance<targetDistance){
-				drive->mec_drive(speed,0,rotation);
-				return CONTINUE;
+			if(targetDistance>0){
+				if(currentDistance<targetDistance){
+					drive->mec_drive(speed,0,rotation);
+					return CONTINUE;
+				}else{
+					drive->mec_drive(0,0,0);
+					drive->giveLog("DriveAction Completed");
+					return END;
+				}
 			}else{
-				drive->mec_drive(0,0,0);
-				return END;
+				if(currentDistance>targetDistance){
+					drive->mec_drive(speed,0,rotation);
+					return CONTINUE;
+				}else{
+					drive->mec_drive(0,0,0);
+					drive->giveLog("DriveAction Completed");
+					return END;
+				}
 			}
+
 		}
 	};
 

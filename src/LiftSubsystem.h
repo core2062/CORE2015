@@ -27,12 +27,15 @@ class LiftSubsystem: public CORESubsystem {
 	bool liftUpButton = false;
 	bool liftDownButton = false;
 	bool toteHeightButton = false;
+	double liftAxis = 0.0;
+	double liftValue = 0.0;
 	bool twoToteHeightButton = false;
+	bool topLatch = false;
+	bool bottomLatch = false;
 	bool logIR = false;
 	bool logENC = false;
 	bool logLLLE = false;
 	bool logLLLL = false;
-	double liftValue = 0.0;
 	double IRliftValue = 0.0;
 	double buffer = 0.0;
 	double ticksPerRotation = 200;
@@ -76,6 +79,7 @@ public:
 	{
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
+		liftMotor.Set(0.0);
 	}
 
 	void robotInit(void);
@@ -100,7 +104,7 @@ class LiftAction: public Action {
 	double currentHeight = 0.0;
 public:
 	LiftAction(LiftSubsystem& lift, double targetHeight) :
-			lift(&lift), targetHeight(targetHeight) {
+			lift(&lift), targetHeight(targetHeight){
 
 	}
 	void init(void) {

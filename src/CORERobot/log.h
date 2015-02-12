@@ -20,6 +20,8 @@ class OutLog {
     	}
     	void createFile();
     	void throwLog(std::string s);
+    	void throwLog(double s);
+    	void throwLog(std::string s, double d);
 		~OutLog(){
 			outFile.close();
 		}

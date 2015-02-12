@@ -21,13 +21,14 @@ void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
 	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
 
-	robot.joystick.register_button("liftUpButton", 2, 1);
-	robot.joystick.register_button("liftDownButton", 2, 2);
+//	robot.joystick.register_button("liftUpButton", 2, 1);
+//	robot.joystick.register_button("liftDownButton", 2, 2);
 	robot.joystick.register_button("twoToteHeightButton", 1, 3);
 	robot.joystick.register_button("toteHeightButton", 1, 4);
+	robot.joystick.register_button("FlagButton", 2 , 1);
+	robot.joystick.register_axis("liftAxis", 2, 1);
 
 	SmartDashboard::PutBoolean("liftStart", true);
-
 
 }
 void LiftSubsystem::teleop(void){
@@ -52,8 +53,27 @@ void LiftSubsystem::teleop(void){
 	SmartDashboard::PutBoolean("liftDownButton", liftDownButton);
 	SmartDashboard::PutBoolean("botLimit", bottomLimit.Get());
 	SmartDashboard::PutBoolean("topLimit", topLimit.Get());
+	SmartDashboard::PutBoolean("Top Latch", topLatch);
+	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
 //	SmartDashboard::PutNumber("liftEncoderValue", encoderLift.location);
 //	SmartDashboard::PutNumber("IR-Sensor-Value", IRLift.location);
+	liftValue = robot.joystick.axis("liftAxis");
+//	liftMotor.SetVoltageRampRate(SmartDashboard::GetNumber("voltage ramp rate"));
+
+	if (robot.joystick.button("FlagButton")){
+		robot.outLog.throwLog("Lift Flag");
+		robot.outLog.throwLog(liftMotor.GetStickyFaults());
+		robot.outLog.throwLog(liftMotor.IsAlive());
+	}
+	if (!bottomLimit.Get()){
+		bottomLatch = true;
+	}
+	if (!topLimit.Get()){
+		topLatch = true;
+	}
+	if (liftValue < 0.1 && liftValue > -.1){
+		liftValue = 0;
+	}
 
 
 	if(liftMode == "use-Encoder-Lift"){
@@ -70,12 +90,12 @@ void LiftSubsystem::teleop(void){
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
-			liftMotor.Set(0.5);
+			liftMotor.Set(SmartDashboard::GetNumber("Lift-Speed"));
 		}else if (liftDownButton == true && bottomLimit.Get() == true){
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
-			liftMotor.Set(-0.5);
+			liftMotor.Set(-SmartDashboard::GetNumber("Lift-Speed"));
 		}else if (twoToteHeightButton == true){
 //			if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
 	//			liftMotor.SetFeedbackDevice(CANTalon::EncRising);
@@ -106,23 +126,32 @@ void LiftSubsystem::teleop(void){
 			logIR = true;
 
 		}
-		if (liftUpButton == true && topLimit.Get() == true){
+		if (liftValue > 0.0 && topLatch == false){
 
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
+
 			}
-			liftMotor.Set(0.5);
-		}else if (liftDownButton == true && bottomLimit.Get() == true){
+			robot.outLog.throwLog("Lift Go Up Commandeded at :", liftValue);
+			bottomLatch = false;
+			liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+			robot.outLog.throwLog("Lift Value at :", liftMotor.Get());
+		}else if (liftValue < 0.0 && bottomLatch == false){
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
-			liftMotor.Set(-0.5);
+			robot.outLog.throwLog("Lift Go Down Commandeded at :", liftValue);
+			topLatch = false;
+			liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+			robot.outLog.throwLog("Lift Value at :", liftMotor.Get());
 		}else if (twoToteHeightButton == true){
 //			if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
 	//			liftMotor.SetFeedbackDevice(CANTalon::AnalogPot);
 	//			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
 	//			liftMotor.SetPID(IRLift.P, IRLift.I, IRLift.D);
 	//			liftMotor.SetControlMode(CANSpeedController::kPosition);
+
+			robot.outLog.throwLog("Lift PID?");
 	//		}
 			liftMotor.Set(IRLift.twoToteHeight);
 		}else if (toteHeightButton == true){
@@ -132,12 +161,16 @@ void LiftSubsystem::teleop(void){
 	//			liftMotor.SetPID(IRLift.P, IRLift.I, IRLift.D);
 	//			liftMotor.SetControlMode(CANSpeedController::kPosition);
 	//		}
+			robot.outLog.throwLog("Lift PID?");
 			liftMotor.Set(IRLift.toteHeight);
 		}else{
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
 			liftMotor.Set(0.0);
+			robot.outLog.throwLog("Nothing For Lift");
+			robot.outLog.throwLog("Lift Value at :", liftMotor.Get());
+
 		}
 
 	}else if (liftMode == "use-three-limit-switches-one-encoder"){
@@ -154,12 +187,12 @@ void LiftSubsystem::teleop(void){
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
-			liftMotor.Set(0.5);
+			liftMotor.Set(SmartDashboard::GetNumber("Lift-Speed"));
 		}else if (liftDownButton == true && bottomLimit.Get() == true){
 			if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 				liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 			}
-			liftMotor.Set(-0.5);
+			liftMotor.Set(-SmartDashboard::GetNumber("Lift-Speed"));
 		}else if (twoToteHeightButton == true){
 //			if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
 	//			liftMotor.SetFeedbackDevice(CANTalon::EncRising);

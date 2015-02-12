@@ -17,7 +17,10 @@ void DriveSubsystem::teleopInit(void){
 	backLeft.SetSafetyEnabled(true);
 	frontRight.SetSafetyEnabled(true);
 	backRight.SetSafetyEnabled(true);
-
+	frontLeft.Set(0.0);
+	backLeft.Set(0.0);
+	frontRight.Set(0.0);
+	backRight.Set(0.0);
 	robot.joystick.register_axis("drive_x", 1, 0);
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
@@ -35,6 +38,13 @@ void DriveSubsystem::teleopInit(void){
 	
 void DriveSubsystem::teleop(void){
 	//robot.outLog.throwLog("start and smt dshbrd");
+	double gyroRate = gyro.GetRate();
+
+	if (gyroRate>-2 && gyroRate<2){
+		gyroRate = 0.0;
+	}
+
+
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
 	SmartDashboard::PutNumber("drive rot", drive_rotation);
@@ -43,6 +53,8 @@ void DriveSubsystem::teleop(void){
 	SmartDashboard::PutNumber("Front Right Set", frontRightSet);
 	SmartDashboard::PutNumber("Back Left Set", backLeftSet);
 	SmartDashboard::PutNumber("Back Right Set", backRightSet);
+	SmartDashboard::PutNumber("Gyro Rate", gyroRate);
+	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 
 
 	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
@@ -55,6 +67,7 @@ void DriveSubsystem::teleop(void){
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+
 	//robot.outLog.throwLog("db");
 //Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
@@ -73,16 +86,19 @@ void DriveSubsystem::teleop(void){
 	//robot.outLog.throwLog("gyro pid");
 	//Gyro PID
 	if((drive_rotation==0.0)){
-		//Disable Brake
-		gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
-		gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
-		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
+		gyroPID.mistake = gyroPID.setPoint - gyroRate;
+		gyroPID.integral = gyroPID.integral + (gyroPID.mistake);
+		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError);
 		double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
 		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
 		drive_rotation = output;
 		gyroPID.lastError = gyroPID.mistake;
+		SmartDashboard::PutNumber("Gyro PID Out", output);
 	}
 
+	if (drive_rotation < .05 && drive_rotation > -.05){
+		drive_rotation = 0;
+	}
 //Testing for broken encoders
 //	if(isTested == false){
 //			if(5 < timer.Get() && timer.Get() < 5.5){
@@ -136,6 +152,7 @@ void DriveSubsystem::teleop(void){
 	//robot.outLog.throwLog("");
 }
 void DriveSubsystem::teleopEnd(void){
+	robot.outLog.throwLog("drive tele end");
 	frontLeft.SetSafetyEnabled(false);
 	frontRight.SetSafetyEnabled(false);
 	backLeft.SetSafetyEnabled(false);
@@ -199,3 +216,25 @@ double DriveSubsystem::getJoystickMultiplier(void){
 void DriveSubsystem::giveLog(std::string stringVar){
 	robot.outLog.throwLog(stringVar);
 }
+
+double DriveSubsystem::gyroPIDCalc(double rot){
+	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
+	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
+	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+	if((rot==0.0)){
+		gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
+		gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
+		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
+		double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+		rot = output;
+		gyroPID.lastError = gyroPID.mistake;
+		SmartDashboard::PutNumber("Gyro PID Out", output);
+	}
+
+	if (rot < .05 && rot > -.05){
+		rot = 0;
+	}
+	return rot;
+}
+
