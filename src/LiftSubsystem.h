@@ -21,32 +21,22 @@ class LiftSubsystem: public CORESubsystem {
 	DigitalInput bottomLimit;
 	DigitalInput middleLimit;
 	DigitalInput topLimit;
-	AnalogInput IRSensor;
-	SendableChooser liftChoose;
 
-	bool liftUpButton = false;
-	bool liftDownButton = false;
 	bool toteHeightButton = false;
-	double liftAxis = 0.0;
-	double liftValue = 0.0;
 	bool twoToteHeightButton = false;
 	bool topLatch = false;
 	bool bottomLatch = false;
-	bool logIR = false;
-	bool logENC = false;
-	bool logLLLE = false;
-	bool logLLLL = false;
-	double IRliftValue = 0.0;
+	double liftAxis = 0.0;
+	double liftValue = 0.0;
 	double buffer = 0.0;
 	double ticksPerRotation = 200;
-	struct {
-		double P = 0.0;
-		double I = 0.0;
-		double D = 0.0;
-		double toteHeight = 0.0;
-		double twoToteHeight = 0.0;
-		double location = 0.0;
-	}encoderLift, IRLift;
+	double toteHeight = 0.0;
+	double twoToteHeight = 0.0;
+	double location = 0.0;
+	double P = 0.0;
+	double I = 0.0;
+	double D = 0.0;
+
 
 	struct{
 		double P = 0.1;
@@ -72,10 +62,7 @@ public:
 			encoder(9, 10),
 			bottomLimit(0),
 			middleLimit(-1),
-			topLimit(1),
-			IRSensor(1),
-			liftChoose()
-
+			topLimit(1)
 	{
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
@@ -90,9 +77,7 @@ public:
 	double getBufferValue(void);
 	void setLift(double speed);
 	void setPositionModeEnc(void);
-	void setPositionModeIR(void);
 	void setVoltageMode(void);
-	double getIRLiftHeight(void);
 	void giveLog(std::string stringVar);
 	double liftPID(void);
 
@@ -119,26 +104,6 @@ public:
 	}
 };
 
-class IRLiftAction: public Action {
-	LiftSubsystem* lift;
-	double targetHeight;
-	double currentHeight = 0.0;
-public:
-	IRLiftAction(LiftSubsystem& lift, double targetHeight) :
-			lift(&lift), targetHeight(targetHeight) {
-
-	}
-	void init(void) {
-		lift->setPositionModeIR();
-		currentHeight = lift->getIRLiftHeight();
-
-	}
-	ControlFlow call(void) {
-		lift->giveLog("IRLiftAction Completed");
-		lift->setLift(targetHeight);
-		return END;
-	}
-};
 
 #endif /* SRC_LIFTSUBSYSTEM_H_ */
 ;

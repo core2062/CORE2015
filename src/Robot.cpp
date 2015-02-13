@@ -36,7 +36,7 @@ public:
 		SmartDashboard::PutNumber("BackRightPValue",0.0);
 		SmartDashboard::PutNumber("BackRightIValue",0.0);
 		SmartDashboard::PutNumber("BackRightDValue",0.0);
-		SmartDashboard::PutNumber("JoystickMultipier",1);
+		SmartDashboard::PutNumber("JoystickMultipier", 0.5);
 		SmartDashboard::PutNumber("gyroPValue",0.0);
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);

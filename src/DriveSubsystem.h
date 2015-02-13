@@ -46,6 +46,7 @@ class DriveSubsystem : public CORESubsystem{
 	bool isBroken = true;
 	bool switchEncoderMode = false;
 	bool flag = false;
+	bool shoulderSpeed = false;
 
 	struct{
 		double P = 0.1;
