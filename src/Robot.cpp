@@ -53,6 +53,7 @@ public:
 		SmartDashboard::PutNumber("IR-Lift-I-Value", 0.0);
 		SmartDashboard::PutNumber("IR-Lift-D-Value", 0.0);
 		SmartDashboard::PutNumber("Lift-Speed",1.0);
+		SmartDashboard::PutNumber("DriveVoltageRampRate",6.0);
 
 		//SmartDashboard::PutNumber("voltage ramp rate", 6.0);
 		//Auto

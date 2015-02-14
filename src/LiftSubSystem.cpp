@@ -14,6 +14,7 @@ void LiftSubsystem::robotInit(void){
 }
 void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
+	liftMotor.Set(0);
 	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
 	robot.joystick.register_button("twoToteHeightButton", 1, 3);
 	robot.joystick.register_button("toteHeightButton", 1, 4);
@@ -34,6 +35,7 @@ void LiftSubsystem::teleop(void){
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
 	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
 	liftValue = robot.joystick.axis("liftAxis");
+
 
 	if (liftMotor.GetStickyFaults() != 0){
 		robot.outLog.throwLog("Lift Flag");

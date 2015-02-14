@@ -45,7 +45,7 @@ void DriveSubsystem::teleop(void){
 		gyroRate = 0.0;
 	}
 
-
+	shoulderSpeed = robot.joystick.button("shoulderSpeed");
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
 	SmartDashboard::PutNumber("drive rot", drive_rotation);
@@ -57,6 +57,10 @@ void DriveSubsystem::teleop(void){
 	SmartDashboard::PutNumber("Gyro Rate", gyroRate);
 	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
+//	frontRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
+//	frontLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
+//	backRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
+//	backLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 
 
 	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
@@ -87,18 +91,20 @@ void DriveSubsystem::teleop(void){
 	drive_y *= -1;
 	//robot.outLog.throwLog("gyro pid");
 	//Gyro PID
-	if((drive_y != 0 || drive_x != 0) && drive_rotation == 0){
+//	if((drive_y != 0 || drive_x != 0) && drive_rotation == 0){
 		if((drive_rotation==0.0)){
-			gyroPID.mistake = gyroPID.setPoint - gyroRate;
+			gyroPID.mistake =   gyroRate + gyroPID.setPoint;
+			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
 			gyroPID.integral = gyroPID.integral + (gyroPID.mistake *.05);
 			gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)*(1.0/.05);
 			double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+			SmartDashboard::PutNumber("Gyro PID Out before", output);
 			output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_rotation = output;
+			drive_rotation = -1*output;
 			gyroPID.lastError = gyroPID.mistake;
 			SmartDashboard::PutNumber("Gyro PID Out", output);
 		}
-	}
+//	}
 	if (drive_rotation < .05 && drive_rotation > -.05){
 		drive_rotation = 0;
 	}
@@ -147,10 +153,18 @@ void DriveSubsystem::teleop(void){
 			flag = true;
 		}
 		//robot.outLog.throwLog("drive motor norm");
-		frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation));
-		frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation));
-		backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation));
-		backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation));
+		if(shoulderSpeed){
+			frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation));
+			frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation));
+			backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation));
+			backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation));
+		}else{
+			frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier",.2));
+			frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier",.2));
+			backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultipier"),.2);
+			backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier"),.2);
+		}
+
 	}
 	//robot.outLog.throwLog("");
 }
