@@ -22,6 +22,7 @@ class LiftSubsystem: public CORESubsystem {
 	DigitalInput middleLimit;
 	DigitalInput topLimit;
 
+	bool bottomHeightButton = false;
 	bool toteHeightButton = false;
 	bool twoToteHeightButton = false;
 	bool topLatch = false;
@@ -29,13 +30,15 @@ class LiftSubsystem: public CORESubsystem {
 	double liftAxis = 0.0;
 	double liftValue = 0.0;
 	double buffer = 0.0;
-	double ticksPerRotation = 200;
+	double ticksPerRotation = 1024;
+	double bottomHeight = 1200;
 	double toteHeight = 0.0;
 	double twoToteHeight = 0.0;
 	double location = 0.0;
 	double P = 0.0;
 	double I = 0.0;
 	double D = 0.0;
+	bool beenSet = false;
 
 
 	struct{
@@ -58,15 +61,16 @@ public:
 	}
 	LiftSubsystem(CORERobot& robot) :
 			CORESubsystem(robot),
-			liftMotor(13),
+			liftMotor(14),
 			encoder(9, 10),
 			bottomLimit(0),
 			middleLimit(-1),
 			topLimit(1)
 	{
+		liftMotor.Set(0.0);
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
-		liftMotor.Set(0.0);
+		liftMotor.SetSensorDirection(true);
 	}
 
 	void robotInit(void);

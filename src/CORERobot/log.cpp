@@ -21,17 +21,29 @@ void OutLog::createFile(){
 	    outFile << "Log File Successfully Created!" << std::endl;
 }
 void OutLog::throwLog(std::string s){
-	time = DriverStation::GetInstance()->GetMatchTime();
+	time = timer.Get();
+	time = (mode == TELE)?(time+15.0):(time);
 	 std::cout << "Writing " << s.c_str() << " to log" << std::endl;
 	outFile << "[" << time << "] " << s.c_str() << std::endl;
 }
 void OutLog::throwLog(double s){
-	time = DriverStation::GetInstance()->GetMatchTime();
+	time = timer.Get();
+	time = (mode == TELE)?(time+15.0):(time);
 	 std::cout << "Writing " << s << " to log" << std::endl;
 	outFile << "[" << time << "] " << s << std::endl;
 }
 void OutLog::throwLog(std::string s, double d){
-	time = DriverStation::GetInstance()->GetMatchTime();
+	time = timer.Get();
+	time = (mode == TELE)?(time+15.0):(time);
 	 std::cout << "Writing " << s.c_str() << " to log" << std::endl;
 	outFile << "[" << time << "] " << s.c_str() << d << std::endl;
+}
+
+void OutLog::startTime(){
+	timer.Reset();
+	timer.Start();
+}
+
+void OutLog::setMode(Mode m){
+	mode = m;
 }

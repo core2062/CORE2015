@@ -20,11 +20,7 @@ Action::ControlFlow WaitAction::call(void){
 	}
 }
 
-AutoSequencer::AutoSequencer():
-	aqueue(),
-	background(),
-	empty_flag(false){
-}
+
 
 void AutoSequencer::clear(void){
     while (!aqueue.empty())
@@ -67,6 +63,7 @@ void AutoSequencer::iter(void){
 		break;
 	case Action::BACKGROUND:
 		std::cout << "adding to background: " << a << std::endl;
+
 		background.push_back(a);
 	case Action::END:
 		aqueue.pop();

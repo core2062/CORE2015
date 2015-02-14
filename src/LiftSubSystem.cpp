@@ -16,8 +16,9 @@ void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
 	liftMotor.Set(0);
 	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
-	robot.joystick.register_button("twoToteHeightButton", 1, 3);
-	robot.joystick.register_button("toteHeightButton", 1, 4);
+	robot.joystick.register_button("bottomHeightButton", 2, 2);
+	robot.joystick.register_button("twoToteHeightButton", 2, 4);
+	robot.joystick.register_button("toteHeightButton", 2, 3);
 	robot.joystick.register_button("FlagButton", 2 , 1);
 	robot.joystick.register_axis("liftAxis", 2, 1);
 
@@ -25,8 +26,10 @@ void LiftSubsystem::teleopInit(void){
 
 }
 void LiftSubsystem::teleop(void){
+	beenSet = false;
 	toteHeight = SmartDashboard::GetNumber("toteHeight");
 	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
+	bottomHeight = SmartDashboard::GetNumber("bottomHeight");
 	P = SmartDashboard::GetNumber("Lift-P-Value");
 	I = SmartDashboard::GetNumber("Lift-I-Value");
 	D = SmartDashboard::GetNumber("Lift-D-Value");
@@ -35,7 +38,10 @@ void LiftSubsystem::teleop(void){
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
 	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
 	liftValue = robot.joystick.axis("liftAxis");
-
+	bottomHeightButton = robot.joystick.button("bottomHeightButton");
+	toteHeightButton = robot.joystick.button("toteHeightButton");
+	twoToteHeightButton = robot.joystick.button("twoToteHeightButton");
+	SmartDashboard::PutNumber("Lift Encoder", liftMotor.GetEncPosition());
 
 	if (liftMotor.GetStickyFaults() != 0){
 		robot.outLog.throwLog("Lift Flag");
@@ -44,6 +50,7 @@ void LiftSubsystem::teleop(void){
 	}
 	if (!bottomLimit.Get()){
 		bottomLatch = true;
+		liftMotor.SetPosition(0);
 	}
 	if (!topLimit.Get()){
 		topLatch = true;
@@ -60,37 +67,58 @@ void LiftSubsystem::teleop(void){
 		}
 		bottomLatch = false;
 		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+		beenSet = true;
 	}else if (liftValue < 0.0 && bottomLatch == false){
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 		}
 		topLatch = false;
 		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+		beenSet = true;
 	}else if (twoToteHeightButton == true){
-//			if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
-//			liftMotor.SetFeedbackDevice(CANTalon::AnalogPot);
-//			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
-//			liftMotor.SetPID(IRLift.P, IRLift.I, IRLift.D);
-//			liftMotor.SetControlMode(CANSpeedController::kPosition);
-//		}
+		if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
+			liftMotor.SetFeedbackDevice(CANTalon::QuadEncoder);
+			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
+			liftMotor.SetPID(P, I, D);
+			liftMotor.SetControlMode(CANSpeedController::kPosition);
+		}
 		liftMotor.Set(twoToteHeight);
+		beenSet = true;
 	}else if (toteHeightButton == true){
-//		if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
-//			liftMotor.SetFeedbackDevice(CANTalon::AnalogPot);
-//			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
-//			liftMotor.SetPID(IRLift.P, IRLift.I, IRLift.D);
-//			liftMotor.SetControlMode(CANSpeedController::kPosition);
-//		}
+		if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
+			liftMotor.SetFeedbackDevice(CANTalon::QuadEncoder);
+			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
+			liftMotor.SetPID(P, I, D);
+			liftMotor.SetControlMode(CANSpeedController::kPosition);
+			liftMotor.SetSensorDirection(true);
+		}
 		liftMotor.Set(toteHeight);
+		beenSet = true;
+	}else if (bottomHeightButton == true){
+		if(liftMotor.GetControlMode() != CANSpeedController::kPosition){
+			liftMotor.SetFeedbackDevice(CANTalon::QuadEncoder);
+			liftMotor.ConfigEncoderCodesPerRev(ticksPerRotation);
+			liftMotor.SetPID(P, I, D);
+			liftMotor.SetControlMode(CANSpeedController::kPosition);
+			liftMotor.SetSensorDirection(true);
+		}
+		liftMotor.Set(bottomHeight);
+		beenSet = true;
 	}else{
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 		}
 		liftMotor.Set(0.0);
+		beenSet = true;
+	}
+	if (!beenSet){
+		liftMotor.Set(0.0);
 	}
 }
+
 void LiftSubsystem::teleopEnd(){
 	liftMotor.SetSafetyEnabled(false);
+	liftMotor.Set(0.0);
 }
 double LiftSubsystem::getLiftHeight(void)
 {

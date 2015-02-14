@@ -35,9 +35,12 @@ void DriveSubsystem::teleopInit(void){
 	oldBackRight = backRight.GetEncPosition();
 	oldBackLeft = backLeft.GetEncPosition();
 	timer.Start();
+	gyroTimer.Start();
+	gyroTimer.Reset();
 }
 	
 void DriveSubsystem::teleop(void){
+//	gyro.SetSensitivity(SmartDashboard::GetNumber("Gyro Sensitivity", 0.0065));
 	//robot.outLog.throwLog("start and smt dshbrd");
 	double gyroRate = gyro.GetRate();
 
@@ -93,21 +96,23 @@ void DriveSubsystem::teleop(void){
 	//Gyro PID
 //	if((drive_y != 0 || drive_x != 0) && drive_rotation == 0){
 		if((drive_rotation==0.0)){
-			gyroPID.mistake =   gyroRate + gyroPID.setPoint;
+			gyroTime = gyroTimer.Get();
+			gyroPID.mistake =  gyroPID.setPoint - gyroRate;
 			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
-			gyroPID.integral = gyroPID.integral + (gyroPID.mistake *.05);
-			gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)*(1.0/.05);
+			gyroPID.integral += (gyroPID.mistake *gyroTime);
+			gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
 			double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
 			SmartDashboard::PutNumber("Gyro PID Out before", output);
 			output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_rotation = -1*output;
+			drive_rotation = output;
 			gyroPID.lastError = gyroPID.mistake;
 			SmartDashboard::PutNumber("Gyro PID Out", output);
+			gyroTimer.Reset();
 		}
 //	}
-	if (drive_rotation < .05 && drive_rotation > -.05){
-		drive_rotation = 0;
-	}
+//	if (drive_rotation < .05 && drive_rotation > -.05){
+//		drive_rotation = 0;
+//	}
 //Testing for broken encoders
 //	if(isTested == false){
 //			if(5 < timer.Get() && timer.Get() < 5.5){
@@ -174,6 +179,10 @@ void DriveSubsystem::teleopEnd(void){
 	frontRight.SetSafetyEnabled(false);
 	backLeft.SetSafetyEnabled(false);
 	backRight.SetSafetyEnabled(false);
+	frontLeft.Set(0.0);
+	frontRight.Set(0.0);
+	backLeft.Set(0.0);
+	backRight.Set(0.0);
 }
 
 double DriveSubsystem::getDistance(void)

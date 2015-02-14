@@ -24,6 +24,8 @@ void CORERobot::robotInit(void){
 
 void CORERobot::teleopInit(void){
 	outLog.throwLog("--------- Teleop Init---------");
+	outLog.startTime();
+	outLog.setMode(OutLog::TELE);
 	std::vector<CORESubsystem*>::iterator it;
 	for(it = subsystems.begin(); it != subsystems.end(); ++it){
 //		cout << "tele init " << (*it)->name() << endl;

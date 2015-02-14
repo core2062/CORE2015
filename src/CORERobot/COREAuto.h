@@ -5,6 +5,7 @@
 #include <queue>
 #include <vector>
 #include <iostream>
+#include "CORERobot.h"
 
 #include "WPILib.h"
 
@@ -48,9 +49,15 @@ public:
 class AutoSequencer{
 	std::queue<Action*> aqueue;
 	std::vector<Action*> background;
+//	CORERobot& robot;
 	bool empty_flag;
 public:
-	AutoSequencer(void);
+	AutoSequencer(/*CORERobot& r*/):
+//		robot(r),
+		aqueue(),
+		background(),
+		empty_flag(false)
+		{}
 	void clear(void);
 	void add_action(Action& action);
 	void add_action(Action* action);

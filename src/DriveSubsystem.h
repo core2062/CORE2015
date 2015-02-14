@@ -29,6 +29,8 @@ class DriveSubsystem : public CORESubsystem{
 	Encoder backRightEnc;
 
 	Timer timer;
+	Timer gyroTimer;
+	double gyroTime = 0.0;
 	Gyro gyro;
 	
 	float drive_x = 0.0;
@@ -55,7 +57,7 @@ class DriveSubsystem : public CORESubsystem{
 		double mistake;
 		double actualPosition;
 		double lastError;
-		double integral;
+		double integral =0.0;
 		double derivative;
 		double setPoint = 0.0;
 		bool enabled = false;
@@ -66,10 +68,10 @@ public:
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
-		frontLeft(6),
-		backLeft(8),
-		frontRight(9),
-		backRight(7),
+		frontLeft(13),
+		backLeft(12),
+		frontRight(10),
+		backRight(11),
 		frontLeftEnc(11,2), //TODO encoder channels
 		backLeftEnc(3,4),
 		frontRightEnc(5,6),
@@ -84,6 +86,8 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
+//			gyro.SetSensitivity(.0065);
+			gyro.SetDeadband(0.005);
 //			frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //			backLeft.SetControlMode(CANSpeedController::kSpeed);
 //			frontRight.SetControlMode(CANSpeedController::kSpeed);
