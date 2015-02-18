@@ -16,7 +16,7 @@ using namespace CORE;
 
 class LiftSubsystem: public CORESubsystem {
 
-	CANTalon liftMotor;
+
 	Encoder encoder;
 	DigitalInput bottomLimit;
 	DigitalInput middleLimit;
@@ -38,6 +38,12 @@ class LiftSubsystem: public CORESubsystem {
 	double P = 0.0;
 	double I = 0.0;
 	double D = 0.0;
+	double Pu = 0.0;
+	double Iu = 0.0;
+	double Du = 0.0;
+	double Pd = 0.0;
+	double Id = 0.0;
+	double Dd = 0.0;
 	bool beenSet = false;
 
 
@@ -59,6 +65,7 @@ public:
 		return "lift";
 
 	}
+	CANTalon liftMotor;
 	LiftSubsystem(CORERobot& robot) :
 			CORESubsystem(robot),
 			liftMotor(14),
@@ -84,6 +91,7 @@ public:
 	void setVoltageMode(void);
 	void giveLog(std::string stringVar);
 	double liftPID(void);
+	void setPID(double setPoint);
 
 };
 

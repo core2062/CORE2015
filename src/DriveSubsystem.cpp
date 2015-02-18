@@ -21,6 +21,10 @@ void DriveSubsystem::teleopInit(void){
 	backLeft.Set(0.0);
 	frontRight.Set(0.0);
 	backRight.Set(0.0);
+//	frontRight.SetExpiration(0.1);
+//	frontLeft.SetExpiration(0.1);
+//	backRight.SetExpiration(0.1);
+//	backLeft.SetExpiration(0.1);
 	robot.joystick.register_axis("drive_x", 1, 0);
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
@@ -42,11 +46,11 @@ void DriveSubsystem::teleopInit(void){
 void DriveSubsystem::teleop(void){
 //	gyro.SetSensitivity(SmartDashboard::GetNumber("Gyro Sensitivity", 0.0065));
 	//robot.outLog.throwLog("start and smt dshbrd");
-	double gyroRate = gyro.GetRate();
+	double gyroRate = gyro.GetAngle();
 
-	if (gyroRate>-2 && gyroRate<2){
-		gyroRate = 0.0;
-	}
+//	if (gyroRate>-2 && gyroRate<2){
+//		gyroRate = 0.0;
+//	}
 
 	shoulderSpeed = robot.joystick.button("shoulderSpeed");
 	SmartDashboard::PutNumber("drive x", drive_x);
@@ -83,6 +87,7 @@ void DriveSubsystem::teleop(void){
 	if (drive_x < 0.05 && drive_x > -.05){
 		drive_x = 0;
 	}
+
 	drive_rotation = robot.joystick.axis("drive_rotation");
 	if (drive_rotation < .05 && drive_rotation > -.05){
 		drive_rotation = 0;
@@ -92,10 +97,21 @@ void DriveSubsystem::teleop(void){
 		drive_y = 0;		
 	}
 	drive_y *= -1;
+	if ((drive_rotation == 0) && (oldRot != 0.0)){
+//		gyro.Reset();
+		resetQ = 6;
+	}
+	if (resetQ != 0){
+		if (resetQ == 3){
+			gyro.Reset();
+		}
+		resetQ--;
+	}
+	oldRot = drive_rotation;
 	//robot.outLog.throwLog("gyro pid");
 	//Gyro PID
 //	if((drive_y != 0 || drive_x != 0) && drive_rotation == 0){
-		if((drive_rotation==0.0)){
+		if((drive_rotation==0.0 && resetQ == 0)){
 			gyroTime = gyroTimer.Get();
 			gyroPID.mistake =  gyroPID.setPoint - gyroRate;
 			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);

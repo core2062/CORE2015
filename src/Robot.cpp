@@ -12,6 +12,7 @@ class CORE2015: public SampleRobot {
 
 	AutoSequencer autoSeq;
 	SendableChooser autoChoose;
+	Timer timeVal;
 public:
 	CORE2015() :
 		robot(),
@@ -38,7 +39,7 @@ public:
 //		SmartDashboard::PutNumber("BackRightIValue",0.0);
 //		SmartDashboard::PutNumber("BackRightDValue",0.0);
 		SmartDashboard::PutNumber("JoystickMultipier", 0.5);
-		SmartDashboard::PutNumber("gyroPValue",0.0);
+		SmartDashboard::PutNumber("gyroPValue",0.05);
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);
 
@@ -47,9 +48,12 @@ public:
 		SmartDashboard::PutNumber("bottomHeight",1200.0);
 //		SmartDashboard::PutNumber("IRtoteHeight", 0.0);
 //		SmartDashboard::PutNumber("IRtwoToteHeight", 0.0);
-		SmartDashboard::PutNumber("Lift-P-Value", 0.0);
-		SmartDashboard::PutNumber("Lift-I-Value", 0.0);
-		SmartDashboard::PutNumber("Lift-D-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-P-Up-Value", 2.5);
+		SmartDashboard::PutNumber("Lift-I-Up-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-D-Up-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-P-Down-Value", 1.0);
+		SmartDashboard::PutNumber("Lift-I-Down-Value", 0.0);
+		SmartDashboard::PutNumber("Lift-D-Down-Value", 0.0);
 //		SmartDashboard::PutNumber("IR-Lift-P-Value", 0.0);
 //		SmartDashboard::PutNumber("IR-Lift-I-Value", 0.0);
 //		SmartDashboard::PutNumber("IR-Lift-D-Value", 0.0);
@@ -57,7 +61,7 @@ public:
 		SmartDashboard::PutNumber("DriveVoltageRampRate",6.0);
 		SmartDashboard::PutNumber("Gyro Sensitivity", 0.0065);
 
-		//SmartDashboard::PutNumber("voltage ramp rate", 6.0);
+//		SmartDashboard::PutNumber("voltage ramp rate", 6.0);
 		//Auto
 		//Drive To Zone
 		SmartDashboard::PutNumber("DriveToZoneDist",0.0);
@@ -75,6 +79,7 @@ public:
 		autoChoose.AddObject("Push All to Zone", new std::string("Push-All-to-Zone"));
 
 		SmartDashboard::PutData("auto-chooser", &autoChoose);
+
 	}
 	void Autonomous() {
 		robot.teleopEnd();
@@ -132,17 +137,29 @@ public:
 	}
 //
 	void OperatorControl() {
+		timeVal.Start();
+		timeVal.Reset();
+//		lift.liftMotor.SetExpiration(1.00);
+//		lift.liftMotor.Set(0);
+//		drive.frontLeft.SetExpiration(1.00);
+//		drive.backLeft.SetExpiration(1.00);
+//		drive.frontRight.SetExpiration(1.00);
+//		drive.backRight.SetExpiration(1.00);
 		robot.teleopInit();
 ////		Watchdog& wd = GetWatchdog();
 ////		wd.SetExpiration(.5);
 ////		wd.SetEnabled(true);
 ////
+		SmartDashboard::PutNumber("Timer", timeVal.Get());
 		while (IsOperatorControl() && !IsDisabled()) {
+			SmartDashboard::PutNumber("Timer", timeVal.Get());
+			timeVal.Reset();
 ////			wd.Feed();
 			robot.teleop();
 			Wait(0.05); // wait for a motor update time
 ////			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 		};
+		robot.teleopEnd();
 	};
 
 	/**

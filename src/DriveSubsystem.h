@@ -15,11 +15,7 @@ const int backRightInvert = -1;
 
 
 class DriveSubsystem : public CORESubsystem{
-	// Drive Motors
-	CANTalon frontLeft;
-	CANTalon backLeft;
-	CANTalon frontRight;
-	CANTalon backRight;
+
 
 
 
@@ -49,6 +45,8 @@ class DriveSubsystem : public CORESubsystem{
 	bool switchEncoderMode = false;
 	bool flag = false;
 	bool shoulderSpeed = false;
+	bool oldRot = 0.0;
+	int resetQ = 0;
 
 	struct{
 		double P = 0.1;
@@ -64,19 +62,24 @@ class DriveSubsystem : public CORESubsystem{
 		}gyroPID;
 
 public:
-	
+		// Drive Motors
+		CANTalon frontLeft;
+		CANTalon backLeft;
+		CANTalon frontRight;
+		CANTalon backRight;
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
-		frontLeft(13),
-		backLeft(12),
-		frontRight(10),
-		backRight(11),
+
 		frontLeftEnc(11,2), //TODO encoder channels
 		backLeftEnc(3,4),
 		frontRightEnc(5,6),
 		backRightEnc(7,8),
-		gyro(0)
+		gyro(0),
+		frontLeft(13),
+		backLeft(12),
+		frontRight(10),
+		backRight(11)
 		{
 			frontLeft.SetSafetyEnabled(false);
 			frontRight.SetSafetyEnabled(false);
