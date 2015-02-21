@@ -68,12 +68,12 @@ public:
 	CANTalon liftMotor;
 	LiftSubsystem(CORERobot& robot) :
 			CORESubsystem(robot),
-			liftMotor(14),
 			encoder(9, 10),
 			bottomLimit(0),
 			middleLimit(-1),
-			topLimit(1)
-	{
+			topLimit(1),
+			liftMotor(14)
+			{
 		liftMotor.Set(0.0);
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.1);
@@ -99,19 +99,25 @@ class LiftAction: public Action {
 	LiftSubsystem* lift;
 	double targetHeight;
 	double currentHeight = 0.0;
+	bool background = false;
 public:
-	LiftAction(LiftSubsystem& lift, double targetHeight) :
+	LiftAction(LiftSubsystem& lift, double targetHeight, bool background = false) :
 			lift(&lift), targetHeight(targetHeight){
-
 	}
 	void init(void) {
 		currentHeight = lift->getLiftHeight();
 		lift->setPositionModeEnc();
 	}
 	ControlFlow call(void) {
-		lift->giveLog("ENCLiftAction Completed");
-		lift->setLift(targetHeight);
-		return END;
+		if (background){
+			lift->giveLog("ENCLiftAction Completed");
+			lift->setLift(targetHeight);
+			return BACKGROUND;
+		} else {
+			lift->giveLog("ENCLiftAction Completed");
+			lift->setLift(targetHeight);
+			return END;
+		}
 
 	}
 };

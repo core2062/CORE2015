@@ -74,9 +74,16 @@ public:
 		SmartDashboard::PutNumber("SetBackupToteDist",0.0);
 		SmartDashboard::PutNumber("LiftLowerWait",2.0);
 		SmartDashboard::PutNumber("LiftRaiseWait", 2.0);
+		SmartDashboard::PutNumber("BinSlapDrive", 2.0);
+		SmartDashboard::PutNumber("BinSlapLiftDown", 0.0);
+		SmartDashboard::PutNumber("BinSlapLiftUp", 0.0);
+		SmartDashboard::PutNumber("BinSlap", 0.0);
+		SmartDashboard::PutNumber("BinSlapSmallDriveForward", 0.0);
+		SmartDashboard::PutNumber("BinSlapMediumDriveForward", 0.0);
+		SmartDashboard::PutNumber("BinSlapDrive-To-Autozone", 0.0);
 		autoChoose.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
 		autoChoose.AddObject("Move Set", new std::string("Move-Set"));
-		autoChoose.AddObject("Push All to Zone", new std::string("Push-All-to-Zone"));
+		autoChoose.AddObject("Bin Slap", new std::string("Bin-Slap"));
 
 		SmartDashboard::PutData("auto-chooser", &autoChoose);
 
@@ -123,9 +130,38 @@ public:
 					autoSeq.iter();
 					Wait(0.05);
 				}
-			}else if (choice=="Push-All-to-Zone"){
-// move all the totes..... WIN AT LIFE
-
+			}else if (choice=="Bin-Slap"){
+// move all the totes.....#slapattack
+				LiftAction binSlap_LiftDown(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown);
+				LiftAction binSlap_LiftUp(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(binSlap_LiftUp);
+				DriveAction binSlap_SmallDriveForward(drive, 0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_SmallDriveForward);
+				//We gon knock that bin now
+				DriveAction binSlap_MediumDriveForward(drive, 0.9, SmartDashboard::GetNumber("BinSlapMediumDriveForward"));
+				autoSeq.add_action(binSlap_MediumDriveForward);
+				LiftAction binSlap_LiftDown2(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown2);
+				LiftAction binSlap_LiftUp2(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(binSlap_LiftUp2);
+				DriveAction binSlap_SmallDriveForward2(drive, 0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_SmallDriveForward2);
+				//We gon knock that bin now 2
+				DriveAction binSlap_MediumDriveForward2(drive, 0.9, SmartDashboard::GetNumber("BinSlapMediumDriveForward"));
+				autoSeq.add_action(binSlap_MediumDriveForward2);
+				LiftAction binSlap_LiftDown3(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown3);
+				LiftAction binSlap_LiftUp3(lift, SmartDashboard::GetNumber("BinSlapLiftUp", true));
+				autoSeq.add_action(binSlap_LiftUp3);
+				TurnAction binSlap_Turn(drive, 0.9, 90);
+				autoSeq.add_action(binSlap_Turn);
+				DriveAction binSlap_DriveToAutozone(drive, 0.9, SmartDashboard::GetNumber("BinSlapDrive-To-Autozone"));
+				autoSeq.add_action(binSlap_DriveToAutozone);
+				LiftAction binSlap_LiftDown4(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown4);
+				DriveAction binSlap_Back(drive, -0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_Back);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
 					autoSeq.iter();
@@ -139,12 +175,11 @@ public:
 	void OperatorControl() {
 		timeVal.Start();
 		timeVal.Reset();
-//		lift.liftMotor.SetExpiration(1.00);
-//		lift.liftMotor.Set(0);
-//		drive.frontLeft.SetExpiration(1.00);
-//		drive.backLeft.SetExpiration(1.00);
-//		drive.frontRight.SetExpiration(1.00);
-//		drive.backRight.SetExpiration(1.00);
+		lift.liftMotor.SetExpiration(.15);
+		drive.frontLeft.SetExpiration(.15);
+		drive.backLeft.SetExpiration(.15);
+		drive.frontRight.SetExpiration(.15);
+		drive.backRight.SetExpiration(.15);
 		robot.teleopInit();
 ////		Watchdog& wd = GetWatchdog();
 ////		wd.SetExpiration(.5);
