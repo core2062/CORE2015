@@ -29,6 +29,10 @@ class DriveSubsystem : public CORESubsystem{
 	double gyroTime = 0.0;
 	Gyro gyro;
 	
+	DigitalInput leftPhoto;
+	DigitalInput middlePhoto;
+	DigitalInput rightPhoto;
+
 	float drive_x = 0.0;
 	float drive_rotation = 0.0;
 	float drive_y = 0.0;
@@ -47,6 +51,10 @@ class DriveSubsystem : public CORESubsystem{
 	bool shoulderSpeed = false;
 	bool oldRot = 0.0;
 	int resetQ = 0;
+	bool l = 0;
+	bool m = 0;
+	bool r = 0;
+	bool alignError = 0;
 
 	struct{
 		double P = 0.1;
@@ -76,6 +84,9 @@ public:
 		frontRightEnc(5,6),
 		backRightEnc(7,8),
 		gyro(0),
+		leftPhoto(2),
+		middlePhoto(3),
+		rightPhoto(4),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
@@ -95,10 +106,10 @@ public:
 //			backLeft.SetControlMode(CANSpeedController::kSpeed);
 //			frontRight.SetControlMode(CANSpeedController::kSpeed);
 //			backRight.SetControlMode(CANSpeedController::kSpeed);
-//			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			robot.outLog.throwLog("le (drive) constroctor has arrived");
 		}
 	void robotInit(void);

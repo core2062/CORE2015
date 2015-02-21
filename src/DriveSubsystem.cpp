@@ -29,6 +29,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
 	robot.joystick.register_button("shoulderSpeed", 1, 5);
+	robot.joystick.register_button("lift_align",1,1);
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -64,6 +65,8 @@ void DriveSubsystem::teleop(void){
 	SmartDashboard::PutNumber("Gyro Rate", gyroRate);
 	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
+
+	SmartDashboard::PutBoolean("Tote Align", robot.joystick.button("lift_align"));
 //	frontRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 //	frontLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 //	backRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
@@ -80,6 +83,11 @@ void DriveSubsystem::teleop(void){
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+
+	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
+	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
+	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
+	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
 
 	//robot.outLog.throwLog("db");
 //Simple Dead-banding
@@ -129,6 +137,54 @@ void DriveSubsystem::teleop(void){
 //	if (drive_rotation < .05 && drive_rotation > -.05){
 //		drive_rotation = 0;
 //	}
+		//Tote Alignment
+			if (robot.joystick.button("lift_align") && drive_x == 0.0){
+				//set vars
+				l = leftPhoto.Get();
+				m = middlePhoto.Get();
+				r = rightPhoto.Get();
+
+				//different cases
+				if ((l && !r)){
+					drive_x = -.5;
+					alignError = false;
+				}else if ((!l && r)){
+					drive_x = .5;
+					alignError = false;
+				}else if (!l && m && !r){
+					drive_x = 0;
+					alignError = false;
+				}else if ((!l && !m && !r) || (l && m && r)){
+					drive_x = 0;
+					alignError = true;
+				}
+
+				//SmartDashboard Set
+				if (!alignError){
+					SmartDashboard::PutBoolean("leftPhoto", l);
+					SmartDashboard::PutBoolean("middlePhoto", m);
+					SmartDashboard::PutBoolean("rightPhoto", r);
+					SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
+				}else{
+					if (SmartDashboard::GetBoolean("Tote align", true)){
+						SmartDashboard::PutBoolean("leftPhoto", false);
+						SmartDashboard::PutBoolean("middlePhoto", false);
+						SmartDashboard::PutBoolean("rightPhoto", false);
+						SmartDashboard::PutBoolean("Tote align", false);
+					}else{
+						SmartDashboard::PutBoolean("leftPhoto", true);
+						SmartDashboard::PutBoolean("middlePhoto", true);
+						SmartDashboard::PutBoolean("rightPhoto", true);
+						SmartDashboard::PutBoolean("Tote align", true);
+					}
+				}
+			}else{
+				SmartDashboard::PutBoolean("leftPhoto", leftPhoto.Get());
+				SmartDashboard::PutBoolean("middlePhoto", middlePhoto.Get());
+				SmartDashboard::PutBoolean("rightPhoto", rightPhoto.Get());
+				SmartDashboard::PutBoolean("Tote align", false);
+			}
+
 //Testing for broken encoders
 //	if(isTested == false){
 //			if(5 < timer.Get() && timer.Get() < 5.5){
