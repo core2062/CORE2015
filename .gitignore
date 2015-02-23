@@ -44,3 +44,5 @@ Temporary Items
 sysProps.xml
 *.o
 Debug/FRCUserProgram
+*.o
+/Debug/

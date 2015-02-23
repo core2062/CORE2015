@@ -16,8 +16,6 @@ using namespace CORE;
 
 class LiftSubsystem: public CORESubsystem {
 
-
-	Encoder encoder;
 	DigitalInput bottomLimit;
 	DigitalInput middleLimit;
 	DigitalInput topLimit;
@@ -68,7 +66,6 @@ public:
 	CANTalon liftMotor;
 	LiftSubsystem(CORERobot& robot) :
 			CORESubsystem(robot),
-			encoder(9, 10),
 			bottomLimit(0),
 			middleLimit(-1),
 			topLimit(1),
@@ -101,22 +98,32 @@ class LiftAction: public Action {
 	double currentHeight = 0.0;
 	bool background = false;
 public:
+	std::string name = "Lift Action";
 	LiftAction(LiftSubsystem& lift, double targetHeight, bool background = false) :
-			lift(&lift), targetHeight(targetHeight){
-	}
+			lift(&lift),
+			targetHeight(targetHeight)
+			{}
 	void init(void) {
 		currentHeight = lift->getLiftHeight();
 		lift->setPositionModeEnc();
 	}
 	ControlFlow call(void) {
 		if (background){
-			lift->giveLog("ENCLiftAction Completed");
 			lift->setLift(targetHeight);
-			return BACKGROUND;
+			if(lift->getLiftHeight() < targetHeight+200 &&lift->getLiftHeight() > targetHeight-200){
+				lift->giveLog("ENCLiftAction Completed");
+				return END;
+			}else{
+				return BACKGROUND;
+			}
 		} else {
-			lift->giveLog("ENCLiftAction Completed");
 			lift->setLift(targetHeight);
-			return END;
+			if(lift->getLiftHeight() < targetHeight+200 &&lift->getLiftHeight() > targetHeight-200){
+				lift->giveLog("ENCLiftAction Completed");
+				return END;
+			}else{
+				return CONTINUE;
+			}
 		}
 
 	}

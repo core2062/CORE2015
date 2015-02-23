@@ -29,16 +29,17 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
 	robot.joystick.register_button("shoulderSpeed", 1, 5);
-	robot.joystick.register_button("lift_align",1,1);
+	robot.joystick.register_button("lift_align",1,2);
+	robot.joystick.register_button("top_lift_align",1,1);
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
 //	frontRight.SetControlMode(CANSpeedController::kSpeed);
 //	backRight.SetControlMode(CANSpeedController::kSpeed);
-	oldFrontRight = frontRight.GetEncPosition();
-	oldFrontLeft = frontLeft.GetEncPosition();
-	oldBackRight = backRight.GetEncPosition();
-	oldBackLeft = backLeft.GetEncPosition();
+//	oldFrontRight = frontRight.GetEncPosition();
+//	oldFrontLeft = frontLeft.GetEncPosition();
+//	oldBackRight = backRight.GetEncPosition();
+//	oldBackLeft = backLeft.GetEncPosition();
 	timer.Start();
 	gyroTimer.Start();
 	gyroTimer.Reset();
@@ -58,15 +59,16 @@ void DriveSubsystem::teleop(void){
 	SmartDashboard::PutNumber("drive y", drive_y);
 	SmartDashboard::PutNumber("drive rot", drive_rotation);
 	SmartDashboard::PutBoolean("Encoders-Status", isBroken);
-	SmartDashboard::PutNumber("Front Left Set", frontLeftSet);
-	SmartDashboard::PutNumber("Front Right Set", frontRightSet);
-	SmartDashboard::PutNumber("Back Left Set", backLeftSet);
-	SmartDashboard::PutNumber("Back Right Set", backRightSet);
-	SmartDashboard::PutNumber("Gyro Rate", gyroRate);
+	SmartDashboard::PutNumber("Front Left Set", frontLeft.Get());
+	SmartDashboard::PutNumber("Front Right Set", frontRight.Get());
+	SmartDashboard::PutNumber("Back Left Set", backLeft.Get());
+	SmartDashboard::PutNumber("Back Right Set", backRight.Get());
+//	SmartDashboard::PutNumber("Gyro Rate", gyroRate);
 	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
 
-	SmartDashboard::PutBoolean("Tote Align", robot.joystick.button("lift_align"));
+	SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
+	SmartDashboard::PutBoolean("Top Tote align", robot.joystick.button("top_lift_align"));
 //	frontRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 //	frontLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 //	backRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
@@ -75,21 +77,15 @@ void DriveSubsystem::teleop(void){
 
 	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
 
-//	frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"), SmartDashboard::GetNumber("FrontLeftIValue"), SmartDashboard::GetNumber("FrontLeftDValue"));
-//	backLeft.SetPID(SmartDashboard::GetNumber("BackLeftPValue"), SmartDashboard::GetNumber("BackLeftIValue"), SmartDashboard::GetNumber("BackLeftDValue"));
-//	frontRight.SetPID(SmartDashboard::GetNumber("FrontRightPValue"), SmartDashboard::GetNumber("FrontRightIValue"), SmartDashboard::GetNumber("FrontRightDValue"));
-//	backRight.SetPID(SmartDashboard::GetNumber("BackRightPValue"), SmartDashboard::GetNumber("BackRightIValue"), SmartDashboard::GetNumber("BackRightDValue"));
-
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
 
-	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
-	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
-	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
-	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
+//	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
+//	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
+//	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
+//	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
 
-	//robot.outLog.throwLog("db");
 //Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
 	if (drive_x < 0.05 && drive_x > -.05){
@@ -106,7 +102,6 @@ void DriveSubsystem::teleop(void){
 	}
 	drive_y *= -1;
 	if ((drive_rotation == 0) && (oldRot != 0.0)){
-//		gyro.Reset();
 		resetQ = 6;
 	}
 	if (resetQ != 0){
@@ -116,9 +111,7 @@ void DriveSubsystem::teleop(void){
 		resetQ--;
 	}
 	oldRot = drive_rotation;
-	//robot.outLog.throwLog("gyro pid");
 	//Gyro PID
-//	if((drive_y != 0 || drive_x != 0) && drive_rotation == 0){
 		if((drive_rotation==0.0 && resetQ == 0)){
 			gyroTime = gyroTimer.Get();
 			gyroPID.mistake =  gyroPID.setPoint - gyroRate;
@@ -133,37 +126,34 @@ void DriveSubsystem::teleop(void){
 			SmartDashboard::PutNumber("Gyro PID Out", output);
 			gyroTimer.Reset();
 		}
-//	}
-//	if (drive_rotation < .05 && drive_rotation > -.05){
-//		drive_rotation = 0;
-//	}
+
 		//Tote Alignment
 			if (robot.joystick.button("lift_align") && drive_x == 0.0){
 				//set vars
-				l = leftPhoto.Get();
-				m = middlePhoto.Get();
-				r = rightPhoto.Get();
+				leftPhotoVar = leftPhoto.Get();
+				middlePhotoVar = middlePhoto.Get();
+				rightPhotoVar = rightPhoto.Get();
 
 				//different cases
-				if ((l && !r)){
-					drive_x = -.5;
+				if ((leftPhotoVar && !rightPhotoVar)){
+					drive_x = -.6;
 					alignError = false;
-				}else if ((!l && r)){
-					drive_x = .5;
+				}else if ((!leftPhotoVar && rightPhotoVar)){
+					drive_x = .6;
 					alignError = false;
-				}else if (!l && m && !r){
+				}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
 					drive_x = 0;
 					alignError = false;
-				}else if ((!l && !m && !r) || (l && m && r)){
+				}else if ((!leftPhotoVar && !middlePhotoVar && !rightPhotoVar) || (leftPhotoVar && middlePhotoVar && rightPhotoVar)){
 					drive_x = 0;
 					alignError = true;
 				}
 
 				//SmartDashboard Set
 				if (!alignError){
-					SmartDashboard::PutBoolean("leftPhoto", l);
-					SmartDashboard::PutBoolean("middlePhoto", m);
-					SmartDashboard::PutBoolean("rightPhoto", r);
+					SmartDashboard::PutBoolean("leftPhoto", leftPhotoVar);
+					SmartDashboard::PutBoolean("middlePhoto", middlePhotoVar);
+					SmartDashboard::PutBoolean("rightPhoto", rightPhotoVar);
 					SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
 				}else{
 					if (SmartDashboard::GetBoolean("Tote align", true)){
@@ -185,41 +175,56 @@ void DriveSubsystem::teleop(void){
 				SmartDashboard::PutBoolean("Tote align", false);
 			}
 
-//Testing for broken encoders
-//	if(isTested == false){
-//			if(5 < timer.Get() && timer.Get() < 5.5){
-//				if(oldFrontRight == frontRight.GetEncPosition()){
-//					robot.outLog.throwLog("[ERROR] FrontRight Encoder stopped working!");
-//				}
-//				if(oldFrontLeft == frontLeft.GetEncPosition()){
-//					robot.outLog.throwLog("[ERROR] FrontLeft Encoder stopped working!");
-//				}
-//				if(oldBackRight == backRight.GetEncPosition()){
-//					robot.outLog.throwLog("[ERROR] BackRight Encoder stopped working!");
-//				}
-//				if(oldBackLeft == backLeft.GetEncPosition()){
-//					robot.outLog.throwLog("[ERROR] BackLeft Encoder stopped working!");
-//				}
-//				isTested = true;
-//			}
-//			isBroken = true;
-//		}
-	//robot.outLog.throwLog("broken test");
-//Deciding which drive mode to use
-	if(isBroken == false && switchEncoderMode == false){
-		//robot.outLog.throwLog("tried PID");
-		frontLeftSet = (frontLeftInvert*(drive_x+drive_y+drive_rotation)* (shoulderSpeed ? 1 : SmartDashboard::GetNumber("JoystickMultiplier")));
-		frontRightSet = (frontRightInvert*(-drive_x+drive_y-drive_rotation)* (shoulderSpeed ? 1 : SmartDashboard::GetNumber("JoystickMultiplier")));
-		backLeftSet = (backLeftInvert*(-drive_x+drive_y+drive_rotation)* (shoulderSpeed ? 1 : SmartDashboard::GetNumber("JoystickMultiplier")));
-		backRightSet = (backRightInvert*(drive_x+drive_y-drive_rotation)* (shoulderSpeed ? 1 : SmartDashboard::GetNumber("JoystickMultiplier")));
-		frontLeft.Set(frontLeftSet);
-		frontRight.Set(frontRightSet);
-		backLeft.Set(backLeftSet);
-		backRight.Set(backRightSet);
-		if(flag != false){
-			flag = false;
-		}
-	}else{
+			//Tote Alignment
+				if (robot.joystick.button("top_lift_align") && drive_x == 0.0){
+					//set vars
+					tl = topLeftPhoto.Get();
+					tm = middlePhoto.Get();
+					tr = topRightPhoto.Get();
+
+					//different cases
+					if ((tl && !tr)){
+						drive_x = -.6;
+						alignError = false;
+					}else if ((!tl && tr)){
+						drive_x = .6;
+						alignError = false;
+					}else if (!tl && tm && !tr){
+						drive_x = 0;
+						alignError = false;
+					}else if ((!tl && !tm && !tr) || (tl && tm && tr)){
+						drive_x = 0;
+						alignError = true;
+					}
+
+					//SmartDashboard Set
+					if (!alignError){
+						SmartDashboard::PutBoolean("leftPhoto", tl);
+						SmartDashboard::PutBoolean("middlePhoto", tm);
+						SmartDashboard::PutBoolean("rightPhoto", tr);
+						SmartDashboard::PutBoolean("Top Tote align", robot.joystick.button("lift_align"));
+					}else{
+						if (SmartDashboard::GetBoolean("Tote align", true)){
+							SmartDashboard::PutBoolean("topLeftPhoto", false);
+							SmartDashboard::PutBoolean("topMiddlePhoto", false);
+							SmartDashboard::PutBoolean("topRightPhoto", false);
+							SmartDashboard::PutBoolean("Top Tote align", false);
+						}else{
+							SmartDashboard::PutBoolean("topLeftPhoto", true);
+							SmartDashboard::PutBoolean("topMiddlePhoto", true);
+							SmartDashboard::PutBoolean("topRightPhoto", true);
+							SmartDashboard::PutBoolean("Top Tote align", true);
+						}
+					}
+				}else{
+					SmartDashboard::PutBoolean("topLeftPhoto", topLeftPhoto.Get());
+					SmartDashboard::PutBoolean("topMiddlePhoto", middlePhoto.Get());
+					SmartDashboard::PutBoolean("topRightPhoto", topRightPhoto.Get());
+					SmartDashboard::PutBoolean("Top Tote align", false);
+				}
+
+
+
 		if(flag == false){
 			robot.outLog.throwLog("set to voltage");
 			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
@@ -243,8 +248,7 @@ void DriveSubsystem::teleop(void){
 		}
 
 	}
-	//robot.outLog.throwLog("");
-}
+
 void DriveSubsystem::teleopEnd(void){
 	robot.outLog.throwLog("drive tele end");
 	frontLeft.SetSafetyEnabled(false);
@@ -259,8 +263,15 @@ void DriveSubsystem::teleopEnd(void){
 
 double DriveSubsystem::getDistance(void)
 {
-	double distance = (fabs(frontLeftEnc.GetDistance())+fabs(frontRightEnc.GetDistance())+fabs(backRightEnc.GetDistance())+fabs(backLeftEnc.GetDistance()))/4;
+	double distance = (fabs(frontLeft.GetEncPosition())+fabs(frontRight.GetEncPosition())+fabs(backRight.GetEncPosition())+fabs(backLeft.GetEncPosition()))/4;
 	return distance;
+}
+
+void DriveSubsystem::resetDistance(void){
+	frontLeft.SetPosition(0);
+	frontRight.SetPosition(0);
+	backLeft.SetPosition(0);
+	backRight.SetPosition(0);
 }
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
@@ -315,24 +326,35 @@ void DriveSubsystem::giveLog(std::string stringVar){
 	robot.outLog.throwLog(stringVar);
 }
 
-double DriveSubsystem::gyroPIDCalc(double rot){
+double DriveSubsystem::gyroPIDCalc(double set, double rot){
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
-	if((rot==0.0)){
-		gyroPID.mistake = gyroPID.setPoint - gyro.GetRate();
-		gyroPID.integral = gyroPID.integral + (gyroPID.mistake * .05);
-		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError) * (1/.05);
+		gyroTime = gyroTimer.Get();
+		gyroPID.mistake =  set - rot;
+		SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
+		gyroPID.integral += (gyroPID.mistake *gyroTime);
+		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
 		double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+		SmartDashboard::PutNumber("Gyro PID Out before", output);
 		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-		rot = output;
+		drive_rotation = output;
 		gyroPID.lastError = gyroPID.mistake;
 		SmartDashboard::PutNumber("Gyro PID Out", output);
-	}
+		gyroTimer.Reset();
 
 	if (rot < .05 && rot > -.05){
 		rot = 0;
 	}
 	return rot;
+}
+bool DriveSubsystem::getLeftPhoto(){
+	return leftPhoto.Get();
+}
+bool DriveSubsystem::getMiddlePhoto(){
+	return middlePhoto.Get();
+}
+bool DriveSubsystem::getRightPhoto(){
+	return rightPhoto.Get();
 }
 

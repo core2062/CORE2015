@@ -19,10 +19,7 @@ class DriveSubsystem : public CORESubsystem{
 
 
 
-	Encoder frontLeftEnc;
-	Encoder backLeftEnc;
-	Encoder frontRightEnc;
-	Encoder backRightEnc;
+
 
 	Timer timer;
 	Timer gyroTimer;
@@ -32,6 +29,9 @@ class DriveSubsystem : public CORESubsystem{
 	DigitalInput leftPhoto;
 	DigitalInput middlePhoto;
 	DigitalInput rightPhoto;
+	DigitalInput topLeftPhoto;
+	DigitalInput topMiddlePhoto;
+	DigitalInput topRightPhoto;
 
 	float drive_x = 0.0;
 	float drive_rotation = 0.0;
@@ -51,9 +51,12 @@ class DriveSubsystem : public CORESubsystem{
 	bool shoulderSpeed = false;
 	bool oldRot = 0.0;
 	int resetQ = 0;
-	bool l = 0;
-	bool m = 0;
-	bool r = 0;
+	bool leftPhotoVar = 0;
+	bool middlePhotoVar = 0;
+	bool rightPhotoVar = 0;
+	bool tl = 0;
+	bool tm = 0;
+	bool tr = 0;
 	bool alignError = 0;
 
 	struct{
@@ -78,20 +81,19 @@ public:
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
-
-		frontLeftEnc(11,2), //TODO encoder channels
-		backLeftEnc(3,4),
-		frontRightEnc(5,6),
-		backRightEnc(7,8),
 		gyro(0),
 		leftPhoto(2),
 		middlePhoto(3),
 		rightPhoto(4),
+		topLeftPhoto(5),
+		topMiddlePhoto(6),
+		topRightPhoto(7),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
 		backRight(11)
 		{
+			//start false to avoid error
 			frontLeft.SetSafetyEnabled(false);
 			frontRight.SetSafetyEnabled(false);
 			backLeft.SetSafetyEnabled(false);
@@ -100,17 +102,13 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-//			gyro.SetSensitivity(.0065);
-			gyro.SetDeadband(0.005);
-//			frontLeft.SetControlMode(CANSpeedController::kSpeed);
-//			backLeft.SetControlMode(CANSpeedController::kSpeed);
-//			frontRight.SetControlMode(CANSpeedController::kSpeed);
-//			backRight.SetControlMode(CANSpeedController::kSpeed);
-			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-			robot.outLog.throwLog("le (drive) constroctor has arrived");
+			gyro.SetDeadband(0.005); // .005 on main bot
+//			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+//			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+//			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+//			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+//			frontRight.SetSensorDirection(true);
+//			backRight.SetSensorDirection(true);
 		}
 	void robotInit(void);
 	// Called before loop at start of Teleop period
@@ -121,6 +119,7 @@ public:
 
 	void teleopEnd(void);
 	double getDistance(void);
+	void resetDistance(void);
 	void mec_drive(double drive_x, double drive_y, double rotation);
 	double getRot(void);
 	void resetRot(void);
@@ -133,7 +132,10 @@ public:
 	void setBackRightMotor(double value);
 	double getJoystickMultiplier(void);
 	void giveLog(std::string stringVar);
-	double gyroPIDCalc(double rot);
+	double gyroPIDCalc(double set, double rot);
+	bool getLeftPhoto();
+	bool getMiddlePhoto();
+	bool getRightPhoto();
 
 };
 
@@ -144,6 +146,7 @@ class DriveAction : public Action{
 	double currentDistance = 0.0;
 	double rotation = 0.0;
 public:
+	std::string name = "Drive Action";
 	DriveAction(DriveSubsystem& drive, double speed, double targetDistance):
 		drive(&drive),
 		speed(speed),
@@ -152,12 +155,14 @@ public:
 	}
 	void init(void){
 		drive->setVoltageMode();
+		drive->resetDistance();
 		currentDistance = drive->getDistance();
+		drive->resetRot();
 		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
 		rotation = drive->getRot();
-		rotation = drive->gyroPIDCalc(rotation);
+		rotation = drive->gyroPIDCalc(0, rotation);
 		currentDistance = drive->getDistance();
 		if(targetDistance>0){
 			if(currentDistance<targetDistance){
@@ -189,6 +194,7 @@ public:
 		double currentDistance = 0.0;
 		double rotation = 0.0;
 	public:
+		std::string name = "Strafe Action";
 		StrafeAction(DriveSubsystem& drive, double speed, double targetDistance):
 			drive(&drive),
 			speed(speed),
@@ -197,14 +203,15 @@ public:
 
 		}
 		void init(void){
+			drive->resetDistance();
 			drive->setVoltageMode();
 			currentDistance = drive->getDistance();
-			rotation = drive->getRot();
-			rotation = rotation/-100.0;
+			drive->resetRot();
+
 		}
 		ControlFlow call(void){
 			rotation = drive->getRot();
-			rotation = drive->gyroPIDCalc(rotation);
+			rotation = drive->gyroPIDCalc(0, rotation);
 			currentDistance = drive->getDistance();
 			if(targetDistance>0){
 				if(currentDistance<targetDistance){
@@ -231,13 +238,12 @@ public:
 
 class TurnAction : public Action{
 	DriveSubsystem* drive;
-	double speed;
 	double degrees;
 	double rotation;
 public:
-	TurnAction(DriveSubsystem& drive, double speed, double degrees):
+	std::string name = "Turn Action";
+	TurnAction(DriveSubsystem& drive, double degrees):
 		drive(&drive),
-		speed(speed),
 		degrees(degrees)
 	{
 		rotation = 0;
@@ -246,27 +252,18 @@ public:
 	void init(void){
 		drive->setVoltageMode();
 		drive->resetRot();
+		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
 		drive->giveLog("TurnAction Completed");
-		rotation = drive->getRot();
-		if (degrees<0){
-					if (rotation>degrees){
-						drive->mec_drive(0, 0,-speed);
-						return CONTINUE;
-					}else{
-						drive->mec_drive(0, 0, 0);
-						return END;
-					}
-				}else{
-					if (rotation<degrees){
-						drive->mec_drive(0, 0, speed);
-						return CONTINUE;
-					}else{
-						drive->mec_drive(0, 0, 0);
-						return END;
-					}
-				}
+		rotation = drive->gyroPIDCalc(degrees,drive->getRot());
+		drive->mec_drive(0,0,rotation);
+		if (drive->getRot()>degrees-2.0 && drive->getRot()<degrees+2.0){
+			drive->mec_drive(0,0,0);
+			return END;
+		}else{
+			return CONTINUE;
+		}
 	}
 };
 
@@ -315,5 +312,67 @@ public:
 		return END;
 	}
 };
+
+class AlignAction: public Action{
+	DriveSubsystem* drive;
+	bool rightPhotoVar = false;
+	bool middlePhotoVar = false;
+	bool leftPhotoVar = false;
+	double rotation = 0;
+	double strafe = 0;
+public:
+	std::string name = "Align Action";
+	AlignAction(DriveSubsystem& drive):
+		drive(&drive)
+		{}
+	void init(void){
+
+	}
+	ControlFlow call(void){
+			rotation = drive->getRot();
+			rotation = drive->gyroPIDCalc(0, rotation);
+			//Tote Alignment
+			//set vars
+			leftPhotoVar = drive->getLeftPhoto();
+			middlePhotoVar = drive->getMiddlePhoto();
+			rightPhotoVar = drive->getRightPhoto();
+
+			//different cases
+			if (leftPhotoVar && !rightPhotoVar){
+				strafe = -.6;
+				drive->mec_drive(strafe,0,rotation);
+				return CONTINUE;
+			}else if (!leftPhotoVar && rightPhotoVar){
+				strafe = .6;
+				drive->mec_drive(strafe,0,rotation);
+				return CONTINUE;
+			}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
+				strafe = 0;
+				drive->mec_drive(0,0,0);
+				drive->giveLog("Tote Aligned");
+				return END;
+			}else /*if((!leftPhotoVar && !middlePhotoVar && !rightPhotoVar) || (leftPhotoVar && middlePhotoVar && rightPhotoVar))*/{
+				drive->mec_drive(0,0,0);
+				strafe = 0;
+				drive->giveLog("ERROR IN PHOTO");
+				return END;
+			}
+
+
+
+	}
+};
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
 

@@ -48,6 +48,7 @@ void AutoSequencer::iter(void){
 //	cout<<"iter start"<<endl;
 	if(aqueue.empty()){
 		if(!empty_flag){
+			log.throwLog("Auto Done");
 			std::cout << "No remaining auto actions!"<<std::endl;
 			empty_flag = true;
 		}
@@ -62,12 +63,18 @@ void AutoSequencer::iter(void){
 	case Action::CONTINUE:
 		break;
 	case Action::BACKGROUND:
-		std::cout << "adding to background: " << a << std::endl;
-
+		std::cout << "adding to background: " << a->name << std::endl;
+		log.throwLog("adding to background:");
+		log.throwLog(a->name);
 		background.push_back(a);
+		/* no break */
 	case Action::END:
 		aqueue.pop();
+		log.throwLog("Ending:");
+		log.throwLog(a->name);
 		std::cout << "new task: " << aqueue.front() << std::endl;
+		log.throwLog("Starting:");
+		log.throwLog(aqueue.front()->name);
 		aqueue.front()->init();
 		break;
 	}

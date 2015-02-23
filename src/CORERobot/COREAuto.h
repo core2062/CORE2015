@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include "CORERobot.h"
+#include "log.h"
 
 #include "WPILib.h"
 
@@ -20,6 +21,7 @@ namespace CORE{
 	 */
 class Action{
 	public:
+		std::string name = "Default";
 		enum ControlFlow{
 			CONTINUE,
 			END,
@@ -49,13 +51,13 @@ public:
 class AutoSequencer{
 	std::queue<Action*> aqueue;
 	std::vector<Action*> background;
-//	CORERobot& robot;
+	OutLog& log;
 	bool empty_flag;
 public:
-	AutoSequencer(/*CORERobot& r*/):
-//		robot(r),
+	AutoSequencer(OutLog& l):
 		aqueue(),
 		background(),
+		log(l),
 		empty_flag(false)
 		{}
 	void clear(void);

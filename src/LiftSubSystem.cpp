@@ -9,8 +9,7 @@ const double MOTORUPDATEFREQUENCY = 0.005;
 
 
 void LiftSubsystem::robotInit(void){
-	robot.outLog.throwLog("LiftSubsystem: RobotInit Start");
-	robot.outLog.throwLog("LiftSubsystem: RobotInit Success");
+	robot.outLog.throwLog("LiftSubsystem: RobotInit");
 }
 void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
@@ -20,10 +19,10 @@ void LiftSubsystem::teleopInit(void){
 	robot.joystick.register_button("bottomHeightButton", 2, 2);
 	robot.joystick.register_button("twoToteHeightButton", 2, 4);
 	robot.joystick.register_button("toteHeightButton", 2, 3);
-	robot.joystick.register_button("FlagButton", 2 , 1);
+//	robot.joystick.register_button("FlagButton", 2 , 1);
 	robot.joystick.register_axis("liftAxis", 2, 1);
 
-	SmartDashboard::PutBoolean("liftStart", true);
+//	SmartDashboard::PutBoolean("liftStart", true);
 
 }
 
@@ -45,14 +44,7 @@ void LiftSubsystem::setPID(double setPoint)
 			liftMotor.SetControlMode(CANSpeedController::kPosition);
 			liftMotor.SetSensorDirection(true);
 		}
-		if(liftMotor.GetEncPosition() >= setPoint)
-		{
-			liftMotor.SelectProfileSlot(1);
-		}
-		else
-		{
-			liftMotor.SelectProfileSlot(0);
-		}
+		liftMotor.SelectProfileSlot((liftMotor.GetEncPosition() >= setPoint) ? 1 : 0);
 		liftMotor.Set(setPoint);
 		beenSet = true;
 }
@@ -118,6 +110,9 @@ void LiftSubsystem::teleop(void){
 		beenSet = true;
 	}
 	if (!beenSet){
+		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
+			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
+		}
 		liftMotor.Set(0.0);
 	}
 }
@@ -152,7 +147,7 @@ void LiftSubsystem::giveLog(std::string stringVar){
 }
 double LiftSubsystem::liftPID(void){
 		//Disable Brake
-		encoderPID.mistake = encoderPID.setPoint - encoder.Get();
+//		encoderPID.mistake = encoderPID.setPoint - encoder.Get();
 		encoderPID.integral = encoderPID.integral + (encoderPID.mistake * .05);
 		encoderPID.derivative = (encoderPID.mistake - encoderPID.lastError) * (1/.05);
 		double output = (encoderPID.P*encoderPID.mistake) + (encoderPID.I*encoderPID.integral) + (encoderPID.D*encoderPID.derivative);
