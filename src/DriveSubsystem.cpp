@@ -31,6 +31,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("shoulderSpeed", 1, 5);
 	robot.joystick.register_button("lift_align",1,2);
 	robot.joystick.register_button("top_lift_align",1,1);
+	robot.joystick.register_button("reset",1,3);
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -49,7 +50,9 @@ void DriveSubsystem::teleop(void){
 //	gyro.SetSensitivity(SmartDashboard::GetNumber("Gyro Sensitivity", 0.0065));
 	//robot.outLog.throwLog("start and smt dshbrd");
 	double gyroRate = gyro.GetAngle();
-
+	if (robot.joystick.button("reset")){
+		resetDistance();
+	}
 //	if (gyroRate>-2 && gyroRate<2){
 //		gyroRate = 0.0;
 //	}
@@ -81,10 +84,10 @@ void DriveSubsystem::teleop(void){
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
 
-//	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
-//	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
-//	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
-//	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
+	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
+	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
+	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
+	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
 
 //Simple Dead-banding
 	drive_x = robot.joystick.axis("drive_x");
@@ -128,7 +131,7 @@ void DriveSubsystem::teleop(void){
 		}
 
 		//Tote Alignment
-			if (robot.joystick.button("lift_align") && drive_x == 0.0){
+			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
 				leftPhotoVar = leftPhoto.Get();
 				middlePhotoVar = middlePhoto.Get();
@@ -176,7 +179,7 @@ void DriveSubsystem::teleop(void){
 			}
 
 			//Tote Alignment
-				if (robot.joystick.button("top_lift_align") && drive_x == 0.0){
+				if ((robot.joystick.button("top_lift_align") || alignTwo) && drive_x == 0.0){
 					//set vars
 					tl = topLeftPhoto.Get();
 					tm = middlePhoto.Get();
@@ -241,10 +244,10 @@ void DriveSubsystem::teleop(void){
 			backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation));
 			backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation));
 		}else{
-			frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier",.2));
-			frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier",.2));
-			backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultipier"),.2);
-			backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultipier"),.2);
+			frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
+			frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
+			backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+			backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
 		}
 
 	}
@@ -276,10 +279,10 @@ void DriveSubsystem::resetDistance(void){
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 {
-	frontLeftSet = ((drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	frontRightSet = ((-drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backLeftSet = ((-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backRightSet = ((drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	frontLeft.Set((drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	frontRight.Set((-drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backLeft.Set((-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	backRight.Set((drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
 }
 double DriveSubsystem::getRot(void)
 {

@@ -69,13 +69,17 @@ void AutoSequencer::iter(void){
 		background.push_back(a);
 		/* no break */
 	case Action::END:
+//		log.throwLog("Ending:");
+//		log.throwLog(a->name);
 		aqueue.pop();
-		log.throwLog("Ending:");
-		log.throwLog(a->name);
-		std::cout << "new task: " << aqueue.front() << std::endl;
-		log.throwLog("Starting:");
-		log.throwLog(aqueue.front()->name);
-		aqueue.front()->init();
+		if(!aqueue.empty()){
+			a = aqueue.front();
+			std::cout << "new task: " << a << std::endl;
+			a->init();
+		}
+//		log.throwLog("Starting:");
+//		log.throwLog(a->name);
+
 		break;
 	}
 	std::vector<Action*>::iterator it = background.begin();

@@ -73,6 +73,8 @@ class DriveSubsystem : public CORESubsystem{
 		}gyroPID;
 
 public:
+		bool alignTwo = false;
+		bool alignOne = false;
 		// Drive Motors
 		CANTalon frontLeft;
 		CANTalon backLeft;
@@ -103,12 +105,17 @@ public:
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
 			gyro.SetDeadband(0.005); // .005 on main bot
-//			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
-//			frontRight.SetSensorDirection(true);
-//			backRight.SetSensorDirection(true);
+			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+//			robot.outLog.throwLog("set to voltage");
+//			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
+//			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
+//			backRight.SetControlMode(CANSpeedController::kPercentVbus);
+//			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
+			frontRight.SetSensorDirection(true);
+			backRight.SetSensorDirection(true);
 		}
 	void robotInit(void);
 	// Called before loop at start of Teleop period
@@ -154,19 +161,32 @@ public:
 
 	}
 	void init(void){
-		drive->setVoltageMode();
+		drive->giveLog("drive action init");
+//		drive->setVoltageMode();
 		drive->resetDistance();
 		currentDistance = drive->getDistance();
+
 		drive->resetRot();
 		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
+//		drive->frontLeft.SetSafetyEnabled(true);
+//		drive->frontLeft.Set(1.0);
+//		drive->giveLog("drive action iter");
 		rotation = drive->getRot();
+//		drive->giveLog("rot gotten");
 		rotation = drive->gyroPIDCalc(0, rotation);
+//		drive->giveLog("pid calced");
 		currentDistance = drive->getDistance();
-		if(targetDistance>0){
-			if(currentDistance<targetDistance){
+		drive->robot.outLog.throwLog(currentDistance);
+//		drive->giveLog("dist got");
+		if(targetDistance>=0){
+			if(currentDistance<=targetDistance){
+				drive->giveLog("set1");
 				drive->mec_drive(0,speed,rotation);
+//				drive->robot.outLog.throwLog(speed);
+//				drive->robot.outLog.throwLog(rotation);
+//				drive->giveLog("cont");
 				return CONTINUE;
 			}else{
 				drive->mec_drive(0,0,0);
@@ -174,8 +194,10 @@ public:
 				return END;
 			}
 		}else{
-			if(currentDistance>targetDistance){
+			if(currentDistance>=targetDistance){
+				drive->giveLog("set2");
 				drive->mec_drive(0,speed,rotation);
+				drive->giveLog("cont");
 				return CONTINUE;
 			}else{
 				drive->mec_drive(0,0,0);
@@ -204,7 +226,7 @@ public:
 		}
 		void init(void){
 			drive->resetDistance();
-			drive->setVoltageMode();
+//			drive->setVoltageMode();
 			currentDistance = drive->getDistance();
 			drive->resetRot();
 
@@ -250,7 +272,7 @@ public:
 	}
 
 	void init(void){
-		drive->setVoltageMode();
+//		drive->setVoltageMode();
 		drive->resetRot();
 		rotation = drive->getRot();
 	}

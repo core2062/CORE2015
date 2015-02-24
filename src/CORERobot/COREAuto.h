@@ -21,7 +21,7 @@ namespace CORE{
 	 */
 class Action{
 	public:
-		std::string name = "Default";
+		std::string name;
 		enum ControlFlow{
 			CONTINUE,
 			END,
@@ -29,7 +29,7 @@ class Action{
 		};
 		Action();
 		virtual ControlFlow call(void){std::cout << "action base class operator"<< std::endl; return END;} // =0
-		virtual void init(void){}
+		virtual void init(void){name = "default";}
 		virtual ~Action(){}
 	};
 

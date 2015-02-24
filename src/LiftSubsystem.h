@@ -11,10 +11,28 @@
 #include "CORERobot/CORERobot.h"
 #include "WPILib.h"
 #include <cmath>
+#include "Subsystems.h"
 
 using namespace CORE;
 
 class LiftSubsystem: public CORESubsystem {
+	DriveSubsystem* drive;
+	enum state{
+		HUMAN,
+		WAITING,
+		ALLIGNTWO,
+		LOWERTWO,
+		ALLIGNONE,
+		LOWERONE
+	};
+	struct{
+		int count = 0;
+		int max = 5;
+		int state = HUMAN;
+
+	}stack;
+
+
 
 	DigitalInput bottomLimit;
 	DigitalInput middleLimit;
@@ -64,8 +82,9 @@ public:
 
 	}
 	CANTalon liftMotor;
-	LiftSubsystem(CORERobot& robot) :
+	LiftSubsystem(CORERobot& robot, DriveSubsystem& drive) :
 			CORESubsystem(robot),
+			drive(&drive),
 			bottomLimit(0),
 			middleLimit(-1),
 			topLimit(1),

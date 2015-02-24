@@ -17,7 +17,7 @@ public:
 	CORE2015() :
 		robot(),
 		drive(robot),
-		lift(robot),
+		lift(robot,drive),
 		autoSeq(robot.outLog)
 	{
 		robot.add(drive);
@@ -38,7 +38,7 @@ public:
 //		SmartDashboard::PutNumber("BackRightPValue",0.0);
 //		SmartDashboard::PutNumber("BackRightIValue",0.0);
 //		SmartDashboard::PutNumber("BackRightDValue",0.0);
-		SmartDashboard::PutNumber("JoystickMultipier", 0.5);
+		SmartDashboard::PutNumber("JoystickMultiplier", 0.5);
 		SmartDashboard::PutNumber("gyroPValue",0.05);
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);
@@ -96,14 +96,21 @@ public:
 		std::string choice = *(std::string*) autoChoose.GetSelected();
 		autoSeq.clear();
 		std::cout<<"Auto mode:" <<choice<<std::endl;
-
+		robot.outLog.throwLog(choice);
 
 			if(choice=="Drive-to-Zone"){
+				robot.outLog.throwLog("chose dtz");
+
 				DriveAction driveToZoneAction(drive, 1.0, SmartDashboard::GetNumber("DriveToZoneDist"));
 				autoSeq.add_action(driveToZoneAction);
-
+//				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("SetLiftHeightAboveCan"));
+//				autoSeq.add_action(liftAboveCan);
+				robot.outLog.throwLog("actions created");
 				autoSeq.init();
+				robot.outLog.throwLog("autoseq initialized");
 				while (IsAutonomous() and !IsDisabled()) {
+//					drive.frontRight.Set(1);
+//					robot.outLog.throwLog("autoiter");
 					autoSeq.iter();
 					Wait(0.05);
 				}

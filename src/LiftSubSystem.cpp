@@ -19,6 +19,7 @@ void LiftSubsystem::teleopInit(void){
 	robot.joystick.register_button("bottomHeightButton", 2, 2);
 	robot.joystick.register_button("twoToteHeightButton", 2, 4);
 	robot.joystick.register_button("toteHeightButton", 2, 3);
+	robot.joystick.register_button("stack",2,5);
 //	robot.joystick.register_button("FlagButton", 2 , 1);
 	robot.joystick.register_axis("liftAxis", 2, 1);
 
@@ -69,6 +70,27 @@ void LiftSubsystem::teleop(void){
 		robot.outLog.throwLog(liftMotor.GetStickyFaults());
 		liftMotor.Get();
 	}
+	if (robot.joystick.button("stack")){
+		switch (stack.state){
+			default:
+				if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
+					liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
+				}
+				liftMotor.Set(0.0);
+			break;
+		}
+
+
+
+
+
+
+
+
+
+
+	}//else{
+
 	if (!bottomLimit.Get()){
 		bottomLatch = true;
 		liftMotor.SetPosition(0);
@@ -115,6 +137,7 @@ void LiftSubsystem::teleop(void){
 		}
 		liftMotor.Set(0.0);
 	}
+//	}
 }
 
 void LiftSubsystem::teleopEnd(){
