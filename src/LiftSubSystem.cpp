@@ -14,7 +14,7 @@ void LiftSubsystem::robotInit(void){
 void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
 	liftMotor.Set(0);
-	liftMotor.SetExpiration(0.1);
+	liftMotor.SetExpiration(0.125);
 	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
 	robot.joystick.register_button("bottomHeightButton", 2, 2);
 	robot.joystick.register_button("twoToteHeightButton", 2, 4);
@@ -22,6 +22,7 @@ void LiftSubsystem::teleopInit(void){
 	robot.joystick.register_button("stack",2,5);
 //	robot.joystick.register_button("FlagButton", 2 , 1);
 	robot.joystick.register_axis("liftAxis", 2, 1);
+	robot.joystick.register_button("toteIn",2,1);
 
 //	SmartDashboard::PutBoolean("liftStart", true);
 
@@ -72,6 +73,60 @@ void LiftSubsystem::teleop(void){
 	}
 	if (robot.joystick.button("stack")){
 		switch (stack.state){
+		case HUMAN:
+			stack.count = 0;
+			setPID(twoToteHeight);
+			stack.state = WAITING;
+			break;
+		case WAITING:
+			setPID(21000.0);
+			if(!stack.old && robot.joystick.button("toteIn")){
+				drive->alignTwo = true;
+				stack.state = ALIGNTWO;
+			}
+			stack.old = robot.joystick.button("toteIn");
+			break;
+		case ALIGNTWO:
+			setPID(21000.0);
+			if (!drive->alignTwo){
+				stack.state = LOWERTWO;
+			}
+			break;
+		case LOWERTWO:
+			setPID(toteHeight);
+			if (liftMotor.GetEncPosition()<(-toteHeight)+100 && liftMotor.GetEncPosition()>(-toteHeight)-100){
+				if (stack.count<=stack.max){
+					stack.old = true;
+					drive->alignOne = true;
+					stack.state = ALIGNONESTACK;
+					stack.count++;
+				}else{
+					drive->alignOne = true;
+					stack.state = ALIGNONE;
+				}
+			}
+			break;
+		case ALIGNONESTACK:
+			setPID(twoToteHeight);
+			if (!drive->alignOne){
+				stack.state = WAITING;
+			}
+			break;
+		case ALIGNONE:
+			setPID(toteHeight);
+			if (!drive->alignOne){
+				stack.state = LOWERONE;
+			}
+			break;
+		case LOWERONE:
+			setPID(100);
+			if (liftMotor.GetEncPosition()<-200 && liftMotor.GetEncPosition()>0){
+				stack.state = CARRY;
+			}
+			break;
+		case CARRY:
+			setPID(bottomHeight);
+			break;
 			default:
 				if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 					liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
@@ -80,6 +135,7 @@ void LiftSubsystem::teleop(void){
 			break;
 		}
 
+		SmartDashboard::PutNumber("Stack State", stack.state);
 
 
 
@@ -89,8 +145,8 @@ void LiftSubsystem::teleop(void){
 
 
 
-	}//else{
-
+	}else{
+	stack.state = HUMAN;
 	if (!bottomLimit.Get()){
 		bottomLatch = true;
 		liftMotor.SetPosition(0);
@@ -137,7 +193,7 @@ void LiftSubsystem::teleop(void){
 		}
 		liftMotor.Set(0.0);
 	}
-//	}
+	}
 }
 
 void LiftSubsystem::teleopEnd(){
@@ -152,7 +208,7 @@ double LiftSubsystem::getBufferValue(void){
 	return buffer;
 }
 void LiftSubsystem::setLift(double speed){
-	liftMotor.Set(speed);
+	setPID(speed);
 }
 void LiftSubsystem::setPositionModeEnc(void){
 	//liftMotor.SetControlMode(CANSpeedController::kPosition);

@@ -66,24 +66,32 @@ public:
 		//Drive To Zone
 		SmartDashboard::PutNumber("DriveToZoneDist",0.0);
 		//Move Set
-		SmartDashboard::PutNumber("SetLiftHeightAboveCan",0.0);
-		SmartDashboard::PutNumber("SetControlCanDist",0.0);
-		SmartDashboard::PutNumber("SetStrafeCanControlDist",0.0);
-		SmartDashboard::PutNumber("SetGoFarDist",0.0);
-		SmartDashboard::PutNumber("SetBackupDist",0.0);
-		SmartDashboard::PutNumber("SetBackupToteDist",0.0);
-		SmartDashboard::PutNumber("LiftLowerWait",2.0);
-		SmartDashboard::PutNumber("LiftRaiseWait", 2.0);
-		SmartDashboard::PutNumber("BinSlapDrive", 2.0);
-		SmartDashboard::PutNumber("BinSlapLiftDown", 0.0);
-		SmartDashboard::PutNumber("BinSlapLiftUp", 0.0);
-		SmartDashboard::PutNumber("BinSlap", 0.0);
-		SmartDashboard::PutNumber("BinSlapSmallDriveForward", 0.0);
-		SmartDashboard::PutNumber("BinSlapMediumDriveForward", 0.0);
-		SmartDashboard::PutNumber("BinSlapDrive-To-Autozone", 0.0);
+		SmartDashboard::PutNumber("SetLiftHeightAboveCan",1200.0);
+		SmartDashboard::PutNumber("SetControlCanDist",10000.0);
+//		SmartDashboard::PutNumber("SetStrafeCanControlDist",0.0);
+		SmartDashboard::PutNumber("SetGoFarDist",5000.0);
+//		SmartDashboard::PutNumber("SetBackupDist",0.0);
+//		SmartDashboard::PutNumber("SetBackupToteDist",0.0);
+//		SmartDashboard::PutNumber("LiftLowerWait",2.0);
+//		SmartDashboard::PutNumber("LiftRaiseWait", 2.0);
+
+
+
+
+//		SmartDashboard::PutNumber("BinSlapDrive", 2.0);
+		SmartDashboard::PutNumber("BinSlapLiftDown", 100.0);
+		SmartDashboard::PutNumber("BinSlapLiftUp", 12000.0);
+//		SmartDashboard::PutNumber("BinSlap", 0.0);
+		SmartDashboard::PutNumber("BinSlapSmallDriveForward", 1000);
+		SmartDashboard::PutNumber("BinSlapMediumDriveForward", 10000);
+		SmartDashboard::PutNumber("BinSlapDrive-To-Autozone", 2000);
+
+		SmartDashboard::PutNumber("shakeNBakeStrafe", 0);
+
 		autoChoose.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
 		autoChoose.AddObject("Move Set", new std::string("Move-Set"));
 		autoChoose.AddObject("Bin Slap", new std::string("Bin-Slap"));
+		autoChoose.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
 
 		SmartDashboard::PutData("auto-chooser", &autoChoose);
 
@@ -117,21 +125,21 @@ public:
 			}else if(choice == "Move-Set"){
 				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("SetLiftHeightAboveCan"));
 				autoSeq.add_action(liftAboveCan);
-				WaitAction waitToLift(SmartDashboard::GetNumber("LiftRaiseWait"));
+//				WaitAction waitToLift(SmartDashboard::GetNumber("LiftRaiseWait"));
 				DriveAction driveToControl(drive, 1.0,SmartDashboard::GetNumber("SetControlCanDist"));
 				autoSeq.add_action(driveToControl);
-				TurnAction turnToControl(drive,.90);
+				TurnAction turnToControl(drive,90);
 				autoSeq.add_action(turnToControl);
-				StrafeAction strafeCanControlDist(drive, -.9, SmartDashboard::GetNumber("SetStrafeCanControlDist"));
-				autoSeq.add_action(strafeCanControlDist);
+//				StrafeAction strafeCanControlDist(drive, -.9, SmartDashboard::GetNumber("SetStrafeCanControlDist"));
+//				autoSeq.add_action(strafeCanControlDist);
 				DriveAction endOfAZone(drive, 1.0, SmartDashboard::GetNumber("SetGoFarDist"));
 				autoSeq.add_action(endOfAZone);
-				DriveAction backupDistance(drive, -1.0, SmartDashboard::GetNumber("SetBackupDist"));
-				autoSeq.add_action(backupDistance);
-				LiftAction lowerToBottom(lift, SmartDashboard::GetNumber("bottomEndHeight"));
+//				DriveAction backupDistance(drive, -1.0, SmartDashboard::GetNumber("SetBackupDist"));
+//				autoSeq.add_action(backupDistance);
+				LiftAction lowerToBottom(lift, SmartDashboard::GetNumber("bottomEndHeight",100.0));
 				autoSeq.add_action(lowerToBottom);
-				WaitAction waitToLower(SmartDashboard::GetNumber("LiftLowerWait"));
-				autoSeq.add_action(waitToLower);
+//				WaitAction waitToLower(SmartDashboard::GetNumber("LiftLowerWait"));
+//				autoSeq.add_action(waitToLower);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
 					autoSeq.iter();
@@ -148,6 +156,8 @@ public:
 				//We gon knock that bin now
 				DriveAction binSlap_MediumDriveForward(drive, 0.9, SmartDashboard::GetNumber("BinSlapMediumDriveForward"));
 				autoSeq.add_action(binSlap_MediumDriveForward);
+//				PhotoDriveAction photoOne(drive);
+//				autoSeq.add_action(photoOne);
 				AlignAction align(drive);
 				autoSeq.add_action(align);
 				LiftAction binSlap_LiftDown2(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
@@ -159,6 +169,57 @@ public:
 				//We gon knock that bin now 2
 				DriveAction binSlap_MediumDriveForward2(drive, 0.9, SmartDashboard::GetNumber("BinSlapMediumDriveForward"));
 				autoSeq.add_action(binSlap_MediumDriveForward2);
+//				PhotoDriveAction photoTwo(drive);
+//				autoSeq.add_action(photoTwo);
+//				AlignAction align2(drive);
+//				autoSeq.add_action(align2);
+				LiftAction binSlap_LiftDown3(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown3);
+				LiftAction binSlap_LiftUp3(lift, SmartDashboard::GetNumber("BinSlapLiftUp", true));
+				autoSeq.add_action(binSlap_LiftUp3);
+				TurnAction binSlap_Turn(drive, 90);
+				autoSeq.add_action(binSlap_Turn);
+				DriveAction binSlap_DriveToAutozone(drive, 0.9, SmartDashboard::GetNumber("BinSlapDrive-To-Autozone"));
+				autoSeq.add_action(binSlap_DriveToAutozone);
+				LiftAction binSlap_LiftDown4(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown4);
+				DriveAction binSlap_Back(drive, -0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_Back);
+				autoSeq.init();
+				while (IsAutonomous() and !IsDisabled()) {
+					autoSeq.iter();
+					Wait(0.05);
+				}
+			}else if (choice=="Shake-n'-Bake"){
+				// move all the totes.....#smackattack
+//				LiftAction binSlap_LiftDown(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+//				autoSeq.add_action(binSlap_LiftDown);
+				LiftAction binSlap_LiftUp(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(binSlap_LiftUp);
+				StrafeAction strafeOne(drive, -.9, SmartDashboard::GetNumber("shakeNBakeStrafe"));
+				autoSeq.add_action(strafeOne);
+				DriveAction binSlap_SmallDriveForward(drive, 0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_SmallDriveForward);
+				StrafeAction strafeTwo(drive, .9, SmartDashboard::GetNumber("shakeNBakeStrafe"));
+				autoSeq.add_action(strafeTwo);
+				//We gon knock that bin now
+				PhotoDriveAction photoOne(drive);
+				autoSeq.add_action(photoOne);
+				AlignAction align(drive);
+				autoSeq.add_action(align);
+				LiftAction binSlap_LiftDown2(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
+				autoSeq.add_action(binSlap_LiftDown2);
+				LiftAction binSlap_LiftUp2(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(binSlap_LiftUp2);
+				StrafeAction strafeThree(drive, -.9, SmartDashboard::GetNumber("shakeNBakeStrafe"));
+				autoSeq.add_action(strafeThree);
+				DriveAction binSlap_SmallDriveForward2(drive, 0.9, SmartDashboard::GetNumber("BinSlapSmallDriveForward"));
+				autoSeq.add_action(binSlap_SmallDriveForward2);
+				//We gon knock that bin now 2
+				StrafeAction strafeFour(drive, .9, SmartDashboard::GetNumber("shakeNBakeStrafe"));
+				autoSeq.add_action(strafeFour);
+				PhotoDriveAction photoTwo(drive);
+				autoSeq.add_action(photoTwo);
 				AlignAction align2(drive);
 				autoSeq.add_action(align2);
 				LiftAction binSlap_LiftDown3(lift, SmartDashboard::GetNumber("BinSlapLiftDown"));
@@ -182,6 +243,7 @@ public:
 				std::cout<<"Bad auto type"<<std::endl;
 			}
 	}
+
 //
 	void OperatorControl() {
 		timeVal.Start();
@@ -226,6 +288,6 @@ public:
 	}
 };
 
-START_ROBOT_CLASS(CORE2015)
-;
+START_ROBOT_CLASS(CORE2015);
+
 

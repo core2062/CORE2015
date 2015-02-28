@@ -58,6 +58,8 @@ class DriveSubsystem : public CORESubsystem{
 	bool tm = 0;
 	bool tr = 0;
 	bool alignError = 0;
+	double alignPowerLeft = -.5;
+	double alignPowerRight = .5;
 
 	struct{
 		double P = 0.1;
@@ -104,7 +106,7 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-			gyro.SetDeadband(0.005); // .005 on main bot
+			gyro.SetDeadband(0.007); //TODO .005 on main bot
 			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
@@ -178,11 +180,11 @@ public:
 		rotation = drive->gyroPIDCalc(0, rotation);
 //		drive->giveLog("pid calced");
 		currentDistance = drive->getDistance();
-		drive->robot.outLog.throwLog(currentDistance);
+//		drive->robot.outLog.throwLog(currentDistance);
 //		drive->giveLog("dist got");
 		if(targetDistance>=0){
 			if(currentDistance<=targetDistance){
-				drive->giveLog("set1");
+//				drive->giveLog("set1");
 				drive->mec_drive(0,speed,rotation);
 //				drive->robot.outLog.throwLog(speed);
 //				drive->robot.outLog.throwLog(rotation);
@@ -195,7 +197,7 @@ public:
 			}
 		}else{
 			if(currentDistance>=targetDistance){
-				drive->giveLog("set2");
+//				drive->giveLog("set2");
 				drive->mec_drive(0,speed,rotation);
 				drive->giveLog("cont");
 				return CONTINUE;
@@ -277,10 +279,10 @@ public:
 		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
-		drive->giveLog("TurnAction Completed");
 		rotation = drive->gyroPIDCalc(degrees,drive->getRot());
 		drive->mec_drive(0,0,rotation);
 		if (drive->getRot()>degrees-2.0 && drive->getRot()<degrees+2.0){
+			drive->giveLog("TurnAction Completed");
 			drive->mec_drive(0,0,0);
 			return END;
 		}else{
@@ -310,6 +312,30 @@ public:
 		return END;
 	}
 };
+class PhotoDriveAction : public Action{
+	DriveSubsystem* drive;
+		bool oldValue = true;
+		double rotation = 0.0;
+public:
+	PhotoDriveAction(DriveSubsystem& drive):
+		drive(&drive){
+
+	}
+	void init(void){
+		drive->giveLog("PotoDriveAction Start");
+	}
+	ControlFlow call(void){
+		rotation = drive->gyroPIDCalc(0,drive->getRot());
+		if(!oldValue && drive->getMiddlePhoto()){
+			drive->mec_drive(0,0,0);
+			drive->giveLog("PhotoDriveAction Completo");
+			return END;
+		}
+		drive->mec_drive(0,0.9,rotation);
+		oldValue = drive->getMiddlePhoto();
+		return CONTINUE;
+	}
+};
 
 class PIDStrafeAction : public Action{
 	DriveSubsystem* drive;
@@ -322,7 +348,7 @@ public:
 
 	}
 	void init(void){
-		drive->setPositionMode();
+//		drive->setPercentMode();
 		gyro = drive->getRot();
 	}
 	ControlFlow call(void){

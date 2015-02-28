@@ -139,17 +139,25 @@ void DriveSubsystem::teleop(void){
 
 				//different cases
 				if ((leftPhotoVar && !rightPhotoVar)){
-					drive_x = -.6;
+					alignPowerLeft+=-.05;
+					drive_x = alignPowerLeft;
 					alignError = false;
 				}else if ((!leftPhotoVar && rightPhotoVar)){
-					drive_x = .6;
+					alignPowerRight+=.05;
+					drive_x = alignPowerRight;
 					alignError = false;
 				}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
+					alignPowerLeft = -.5;
+					alignPowerRight = .5;
 					drive_x = 0;
 					alignError = false;
+					alignOne = false;
 				}else if ((!leftPhotoVar && !middlePhotoVar && !rightPhotoVar) || (leftPhotoVar && middlePhotoVar && rightPhotoVar)){
+					alignPowerLeft = -.5;
+					alignPowerRight = .5;
 					drive_x = 0;
 					alignError = true;
+					alignOne = false;
 				}
 
 				//SmartDashboard Set
@@ -187,17 +195,25 @@ void DriveSubsystem::teleop(void){
 
 					//different cases
 					if ((tl && !tr)){
-						drive_x = -.6;
+						alignPowerLeft+=-.05;
+						drive_x = alignPowerLeft;
 						alignError = false;
 					}else if ((!tl && tr)){
-						drive_x = .6;
+						alignPowerRight+=.05;
+						drive_x = alignPowerRight;
 						alignError = false;
 					}else if (!tl && tm && !tr){
+						alignPowerLeft = -.5;
+						alignPowerRight = .5;
 						drive_x = 0;
 						alignError = false;
+						alignTwo = false;
 					}else if ((!tl && !tm && !tr) || (tl && tm && tr)){
+						alignPowerLeft = -.5;
+						alignPowerRight = .5;
 						drive_x = 0;
 						alignError = true;
+						alignTwo = false;
 					}
 
 					//SmartDashboard Set
@@ -279,10 +295,10 @@ void DriveSubsystem::resetDistance(void){
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 {
-	frontLeft.Set((drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	frontRight.Set((-drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backLeft.Set((-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
-	backRight.Set((drive_x+drive_y-rotation)*SmartDashboard::GetNumber("JoystickMultiplier"));
+	frontLeft.Set(frontLeftInvert*(drive_x+drive_y+rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
+	frontRight.Set(frontRightInvert*(-drive_x+drive_y-rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
+	backLeft.Set(backLeftInvert*(-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+	backRight.Set(backRightInvert*(drive_x+drive_y-rotation)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
 }
 double DriveSubsystem::getRot(void)
 {
@@ -333,23 +349,17 @@ double DriveSubsystem::gyroPIDCalc(double set, double rot){
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
-		gyroTime = gyroTimer.Get();
 		gyroPID.mistake =  set - rot;
 		SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
-		gyroPID.integral += (gyroPID.mistake *gyroTime);
-		gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
-		double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
-		SmartDashboard::PutNumber("Gyro PID Out before", output);
+		double output = (gyroPID.P*gyroPID.mistake);
 		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
 		drive_rotation = output;
 		gyroPID.lastError = gyroPID.mistake;
 		SmartDashboard::PutNumber("Gyro PID Out", output);
-		gyroTimer.Reset();
-
 	if (rot < .05 && rot > -.05){
 		rot = 0;
 	}
-	return rot;
+	return output;
 }
 bool DriveSubsystem::getLeftPhoto(){
 	return leftPhoto.Get();

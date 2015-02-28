@@ -20,16 +20,18 @@ class LiftSubsystem: public CORESubsystem {
 	enum state{
 		HUMAN,
 		WAITING,
-		ALLIGNTWO,
+		ALIGNTWO,
 		LOWERTWO,
-		ALLIGNONE,
-		LOWERONE
+		ALIGNONESTACK,
+		ALIGNONE,
+		LOWERONE,
+		CARRY
 	};
 	struct{
 		int count = 0;
-		int max = 5;
+		int max = 2;
 		int state = HUMAN;
-
+		bool old = false;
 	}stack;
 
 
@@ -92,7 +94,7 @@ public:
 			{
 		liftMotor.Set(0.0);
 		liftMotor.SetSafetyEnabled(false);
-		liftMotor.SetExpiration(0.1);
+		liftMotor.SetExpiration(0.125);
 		liftMotor.SetSensorDirection(true);
 	}
 
@@ -120,16 +122,20 @@ public:
 	std::string name = "Lift Action";
 	LiftAction(LiftSubsystem& lift, double targetHeight, bool background = false) :
 			lift(&lift),
-			targetHeight(targetHeight)
+			targetHeight(targetHeight),
+			background(background)
 			{}
 	void init(void) {
+		lift->robot.outLog.throwLog("Lift Init ", targetHeight);
 		currentHeight = lift->getLiftHeight();
-		lift->setPositionModeEnc();
+		lift->setPID(targetHeight);
 	}
 	ControlFlow call(void) {
+		SmartDashboard::PutNumber("Lift Encoder", lift->getLiftHeight());
 		if (background){
 			lift->setLift(targetHeight);
-			if(lift->getLiftHeight() < targetHeight+200 &&lift->getLiftHeight() > targetHeight-200){
+
+			if(lift->getLiftHeight() < targetHeight+200 && lift->getLiftHeight() > targetHeight-200){
 				lift->giveLog("ENCLiftAction Completed");
 				return END;
 			}else{
@@ -144,10 +150,9 @@ public:
 				return CONTINUE;
 			}
 		}
-
 	}
+
 };
 
 
 #endif /* SRC_LIFTSUBSYSTEM_H_ */
-;
