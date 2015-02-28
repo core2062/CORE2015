@@ -28,10 +28,11 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
 	robot.joystick.register_button("shoulderSpeed", 1, 5);
-	robot.joystick.register_button("lift_align",1,2);
-	robot.joystick.register_button("top_lift_align",1,1);
+	robot.joystick.register_button("lift_align",1,7);
+	robot.joystick.register_button("top_lift_align",1,8);
 	robot.joystick.register_button("reset",1,3);
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
+	robot.joystick.joystick1.GetPOV();
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -65,7 +66,8 @@ void DriveSubsystem::teleop(void){
 //	if (gyroRate>-2 && gyroRate<2){
 //		gyroRate = 0.0;
 //	}
-
+	POV = robot.joystick.joystick1.GetPOV();
+	SmartDashboard::PutNumber("POV", POV);
 	shoulderSpeed = robot.joystick.button("shoulderSpeed");
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
@@ -158,7 +160,7 @@ void DriveSubsystem::teleop(void){
 			ultraTimer.Reset();
 		}
 		//Tote Alignment
-			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
+			if ((((POV == 180) || (POV == 135) || (POV == 225)) ||robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
 				leftPhotoVar = leftPhoto.Get();
 				middlePhotoVar = middlePhoto.Get();
@@ -214,7 +216,7 @@ void DriveSubsystem::teleop(void){
 			}
 
 			//Tote Alignment
-				if ((robot.joystick.button("top_lift_align") || alignTwo) && drive_x == 0.0){
+				if ((((POV == 0) || (POV == 45) || (POV == 315)) || robot.joystick.button("top_lift_align") || alignTwo) && drive_x == 0.0){
 					//set vars
 					tl = topLeftPhoto.Get();
 					tm = middlePhoto.Get();

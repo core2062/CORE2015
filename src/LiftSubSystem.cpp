@@ -95,15 +95,15 @@ void LiftSubsystem::teleop(void){
 		case LOWERTWO:
 			setPID(toteHeight);
 			if (liftMotor.GetEncPosition()<(-toteHeight)+100 && liftMotor.GetEncPosition()>(-toteHeight)-100){
-				if (stack.count<=stack.max){
+//				if (stack.count<=stack.max){
 					stack.old = true;
 					drive->alignOne = true;
 					stack.state = ALIGNONESTACK;
 					stack.count++;
-				}else{
+				/*}else{
 					drive->alignOne = true;
 					stack.state = ALIGNONE;
-				}
+				}*/
 			}
 			break;
 		case ALIGNONESTACK:

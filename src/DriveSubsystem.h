@@ -54,6 +54,7 @@ class DriveSubsystem : public CORESubsystem{
 	bool shoulderSpeed = false;
 	bool oldRot = 0.0;
 	int resetQ = 0;
+	int POV = -1;
 	bool leftPhotoVar = 0;
 	bool middlePhotoVar = 0;
 	bool rightPhotoVar = 0;
@@ -111,7 +112,7 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-			gyro.SetDeadband(0.007); //TODO .005 on main bot
+			gyro.SetDeadband(0.008); //TODO .005 on main bot tried .007
 			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
