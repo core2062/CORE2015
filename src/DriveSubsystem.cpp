@@ -32,6 +32,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("top_lift_align",1,8);
 	robot.joystick.register_button("reset",1,3);
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
+	robot.joystick.register_button("centerDrive",1,6);
 	robot.joystick.joystick1.GetPOV();
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -160,6 +161,23 @@ void DriveSubsystem::teleop(void){
 			ultraTimer.Reset();
 		}
 		//Tote Alignment
+		if(robot.joystick.button("centerDrive")) {
+			if(initalUltraValue == 0){
+				initalUltraValue = getUltra();
+				centerDrivePower = -0.4;
+			}
+			else {
+				centerDrivePower -= 0.025;
+				if((getUltra() - initalUltraValue) > 2) {
+					centerDrivePower = 0.0;
+					SmartDashboard::PutBoolean("driveCentered", true);
+				}
+				else {
+					SmartDashboard::PutBoolean("driveCentered", true);
+				}
+			}
+			drive_x = centerDrivePower;
+		}
 			if ((((POV == 180) || (POV == 135) || (POV == 225)) ||robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
 				leftPhotoVar = leftPhoto.Get();

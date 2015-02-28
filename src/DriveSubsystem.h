@@ -38,10 +38,12 @@ class DriveSubsystem : public CORESubsystem{
 	float ultrasonicValue = 0.0;
 	float drive_rotation = 0.0;
 	float drive_y = 0.0;
+	float centerDrivePower = 0.0;
 	float frontLeftSet = 0.0;
 	float frontRightSet = 0.0;
 	float backLeftSet = 0.0;
 	float backRightSet = 0.0;
+	float initalUltraValue = 0.0;
 	int oldFrontRight = 0;
 	int oldFrontLeft = 0;
 	int oldBackRight = 0;
