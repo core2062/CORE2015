@@ -6,7 +6,6 @@ std::string DriveSubsystem::name(void){
 	return "Drive";
 }
 
-
 void DriveSubsystem::robotInit(void){
 	robot.outLog.throwLog("DriveSubsystem: RobotInit Success");
 }
@@ -32,6 +31,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("lift_align",1,2);
 	robot.joystick.register_button("top_lift_align",1,1);
 	robot.joystick.register_button("reset",1,3);
+	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
 
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
@@ -44,11 +44,20 @@ void DriveSubsystem::teleopInit(void){
 	timer.Start();
 	gyroTimer.Start();
 	gyroTimer.Reset();
+	ultraTimer.Start();
+	ultraTimer.Reset();
 }
-	
+
+float DriveSubsystem::getUltra(void)
+{
+	if(!ultraCalculated)
+		ultraValue = ((1000.0 * ultra.GetVoltage()) / ((jumper.GetVoltage() * 1000.0) / ultraVoltageScale));
+	return ultraValue;
+}
 void DriveSubsystem::teleop(void){
 //	gyro.SetSensitivity(SmartDashboard::GetNumber("Gyro Sensitivity", 0.0065));
 	//robot.outLog.throwLog("start and smt dshbrd");
+	ultraCalculated = false;
 	double gyroRate = gyro.GetAngle();
 	if (robot.joystick.button("reset")){
 		resetDistance();
@@ -80,9 +89,13 @@ void DriveSubsystem::teleop(void){
 
 	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
 
-	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
-	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
-	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
+	gyroPID.P = (SmartDashboard::GetNumber("gyroPValue"));
+	gyroPID.I = (SmartDashboard::GetNumber("gyroIValue"));
+	gyroPID.D = (SmartDashboard::GetNumber("gyroDValue"));
+	ultraPID.P = (SmartDashboard::GetNumber("ultraPValue"));
+	ultraPID.I = (SmartDashboard::GetNumber("ultraIValue"));
+	ultraPID.D =(SmartDashboard::GetNumber("ultraDValue"));
+	ultraPID.setPoint = (SmartDashboard::GetNumber("ultraSetPoint"));
 
 	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
 	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
@@ -121,15 +134,29 @@ void DriveSubsystem::teleop(void){
 			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
 			gyroPID.integral += (gyroPID.mistake *gyroTime);
 			gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
-			double output = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
-			SmartDashboard::PutNumber("Gyro PID Out before", output);
-			output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_rotation = output;
+			double gyroOutput = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+			SmartDashboard::PutNumber("Gyro PID Out before", gyroOutput);
+			gyroOutput = gyroOutput > 1.0 ? 1.0 : (gyroOutput < -1.0 ? -1.0 : gyroOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+			drive_rotation = gyroOutput;
 			gyroPID.lastError = gyroPID.mistake;
-			SmartDashboard::PutNumber("Gyro PID Out", output);
+			SmartDashboard::PutNumber("Gyro PID Out", gyroOutput);
 			gyroTimer.Reset();
 		}
-
+	//Ultrasonic PID
+		if(robot.joystick.button("ultra")) {
+			ultraTime = ultraTimer.Get();
+			ultraPID.mistake =  ultraPID.setPoint - getUltra();
+			SmartDashboard::PutNumber("Ultra PID Error", ultraPID.mistake);
+			ultraPID.integral += (ultraPID.mistake *ultraTime);
+			ultraPID.derivative = (ultraPID.mistake - ultraPID.lastError)/ultraTime;
+			double ultraOutput = (ultraPID.P*ultraPID.mistake) + (ultraPID.I*ultraPID.integral) + (ultraPID.D*ultraPID.derivative);
+			SmartDashboard::PutNumber("Ultra PID Out before", ultraOutput);
+			ultraOutput = ultraOutput > 1.0 ? 1.0 : (ultraOutput < -1.0 ? -1.0 : ultraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+			drive_y = ultraOutput;
+			ultraPID.lastError = ultraPID.mistake;
+			SmartDashboard::PutNumber("Ultra PID Out", ultraOutput);
+			ultraTimer.Reset();
+		}
 		//Tote Alignment
 			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars

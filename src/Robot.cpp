@@ -42,6 +42,9 @@ public:
 		SmartDashboard::PutNumber("gyroPValue",0.05);
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);
+		SmartDashboard::PutNumber("ultraPValue",0.05);
+		SmartDashboard::PutNumber("ultraIValue",0.0);
+		SmartDashboard::PutNumber("ultraDValue",0.0);
 
 		SmartDashboard::PutNumber("toteHeight", 7200.0);
 		SmartDashboard::PutNumber("twoToteHeight", 21000.0);
@@ -60,6 +63,7 @@ public:
 		SmartDashboard::PutNumber("Lift-Speed",-1.0);
 		SmartDashboard::PutNumber("DriveVoltageRampRate",6.0);
 		SmartDashboard::PutNumber("Gyro Sensitivity", 0.0065);
+		SmartDashboard::PutNumber("Ultra Setpoint", 10);
 
 //		SmartDashboard::PutNumber("voltage ramp rate", 6.0);
 		//Auto

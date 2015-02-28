@@ -16,13 +16,10 @@ const int backRightInvert = -1;
 
 class DriveSubsystem : public CORESubsystem{
 
-
-
-
-
-
 	Timer timer;
 	Timer gyroTimer;
+	Timer ultraTimer;
+	double ultraTime = 0.0;
 	double gyroTime = 0.0;
 	Gyro gyro;
 	
@@ -32,8 +29,13 @@ class DriveSubsystem : public CORESubsystem{
 	DigitalInput topLeftPhoto;
 	DigitalInput topMiddlePhoto;
 	DigitalInput topRightPhoto;
+	AnalogInput ultra;
+	AnalogInput jumper;
 
 	float drive_x = 0.0;
+	float ultraVoltageScale = (1024.0 / 2.54); //403.1496
+	float ultraValue = 0.0;
+	float ultrasonicValue = 0.0;
 	float drive_rotation = 0.0;
 	float drive_y = 0.0;
 	float frontLeftSet = 0.0;
@@ -44,6 +46,7 @@ class DriveSubsystem : public CORESubsystem{
 	int oldFrontLeft = 0;
 	int oldBackRight = 0;
 	int oldBackLeft = 0;
+	bool ultraCalculated = false;
 	bool isTested = false;
 	bool isBroken = true;
 	bool switchEncoderMode = false;
@@ -72,7 +75,7 @@ class DriveSubsystem : public CORESubsystem{
 		double derivative;
 		double setPoint = 0.0;
 		bool enabled = false;
-		}gyroPID;
+		}gyroPID, ultraPID;
 
 public:
 		bool alignTwo = false;
@@ -95,7 +98,9 @@ public:
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
-		backRight(11)
+		backRight(11),
+		ultra(1),
+		jumper(2)
 		{
 			//start false to avoid error
 			frontLeft.SetSafetyEnabled(false);
@@ -126,6 +131,7 @@ public:
 	void teleop(void);
 	//Main teleop code
 
+	float getUltra(void);
 	void teleopEnd(void);
 	double getDistance(void);
 	void resetDistance(void);
