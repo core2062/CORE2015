@@ -43,6 +43,7 @@ class LiftSubsystem: public CORESubsystem {
 	bool bottomHeightButton = false;
 	bool toteHeightButton = false;
 	bool twoToteHeightButton = false;
+	bool magicToteHeightButton = false;
 	bool topLatch = false;
 	bool bottomLatch = false;
 	double liftAxis = 0.0;
@@ -52,6 +53,7 @@ class LiftSubsystem: public CORESubsystem {
 	double bottomHeight = 1200;
 	double toteHeight = 0.0;
 	double twoToteHeight = 0.0;
+	double magicToteHeight = 0.0;
 	double location = 0.0;
 	double P = 0.0;
 	double I = 0.0;
@@ -88,7 +90,7 @@ public:
 			CORESubsystem(robot),
 			drive(&drive),
 			bottomLimit(0),
-			middleLimit(-1),
+			middleLimit(8),//TODO Change
 			topLimit(1),
 			liftMotor(14)
 			{

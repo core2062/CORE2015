@@ -21,6 +21,7 @@ class DriveSubsystem : public CORESubsystem{
 	Timer ultraTimer;
 	double ultraTime = 0.0;
 	double gyroTime = 0.0;
+	bool oldCenter = false;
 	Gyro gyro;
 	
 	DigitalInput leftPhoto;
@@ -64,6 +65,9 @@ class DriveSubsystem : public CORESubsystem{
 	bool tm = 0;
 	bool tr = 0;
 	bool alignError = 0;
+	bool noodleSeen = false;
+	bool simple = true;
+
 	double alignPowerLeft = -.5;
 	double alignPowerRight = .5;
 
@@ -83,6 +87,8 @@ class DriveSubsystem : public CORESubsystem{
 public:
 		bool alignTwo = false;
 		bool alignOne = false;
+		bool ultraDistCorrect = false;
+		bool ultraCenter = false;
 		// Drive Motors
 		CANTalon frontLeft;
 		CANTalon backLeft;
@@ -91,19 +97,20 @@ public:
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
-		gyro(0),
+		gyro(1),
 		leftPhoto(2),
 		middlePhoto(3),
 		rightPhoto(4),
 		topLeftPhoto(5),
 		topMiddlePhoto(6),
 		topRightPhoto(7),
+		ultra(2),
+		jumper(3),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
-		backRight(11),
-		ultra(1),
-		jumper(2)
+		backRight(11)
+
 		{
 			//start false to avoid error
 			frontLeft.SetSafetyEnabled(false);
@@ -114,11 +121,16 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-			gyro.SetDeadband(0.008); //TODO .005 on main bot tried .007
+			gyro.SetDeadband(0.007); //TODO .005 on main bot tried .007
 			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+
+//			frontLeft.SetControlMode(CANSpeedController::kSpeed);
+//			frontRight.SetControlMode(CANSpeedController::kSpeed);
+//			backLeft.SetControlMode(CANSpeedController::kSpeed);
+//			backRight.SetControlMode(CANSpeedController::kSpeed);
 //			robot.outLog.throwLog("set to voltage");
 //			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
 //			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
@@ -150,7 +162,7 @@ public:
 	void setBackRightMotor(double value);
 	double getJoystickMultiplier(void);
 	void giveLog(std::string stringVar);
-	double gyroPIDCalc(double set, double rot);
+	double gyroPIDCalc(double set, double rot, int mult= 0);
 	bool getLeftPhoto();
 	bool getMiddlePhoto();
 	bool getRightPhoto();
@@ -273,27 +285,41 @@ class TurnAction : public Action{
 	DriveSubsystem* drive;
 	double degrees;
 	double rotation;
+	int mult;
+	int seen = 0;
+	int seenNeed;
 public:
 	std::string name = "Turn Action";
-	TurnAction(DriveSubsystem& drive, double degrees):
+	TurnAction(DriveSubsystem& drive, double degrees, int mult = 1):
 		drive(&drive),
-		degrees(degrees)
+		degrees(degrees),
+		mult(mult)
 	{
 		rotation = 0;
+		seenNeed = (mult == 1)?1:3;
 	}
 
 	void init(void){
 //		drive->setVoltageMode();
 		drive->resetRot();
+		drive->giveLog("Turn Init");
 		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
-		rotation = drive->gyroPIDCalc(degrees,drive->getRot());
+		rotation = drive->gyroPIDCalc(degrees,drive->getRot(),mult);
 		drive->mec_drive(0,0,rotation);
 		if (drive->getRot()>degrees-2.0 && drive->getRot()<degrees+2.0){
-			drive->giveLog("TurnAction Completed");
-			drive->mec_drive(0,0,0);
-			return END;
+			drive->giveLog("Target Hit");
+			seen++;
+			if (seen ==seenNeed){
+				drive->giveLog("TurnAction Completed");
+				drive->mec_drive(0,0,0);
+				drive->resetRot();
+				drive->giveLog("Turn End");
+				return END;
+			}else{
+				return CONTINUE;
+			}
 		}else{
 			return CONTINUE;
 		}
@@ -321,6 +347,7 @@ public:
 		return END;
 	}
 };
+
 class PhotoDriveAction : public Action{
 	DriveSubsystem* drive;
 		bool oldValue = true;

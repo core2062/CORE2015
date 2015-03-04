@@ -56,6 +56,7 @@ void LiftSubsystem::teleop(void){
 	toteHeight = SmartDashboard::GetNumber("toteHeight");
 	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
 	bottomHeight = SmartDashboard::GetNumber("bottomHeight");
+	magicToteHeight = SmartDashboard::GetNumber("magicToteHeight");
 	SmartDashboard::PutBoolean("botLimit", bottomLimit.Get());
 	SmartDashboard::PutBoolean("topLimit", topLimit.Get());
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
@@ -64,7 +65,9 @@ void LiftSubsystem::teleop(void){
 	bottomHeightButton = robot.joystick.button("bottomHeightButton");
 	toteHeightButton = robot.joystick.button("toteHeightButton");
 	twoToteHeightButton = robot.joystick.button("twoToteHeightButton");
+	magicToteHeightButton = robot.joystick.button("toteIn");
 	SmartDashboard::PutNumber("Lift Encoder", liftMotor.GetEncPosition());
+	SmartDashboard::PutNumber("Lift Get", liftMotor.Get());
 
 	if (liftMotor.GetStickyFaults() != 0){
 		robot.outLog.throwLog("Lift Flag");
@@ -159,7 +162,7 @@ void LiftSubsystem::teleop(void){
 	}
 
 
-	if (liftValue > 0.0 && topLatch == false){
+	if (liftValue < 0.0 && topLatch == false){
 
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
@@ -167,7 +170,7 @@ void LiftSubsystem::teleop(void){
 		bottomLatch = false;
 		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
 		beenSet = true;
-	}else if (liftValue < 0.0 && bottomLatch == false){
+	}else if (liftValue > 0.0 && bottomLatch == false){
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 		}
@@ -180,6 +183,8 @@ void LiftSubsystem::teleop(void){
 		setPID(toteHeight);
 	}else if (bottomHeightButton == true){
 		setPID(bottomHeight);
+	}else if (magicToteHeightButton == true){
+		setPID(magicToteHeight);
 	}else{
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
