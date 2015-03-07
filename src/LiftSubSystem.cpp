@@ -5,7 +5,6 @@
  *      Author: core
  */
 #include "LiftSubsystem.h"
-const double MOTORUPDATEFREQUENCY = 0.005;
 
 
 void LiftSubsystem::robotInit(void){
@@ -14,7 +13,7 @@ void LiftSubsystem::robotInit(void){
 void LiftSubsystem::teleopInit(void){
 	liftMotor.SetSafetyEnabled(true);
 	liftMotor.Set(0);
-	liftMotor.SetExpiration(0.125);
+	liftMotor.SetExpiration(0.25);
 	robot.outLog.throwLog("LiftSubsystem: TeleopInit Success");
 	robot.joystick.register_button("bottomHeightButton", 2, 2);
 	robot.joystick.register_button("twoToteHeightButton", 2, 4);
@@ -57,8 +56,8 @@ void LiftSubsystem::teleop(void){
 	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
 	bottomHeight = SmartDashboard::GetNumber("bottomHeight");
 	magicToteHeight = SmartDashboard::GetNumber("magicToteHeight");
-	SmartDashboard::PutBoolean("botLimit", bottomLimit.Get());
-	SmartDashboard::PutBoolean("topLimit", topLimit.Get());
+//	SmartDashboard::PutBoolean("botLimit", bottomLimit.Get());
+//	SmartDashboard::PutBoolean("topLimit", topLimit.Get());
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
 	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
 	liftValue = robot.joystick.axis("liftAxis");
@@ -67,7 +66,16 @@ void LiftSubsystem::teleop(void){
 	twoToteHeightButton = robot.joystick.button("twoToteHeightButton");
 	magicToteHeightButton = robot.joystick.button("toteIn");
 	SmartDashboard::PutNumber("Lift Encoder", liftMotor.GetEncPosition());
-	SmartDashboard::PutNumber("Lift Get", liftMotor.Get());
+//	SmartDashboard::PutNumber("Lift Get", liftMotor.Get());
+
+	if (liftMotor.GetEncPosition()>=100){
+		bottomLatch = false;
+	}
+	if (liftMotor.GetEncPosition()<twoToteHeight){
+		topLatch = false;
+	}
+
+
 
 	if (liftMotor.GetStickyFaults() != 0){
 		robot.outLog.throwLog("Lift Flag");

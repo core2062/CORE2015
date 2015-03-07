@@ -11,8 +11,9 @@ class CORE2015: public SampleRobot {
 	LiftSubsystem lift;
 
 	AutoSequencer autoSeq;
-	SendableChooser autoChoose;
+	SendableChooser autoChooser;
 	Timer timeVal;
+	double loopTime = 0.1;
 public:
 	CORE2015() :
 		robot(),
@@ -34,19 +35,23 @@ public:
 		SmartDashboard::PutNumber("JoystickMultiplier", 0.5);
 
 		//Drive PID
-		SmartDashboard::PutNumber("FrontLeftPValue",0.0);
-		SmartDashboard::PutNumber("FrontLeftIValue",0.0);
-		SmartDashboard::PutNumber("FrontLeftDValue",0.0);
-		SmartDashboard::PutNumber("BackLeftPValue",0.0);
-		SmartDashboard::PutNumber("BackLeftIValue",0.0);
-		SmartDashboard::PutNumber("BackLeftDValue",0.0);
-		SmartDashboard::PutNumber("FrontRightPValue",0.0);
-		SmartDashboard::PutNumber("FrontRightIValue",0.0);
-		SmartDashboard::PutNumber("FrontRightDValue",0.0);
-		SmartDashboard::PutNumber("BackRightPValue",0.0);
-		SmartDashboard::PutNumber("BackRightIValue",0.0);
-		SmartDashboard::PutNumber("BackRightDValue",0.0);
-		SmartDashboard::PutNumber("MaxVel",20.0);
+		SmartDashboard::PutNumber("FrontLeftPValue",0.06);
+		SmartDashboard::PutNumber("FrontLeftIValue",0.00085);
+		SmartDashboard::PutNumber("FrontLeftDValue",0.01);
+		SmartDashboard::PutNumber("FrontLeftFValue",.25);
+		SmartDashboard::PutNumber("BackLeftPValue",0.06);
+		SmartDashboard::PutNumber("BackLeftIValue",0.00085);
+		SmartDashboard::PutNumber("BackLeftDValue",0.01);
+		SmartDashboard::PutNumber("BackLeftFValue",.25);
+		SmartDashboard::PutNumber("FrontRightPValue",0.06);
+		SmartDashboard::PutNumber("FrontRightIValue",0.00085);
+		SmartDashboard::PutNumber("FrontRightDValue",0.01);
+		SmartDashboard::PutNumber("FrontRightFValue",.25);
+		SmartDashboard::PutNumber("BackRightPValue",0.06);
+		SmartDashboard::PutNumber("BackRightIValue",0.00085);
+		SmartDashboard::PutNumber("BackRightDValue",0.01);
+		SmartDashboard::PutNumber("BackRightFValue",.25);
+		SmartDashboard::PutNumber("MaxVel",2600.0);
 		SmartDashboard::PutBoolean("SimpleDrive",true);
 
 		//Gyro Values
@@ -54,6 +59,7 @@ public:
 		SmartDashboard::PutNumber("gyroIValue",0.0);
 		SmartDashboard::PutNumber("gyroDValue",0.0);
 		SmartDashboard::PutNumber("gyroDead",.009);
+		SmartDashboard::PutBoolean("disableGyro", false);
 
 		//UltraSonic Values
 		SmartDashboard::PutNumber("ultraPValue",0.075);
@@ -88,15 +94,16 @@ public:
 		///////////////////////////////////////////
 		SmartDashboard::PutNumber("Small",1000.0);
 		//Drive To Zone
-		SmartDashboard::PutNumber("DriveToZoneDist",0.0);
+		SmartDashboard::PutNumber("DriveToZoneDist",10000.0);
 
 		//Push to Zone
 		SmartDashboard::PutNumber("PushToZoneDist",0.0);
 
 		//Move Set
-		SmartDashboard::PutNumber("SetLiftHeightAboveCan",1200.0);
-		SmartDashboard::PutNumber("SetControlCanDist",10000.0);
-		SmartDashboard::PutNumber("SetGoFarDist",5000.0);
+		SmartDashboard::PutNumber("TLiftHeightAboveCan",12000.0);
+		SmartDashboard::PutNumber("TControlCanDist",7500.0);
+		SmartDashboard::PutNumber("TGoFarDist",34500.0);
+		SmartDashboard::PutNumber("TBackDist",4000.0);
 		//Unused
 		//SmartDashboard::PutNumber("SetStrafeCanControlDist",0.0);
 		//SmartDashboard::PutNumber("SetBackupDist",0.0);
@@ -105,9 +112,16 @@ public:
 		//SmartDashboard::PutNumber("LiftRaiseWait", 2.0);
 
 		//Two Totes
+		SmartDashboard::PutNumber("TTForwardOne", 3800.0);
+		SmartDashboard::PutNumber("TTForwardTwo", 3875.0);
 		SmartDashboard::PutNumber("TTGotoTote",1000.0);
-		SmartDashboard::PutNumber("TTStrafe",4000.0);
-		SmartDashboard::PutNumber("TTAutoZone",0.0);
+		SmartDashboard::PutNumber("TTStrafe",14000.0);
+		SmartDashboard::PutNumber("TTAutoZone",31500.0);
+		SmartDashboard::PutNumber("TTHitAngle",90.0);
+		SmartDashboard::PutNumber("TTMaxPhotoDist",10000.0);
+		SmartDashboard::PutNumber("TTBackDist",2000.0);
+
+
 
 //		SmartDashboard::PutNumber("BinSlapDrive", 2.0);
 		SmartDashboard::PutNumber("BinSlapLiftDown", 100.0);
@@ -117,20 +131,34 @@ public:
 		SmartDashboard::PutNumber("BinSlapMediumDriveForward", 10000);
 		SmartDashboard::PutNumber("BinSlapDrive-To-Autozone", 2000);
 
+		//Two Tote Alt
+		SmartDashboard::PutNumber("TTAStrafeDist",14000.0);
+		SmartDashboard::PutNumber("TTAForwardOne",0.0);
+		SmartDashboard::PutNumber("TTAAutoZoneDist",31500.0);
+		SmartDashboard::PutNumber("TTABackDist",4000.0);
+		SmartDashboard::PutNumber("TTAPhotoDist",10000.0);
 
-		//ShakeN'Bake (Uses Slap Values otherwise
+		//ShakeN'Bake (Uses Slap Values otherwise)
 		SmartDashboard::PutNumber("shakeNBakeStrafe", 0);
 
-		//Add Auto Choices
-		autoChoose.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
-		autoChoose.AddObject("Move Set", new std::string("Move-Set"));
-		autoChoose.AddObject("Bin Slap", new std::string("Bin-Slap"));
-		autoChoose.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
-		autoChoose.AddObject("Two Tote", new std::string("Two-Tote"));
-		autoChoose.AddObject("Push Bin or Tote", new std::string("Push-to-Zone"));
-		autoChoose.AddObject("Three Tote No Bins",new std::string("Three-Tote-Norm"));
+		// Push Over (uses Slap Values otherwise)
+		SmartDashboard::PutNumber("PushOver-TurnAngle", 35);
+		SmartDashboard::PutNumber("PushOver-SmallDrive", 500);
+		SmartDashboard::PutNumber("PushOver-strafeBack", 300);
+		SmartDashboard::PutNumber("PushOver-longDriveForward", 10000);
 
-		SmartDashboard::PutData("auto-chooser", &autoChoose);
+		//Add Auto Choices
+		autoChooser.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
+		autoChooser.AddObject("One Tote", new std::string("One-Tote"));
+		autoChooser.AddObject("Bin Slap", new std::string("Bin-Slap"));
+		autoChooser.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
+		autoChooser.AddObject("Two Tote", new std::string("Two-Tote"));
+		autoChooser.AddObject("Push Bin or Tote", new std::string("Push-to-Zone"));
+		autoChooser.AddObject("Three Tote No Bins",new std::string("Three-Tote-Norm"));
+		autoChooser.AddObject("Push Over", new std::string("Push-Over"));
+		autoChooser.AddObject("Two tote alt", new std::string("Two-tote-alt"));
+
+		SmartDashboard::PutData("auto-choose", &autoChooser);
 
 	}
 
@@ -138,14 +166,15 @@ public:
 		robot.teleopEnd();
 		robot.outLog.startTime();
 		robot.outLog.setMode(OutLog::AUTO);
-		std::string choice = *(std::string*) autoChoose.GetSelected();
+		std::string choice = *(std::string*) autoChooser.GetSelected();
 		autoSeq.clear();
 		std::cout<<"Auto mode:" <<choice<<std::endl;
 		robot.outLog.throwLog(choice);
 
 			if(choice=="Drive-to-Zone"){
-				robot.outLog.throwLog("chose dtz");
-				DriveAction driveToZoneAction(drive, 1.0, SmartDashboard::GetNumber("DriveToZoneDist"));
+				robot.outLog.throwLog("Auto Choice: drive to zone");
+//				StrafeAction driveToZoneAction(drive, .9, SmartDashboard::GetNumber("DriveToZoneDist"));
+				DriveAction driveToZoneAction(drive, .9, SmartDashboard::GetNumber("DriveToZoneDist"));
 				autoSeq.add_action(driveToZoneAction);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
@@ -153,7 +182,7 @@ public:
 					Wait(0.05);
 				}
 			}else if(choice=="Push-to-Zone"){
-					robot.outLog.throwLog("Push to Zone");
+					robot.outLog.throwLog("Auto Choice:Push to Zone");
 
 					DriveAction pushToZoneAction(drive, 1.0, SmartDashboard::GetNumber("PushToZoneDist"));
 					autoSeq.add_action(pushToZoneAction);
@@ -162,25 +191,27 @@ public:
 						autoSeq.iter();
 						Wait(0.05);
 					}
-			}else if(choice == "Move-Set"){
-				robot.outLog.throwLog("Move set");
-				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("SetLiftHeightAboveCan"));
+			}else if(choice == "One-Tote"){
+				robot.outLog.throwLog("Auto Choice: Move set");
+				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("TLiftHeightAboveCan"),true);
 				autoSeq.add_action(liftAboveCan);
-				DriveAction driveToControl(drive, 1.0,SmartDashboard::GetNumber("SetControlCanDist"));
+				DriveAction driveToControl(drive, 1.0,SmartDashboard::GetNumber("TControlCanDist"));
 				autoSeq.add_action(driveToControl);
 				TurnAction turnToControl(drive,90);
 				autoSeq.add_action(turnToControl);
-				DriveAction endOfAZone(drive, 1.0, SmartDashboard::GetNumber("SetGoFarDist"));
+				DriveAction endOfAZone(drive, 1.0, SmartDashboard::GetNumber("TGoFarDist"));
 				autoSeq.add_action(endOfAZone);
-				LiftAction lowerToBottom(lift, SmartDashboard::GetNumber("bottomEndHeight",100.0));
+				LiftAction lowerToBottom(lift, SmartDashboard::GetNumber("bottomHeight",100.0));
 				autoSeq.add_action(lowerToBottom);
+				DriveAction goBack(drive,-.9,SmartDashboard::GetNumber("TBackDist"));
+				autoSeq.add_action(goBack);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
 					autoSeq.iter();
 					Wait(0.05);
 				}
 			}else if (choice=="Bin-Slap"){
-				robot.outLog.throwLog("Slaperino");
+				robot.outLog.throwLog("Auto Choice: Slaperino");
 
 				// move all the totes.....#smackattack
 //				LiftAction binSlap_LiftDown(lift, 100);
@@ -228,7 +259,7 @@ public:
 				}
 			}else if (choice=="Shake-n'-Bake"){
 
-				robot.outLog.throwLog("shake it n' bake it");
+				robot.outLog.throwLog("Auto Choice: shake it n' bake it");
 				// move all the totes.....#smackattack
 //				LiftAction binSlap_LiftDown(lift, 100);
 //				autoSeq.add_action(binSlap_LiftDown);
@@ -279,7 +310,7 @@ public:
 				}
 			}else if (choice=="Three-Tote-Norm"){
 
-				robot.outLog.throwLog("Norm");
+				robot.outLog.throwLog("Auto Choice: 3tote Norm");
 				// move all the totes
 //				LiftAction LiftDown(lift, 100);
 //				autoSeq.add_action( LiftDown);
@@ -325,38 +356,126 @@ public:
 					Wait(0.05);
 				}
 			}else if(choice=="Two-Tote"){
-				robot.outLog.throwLog("two totez");
-				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("magicToteHeight"));
+
+				//up, right, forward(2 ft), right, forward(2 ft), strafe right (2 feet), forward,align, down, (up bg), left, forward(long), down
+
+
+				robot.outLog.throwLog("Auto Choice: two totez");
+				LiftAction liftAboveCan(lift,SmartDashboard::GetNumber("OverToteHeight"),true);
 				autoSeq.add_action(liftAboveCan);
 //				DriveAction goBack(drive,-.9,-1000);
 //				autoSeq.add_action(goBack);
-				TurnAction turnToSlap(drive,180,2);
+				TurnAction turnToSlap(drive,SmartDashboard::GetNumber("TTHitAngle"));
 				autoSeq.add_action(turnToSlap);
-				LiftAction liftUp(lift,SmartDashboard::GetNumber("OverToteHeight"));
-				autoSeq.add_action(liftUp);
-				StrafeAction strafeOne(drive, .9, SmartDashboard::GetNumber("TTStrafe"));
+				DriveAction forwardOne(drive, .9, SmartDashboard::GetNumber("TTForwardOne"));
+				autoSeq.add_action(forwardOne);
+				TurnAction turnTwo(drive, 180-SmartDashboard::GetNumber("TTHitAngle"));
+				autoSeq.add_action(turnTwo);
+				DriveAction forwardTwo(drive,.9,SmartDashboard::GetNumber("TTForwardTwo"));
+				autoSeq.add_action(forwardTwo);
+				StrafeAction strafeOne(drive, 2.0, SmartDashboard::GetNumber("TTStrafe"));
 				autoSeq.add_action(strafeOne);
-				PhotoDriveAction photoOne(drive);
+				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("TTMaxPhotoDist"));
 				autoSeq.add_action(photoOne);
-				DriveAction goToTote(drive,1.0,SmartDashboard::GetNumber("TTGotoTote"));
+				DriveAction goToTote(drive,1.0,SmartDashboard::GetNumber("Small"));
 				autoSeq.add_action(goToTote);
 				AlignAction align(drive);
 				autoSeq.add_action(align);
-				LiftAction liftDown(lift,100);
+				LiftAction liftDown(lift,SmartDashboard::GetNumber("bottomHeight"));
 				autoSeq.add_action(liftDown);
-				LiftAction liftCarry(lift,SmartDashboard::GetNumber("OverToteHeight",0.0),true);
+				LiftAction liftCarry(lift,SmartDashboard::GetNumber("magicToteHeight",0.0),true);
 				autoSeq.add_action(liftCarry);
 				TurnAction turnRight(drive,-90);
 				autoSeq.add_action(turnRight);
 				DriveAction endOfAZone(drive, 1.0, SmartDashboard::GetNumber("TTAutoZone"));
 				autoSeq.add_action(endOfAZone);
-				LiftAction lowerToBottom(lift, 100.0);
+				LiftAction lowerToBottom(lift, 300.0);
 				autoSeq.add_action(lowerToBottom);
+				DriveAction goBack(drive,-.9,SmartDashboard::GetNumber("TTBackDist"));
+				autoSeq.add_action(goBack);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
 					autoSeq.iter();
 					Wait(0.05);
 				}
+			}else if (choice=="Push-Over"){
+				robot.outLog.throwLog("Auto choice: Push the bins over");
+				// push all the totes.....
+				LiftAction binSlap_LiftUp(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(binSlap_LiftUp);
+				TurnAction turn_one(drive, SmartDashboard::GetNumber("PushOver-TurnAngle", 35));
+				autoSeq.add_action(turn_one);
+				DriveAction binSlap_SmallDriveForward(drive, 0.9, SmartDashboard::GetNumber("PushOver-SmallDrive", 500));
+				autoSeq.add_action(binSlap_SmallDriveForward);
+				TurnAction turn_back_one(drive, -SmartDashboard::GetNumber("PushOver-TurnAngle", 35));
+				autoSeq.add_action(turn_back_one);
+				StrafeAction strafeTwo(drive, .9, SmartDashboard::GetNumber("PushOver-strafeBack", 300));
+				autoSeq.add_action(strafeTwo);
+				DriveAction driveForward(drive, 0.9, SmartDashboard::GetNumber("PushOver-longDriveForward", 10000));
+				autoSeq.add_action(driveForward);
+				AlignAction align(drive);
+				autoSeq.add_action(align);
+				LiftAction binSlap_LiftDown2(lift, 100);
+				autoSeq.add_action(binSlap_LiftDown2);
+				LiftAction liftUp2(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(liftUp2);
+				TurnAction turn_two(drive, SmartDashboard::GetNumber("PushOver-TurnAngle", 35));
+				autoSeq.add_action(turn_two);
+				DriveAction smallDriveForward(drive, 0.9, SmartDashboard::GetNumber("PushOver-SmallDrive", 500));
+				autoSeq.add_action(smallDriveForward);
+				TurnAction turn_back_two(drive, -SmartDashboard::GetNumber("PushOver-TurnAngle", 35));
+				autoSeq.add_action(turn_back_two);
+				StrafeAction strafethree(drive, .9, SmartDashboard::GetNumber("PushOver-strafeBack", 300));
+				autoSeq.add_action(strafethree);
+				DriveAction driveForwardtwo(drive, 0.9, SmartDashboard::GetNumber("PushOver-longDriveForward", 10000));
+				autoSeq.add_action(driveForwardtwo);
+				AlignAction alignTwo(drive);
+				autoSeq.add_action(alignTwo);
+				LiftAction binSlap_LiftDown3(lift, 100);
+				autoSeq.add_action(binSlap_LiftDown3);
+				LiftAction liftUp3(lift, SmartDashboard::GetNumber("BinSlapLiftUp"), true);
+				autoSeq.add_action(liftUp3);
+				TurnAction turn_90(drive, 90);
+				autoSeq.add_action(turn_90);
+				DriveAction driveToAuto(drive, 0.9, SmartDashboard::GetNumber("BinSlapDrive-To-Autozone", 2000));
+				autoSeq.add_action(driveToAuto);
+				LiftAction binSlap_LiftDown4(lift, 100);
+				autoSeq.add_action(binSlap_LiftDown4);
+
+				autoSeq.init();
+				while (IsAutonomous() and !IsDisabled()) {
+					autoSeq.iter();
+					Wait(0.05);
+				}
+			}else if(choice=="two-tote-alt"){
+				LiftAction TTALiftOne(lift,SmartDashboard::GetNumber("OverToteHeight"),true);
+				autoSeq.add_action(TTALiftOne);
+				StrafeAction TTAStrafeDist(drive,2.0, SmartDashboard::GetNumber("TTAStrafeDist",14000.0));
+				autoSeq.add_action(TTAStrafeDist);
+				DriveAction TTAForwardOne(drive,0.9, SmartDashboard::GetNumber("TTAForwardOne"));
+				autoSeq.add_action(TTAForwardOne);
+				StrafeAction TTAStrafeDistTwo(drive,2.0, SmartDashboard::GetNumber("TTAStrafeDist",-14000.0));
+				autoSeq.add_action(TTAStrafeDistTwo);
+				PhotoDriveAction TTAPhotoDist(drive, SmartDashboard::GetNumber("TTAPhotoDist",10000.0));
+				autoSeq.add_action(TTAPhotoDist);
+				DriveAction TTAForwardTwo(drive,0.9, SmartDashboard::GetNumber("TTAForwardTwo"));
+				autoSeq.add_action(TTAForwardTwo);
+				AlignAction TTAAlign(drive);
+				autoSeq.add_action(TTAAlign);
+				LiftAction TTALiftTwo(lift, SmartDashboard::GetNumber("bottomHeight"));
+				autoSeq.add_action(TTALiftTwo);
+				LiftAction TTALiftThree(lift, SmartDashboard::GetNumber("magicToteHeight"),true);
+				autoSeq.add_action(TTALiftThree);
+				TurnAction TTATurn(drive,90);
+				autoSeq.add_action(TTATurn);
+				DriveAction TTAForwardThree(drive,0.9, SmartDashboard::GetNumber("TTAForwardThree"));
+				autoSeq.add_action(TTAForwardThree);
+				LiftAction TTALiftfour(lift, SmartDashboard::GetNumber("bottomHeight"));
+				autoSeq.add_action(TTALiftfour);
+				DriveAction TTABackward(drive,0.9, SmartDashboard::GetNumber("TTABackward"));
+				autoSeq.add_action(TTABackward);
+
+
 			}else{
 				std::cout<<"Bad auto type"<<std::endl;
 			}
@@ -365,23 +484,24 @@ public:
 	void OperatorControl() {
 		timeVal.Start();
 		timeVal.Reset();
-		lift.liftMotor.SetExpiration(.15);
-		drive.frontLeft.SetExpiration(.15);
-		drive.backLeft.SetExpiration(.15);
-		drive.frontRight.SetExpiration(.15);
-		drive.backRight.SetExpiration(.15);
+		lift.liftMotor.SetExpiration(.25);
+		drive.frontLeft.SetExpiration(.25);
+		drive.backLeft.SetExpiration(.25);
+		drive.frontRight.SetExpiration(.25);
+		drive.backRight.SetExpiration(.25);
 		robot.teleopInit();
-////		Watchdog& wd = GetWatchdog();
-////		wd.SetExpiration(.5);
-////		wd.SetEnabled(true);
-////
 		SmartDashboard::PutNumber("Timer", timeVal.Get());
 		while (IsOperatorControl() && !IsDisabled()) {
-			SmartDashboard::PutNumber("Timer", timeVal.Get());
-			timeVal.Reset();
+
 ////			wd.Feed();
 			robot.teleop();
-			Wait(0.05); // wait for a motor update time
+			loopTime = timeVal.Get()<.1?0.1-timeVal.Get():0.0;
+			Wait(loopTime); // wait for a motor update time
+			SmartDashboard::PutNumber("Timer", timeVal.Get());
+			if (timeVal.Get() >= .12){
+				robot.outLog.throwLog("[PROBLEM] Loop Time High! Timer at: ",timeVal.Get());
+			}
+			timeVal.Reset();
 ////			SmartDashboard::PutBoolean("safety",drive.driveMotors.IsSafetyEnabled());
 		};
 		robot.teleopEnd();

@@ -32,6 +32,7 @@ class DriveSubsystem : public CORESubsystem{
 	DigitalInput topRightPhoto;
 	AnalogInput ultra;
 	AnalogInput jumper;
+	DigitalInput centerPhoto;
 
 	float drive_x = 0.0;
 	float ultraVoltageScale = (1024.0 / 2.54); //403.1496
@@ -65,8 +66,9 @@ class DriveSubsystem : public CORESubsystem{
 	bool tm = 0;
 	bool tr = 0;
 	bool alignError = 0;
-	bool noodleSeen = false;
+	bool targetSeen = false;
 	bool simple = true;
+	bool oldCenterPhoto = false;
 
 	double alignPowerLeft = -.5;
 	double alignPowerRight = .5;
@@ -106,6 +108,7 @@ public:
 		topRightPhoto(7),
 		ultra(2),
 		jumper(3),
+		centerPhoto(8),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
@@ -136,6 +139,8 @@ public:
 //			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
 //			backRight.SetControlMode(CANSpeedController::kPercentVbus);
 //			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
+			frontLeft.SetSensorDirection(true);
+			backLeft.SetSensorDirection(true);
 			frontRight.SetSensorDirection(true);
 			backRight.SetSensorDirection(true);
 		}
@@ -175,6 +180,7 @@ class DriveAction : public Action{
 	double targetDistance;
 	double currentDistance = 0.0;
 	double rotation = 0.0;
+	int countTime = 0;
 public:
 	std::string name = "Drive Action";
 	DriveAction(DriveSubsystem& drive, double speed, double targetDistance):
@@ -191,6 +197,7 @@ public:
 
 		drive->resetRot();
 		rotation = drive->getRot();
+		countTime = 0;
 	}
 	ControlFlow call(void){
 //		drive->frontLeft.SetSafetyEnabled(true);
@@ -203,6 +210,7 @@ public:
 		currentDistance = drive->getDistance();
 //		drive->robot.outLog.throwLog(currentDistance);
 //		drive->giveLog("dist got");
+		countTime++;
 		if(targetDistance>=0){
 			if(currentDistance<=targetDistance){
 //				drive->giveLog("set1");
@@ -211,10 +219,12 @@ public:
 //				drive->robot.outLog.throwLog(rotation);
 //				drive->giveLog("cont");
 				return CONTINUE;
-			}else{
+			}else if (countTime >3){
 				drive->mec_drive(0,0,0);
 				drive->giveLog("DriveAction Completed");
 				return END;
+			}else{
+				return CONTINUE;
 			}
 		}else{
 			if(currentDistance>=targetDistance){
@@ -222,17 +232,19 @@ public:
 				drive->mec_drive(0,speed,rotation);
 				drive->giveLog("cont");
 				return CONTINUE;
-			}else{
+			}else if (countTime >3){
 				drive->mec_drive(0,0,0);
 				drive->giveLog("DriveAction Completed");
 				return END;
+			}else{
+				return CONTINUE;
 			}
 		}
 
 	}
 };
 
-	class StrafeAction : public Action{
+class StrafeAction : public Action{
 		DriveSubsystem* drive;
 		double speed;
 		double targetDistance;
@@ -264,7 +276,8 @@ public:
 					return CONTINUE;
 				}else{
 					drive->mec_drive(0,0,0);
-					drive->giveLog("DriveAction Completed");
+					drive->giveLog("StrafeAction Completed");
+					drive->resetDistance();
 					return END;
 				}
 			}else{
@@ -274,6 +287,7 @@ public:
 				}else{
 					drive->mec_drive(0,0,0);
 					drive->giveLog("DriveAction Completed");
+					drive->resetDistance();
 					return END;
 				}
 			}
@@ -296,7 +310,7 @@ public:
 		mult(mult)
 	{
 		rotation = 0;
-		seenNeed = (mult == 1)?1:3;
+		seenNeed = (mult == 1)?2:3;
 	}
 
 	void init(void){
@@ -306,6 +320,7 @@ public:
 		rotation = drive->getRot();
 	}
 	ControlFlow call(void){
+		drive->resetDistance();
 		rotation = drive->gyroPIDCalc(degrees,drive->getRot(),mult);
 		drive->mec_drive(0,0,rotation);
 		if (drive->getRot()>degrees-2.0 && drive->getRot()<degrees+2.0){
@@ -316,6 +331,7 @@ public:
 				drive->mec_drive(0,0,0);
 				drive->resetRot();
 				drive->giveLog("Turn End");
+				drive->resetDistance();
 				return END;
 			}else{
 				return CONTINUE;
@@ -352,23 +368,35 @@ class PhotoDriveAction : public Action{
 	DriveSubsystem* drive;
 		bool oldValue = true;
 		double rotation = 0.0;
+		double maxDist;
+		int timeTicks = 0;
 public:
-	PhotoDriveAction(DriveSubsystem& drive):
-		drive(&drive){
+	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0):
+		drive(&drive),
+		maxDist(maxDist)
+		{
 
 	}
 	void init(void){
 		drive->giveLog("PotoDriveAction Start");
+		drive->resetDistance();
+		timeTicks = 0;
 	}
 	ControlFlow call(void){
 		rotation = drive->gyroPIDCalc(0,drive->getRot());
 		if(!oldValue && drive->getMiddlePhoto()){
 			drive->mec_drive(0,0,0);
-			drive->giveLog("PhotoDriveAction Completo");
+			drive->giveLog("PhotoDriveAction Complete");
+			return END;
+		}else if (drive->getDistance()>maxDist && timeTicks >7){
+			drive->mec_drive(0,0,0);
+			drive->robot.outLog.throwLog("PHOTO MAX DIST", drive->getDistance());
+//			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
 			return END;
 		}
 		drive->mec_drive(0,0.9,rotation);
 		oldValue = drive->getMiddlePhoto();
+		timeTicks++;
 		return CONTINUE;
 	}
 };

@@ -37,7 +37,6 @@ class LiftSubsystem: public CORESubsystem {
 
 
 	DigitalInput bottomLimit;
-	DigitalInput middleLimit;
 	DigitalInput topLimit;
 
 	bool bottomHeightButton = false;
@@ -90,7 +89,6 @@ public:
 			CORESubsystem(robot),
 			drive(&drive),
 			bottomLimit(0),
-			middleLimit(8),//TODO Change
 			topLimit(1),
 			liftMotor(14)
 			{
