@@ -130,15 +130,6 @@ public:
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 
-//			frontLeft.SetControlMode(CANSpeedController::kSpeed);
-//			frontRight.SetControlMode(CANSpeedController::kSpeed);
-//			backLeft.SetControlMode(CANSpeedController::kSpeed);
-//			backRight.SetControlMode(CANSpeedController::kSpeed);
-//			robot.outLog.throwLog("set to voltage");
-//			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
-//			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
-//			backRight.SetControlMode(CANSpeedController::kPercentVbus);
-//			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
 			frontLeft.SetSensorDirection(true);
 			backLeft.SetSensorDirection(true);
 			frontRight.SetSensorDirection(true);
@@ -167,7 +158,7 @@ public:
 	void setBackRightMotor(double value);
 	double getJoystickMultiplier(void);
 	void giveLog(std::string stringVar);
-	double gyroPIDCalc(double set, double rot, int mult= 0);
+	double gyroPIDCalc(double set, double rot, int mult= 1);
 	bool getLeftPhoto();
 	bool getMiddlePhoto();
 	bool getRightPhoto();
@@ -222,6 +213,7 @@ public:
 			}else if (countTime >3){
 				drive->mec_drive(0,0,0);
 				drive->giveLog("DriveAction Completed");
+				drive->robot.outLog.throwLog("Strafe end Enc:", drive->getDistance());
 				return END;
 			}else{
 				return CONTINUE;
@@ -276,7 +268,9 @@ class StrafeAction : public Action{
 					return CONTINUE;
 				}else{
 					drive->mec_drive(0,0,0);
+
 					drive->giveLog("StrafeAction Completed");
+					drive->robot.outLog.throwLog("Strafe end Enc:", drive->getDistance());
 					drive->resetDistance();
 					return END;
 				}

@@ -20,10 +20,6 @@ void DriveSubsystem::teleopInit(void){
 	backLeft.Set(0.0);
 	frontRight.Set(0.0);
 	backRight.Set(0.0);
-//	frontRight.SetExpiration(0.1);
-//	frontLeft.SetExpiration(0.1);
-//	backRight.SetExpiration(0.1);
-//	backLeft.SetExpiration(0.1);
 	robot.joystick.register_axis("drive_x", 1, 0);
 	robot.joystick.register_axis("drive_rotation", 1, 2);
 	robot.joystick.register_axis("drive_y", 1, 1);
@@ -35,14 +31,6 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("centerDrive",1,1);
 	robot.joystick.joystick1.GetPOV();
 
-//	frontLeft.SetControlMode(CANSpeedController::kSpeed);
-//	backLeft.SetControlMode(CANSpeedController::kSpeed);
-//	frontRight.SetControlMode(CANSpeedController::kSpeed);
-//	backRight.SetControlMode(CANSpeedController::kSpeed);
-//	oldFrontRight = frontRight.GetEncPosition();
-//	oldFrontLeft = frontLeft.GetEncPosition();
-//	oldBackRight = backRight.GetEncPosition();
-//	oldBackLeft = backLeft.GetEncPosition();
 	timer.Start();
 	gyroTimer.Start();
 	gyroTimer.Reset();
@@ -52,10 +40,8 @@ void DriveSubsystem::teleopInit(void){
 
 float DriveSubsystem::getUltra(void)
 {
-//	SmartDashboard::PutNumber("Jump V", jumper.GetVoltage());
 	if(!ultraCalculated)
 		ultraValue = ((1000.0 * ultra.GetVoltage()) / ((jumper.GetVoltage() * 1000.0) / ultraVoltageScale));
-//		ultraValue = ((1000.0 * ultra.GetVoltage()) / ((SmartDashboard::GetNumber("ultraVConst") * 1000.0) / ultraVoltageScale));
 	return ultraValue;
 }
 void DriveSubsystem::teleop(void){
@@ -79,7 +65,6 @@ void DriveSubsystem::teleop(void){
 			SmartDashboard::GetNumber("BackRightFValue"));
 	}
 //	robot.outLog.throwLog("PID Sets Done");
-//	gyro.SetSensitivity(SmartDashboard::GetNumber("Gyro Sensitivity", 0.0065));
 	//robot.outLog.throwLog("start and smt dshbrd");
 	ultraCalculated = false;
 	double gyroRate = gyro.GetAngle();
@@ -108,16 +93,17 @@ void DriveSubsystem::teleop(void){
 //	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
 	SmartDashboard::PutBoolean("Centering Photo", centerPhoto.Get());
 
+	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
+	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
+	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
+	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
+
+	SmartDashboard::PutNumber("Ultra Dist", getUltra());
+
 //	SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
 //	SmartDashboard::PutBoolean("Top Tote align", robot.joystick.button("top_lift_align"));
-//	frontRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
-//	frontLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
-//	backRight.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
-//	backLeft.SetVoltageRampRate(SmartDashboard::GetNumber("DriveVoltageRampRate"));
 
-
-//	switchEncoderMode = SmartDashboard::GetBoolean("Swtich-Encoder-Status", false);
-
+// Setting gyro and Ultrasonic PID's
 	gyroPID.P = (SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I = (SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D = (SmartDashboard::GetNumber("gyroDValue"));
@@ -126,22 +112,6 @@ void DriveSubsystem::teleop(void){
 	ultraPID.D =(SmartDashboard::GetNumber("ultraDValue"));
 	ultraPID.setPoint = (SmartDashboard::GetNumber("ultraSetPoint"));
 
-	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
-	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
-	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
-	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
-
-//	SmartDashboard::PutNumber("FLV", frontLeft.GetEncVel());
-//	SmartDashboard::PutNumber("FRV", frontRight.GetEncVel());
-//	SmartDashboard::PutNumber("BLV", backLeft.GetEncVel());
-//	SmartDashboard::PutNumber("BRV", backRight.GetEncVel());
-
-//	SmartDashboard::PutNumber("FLS", frontLeft.GetSpeed());
-//	SmartDashboard::PutNumber("FRS", frontRight.GetSpeed());
-//	SmartDashboard::PutNumber("BLS", backLeft.GetSpeed());
-//	SmartDashboard::PutNumber("BRS", backRight.GetSpeed());
-
-	SmartDashboard::PutNumber("Ultra Dist", getUltra());
 	if (POV == -1){
 
 //Simple Dead-banding
@@ -210,6 +180,7 @@ void DriveSubsystem::teleop(void){
 		resetQ--;
 	}
 	oldRot = drive_rotation;
+
 	//Gyro PID
 		if((drive_rotation==0.0 && resetQ == 0 && !SmartDashboard::GetBoolean("disableGyro"))){
 			gyroTime = gyroTimer.Get();
@@ -225,6 +196,7 @@ void DriveSubsystem::teleop(void){
 //			SmartDashboard::PutNumber("Gyro PID Out", gyroOutput);
 			gyroTimer.Reset();
 		}
+
 	//Ultrasonic PID
 		if((robot.joystick.button("ultra") || ultraDistCorrect) && drive_y ==0) {
 			ultraTime = ultraTimer.Get();
@@ -241,10 +213,11 @@ void DriveSubsystem::teleop(void){
 			ultraTimer.Reset();
 			ultraDistCorrect = (ultraOutput > -.05 && ultraOutput < .05)?false:ultraDistCorrect;
 		}
+
 		//Center to Human Player Station
 		if((robot.joystick.button("centerDrive")) && drive_x == 0.0) {
 				if (!targetSeen){
-					centerDrivePower = 0.3;
+					centerDrivePower = SmartDashboard::GetNumber("CenterSpeed");
 				}else{
 					centerDrivePower = 0.0;
 				}
@@ -264,7 +237,8 @@ void DriveSubsystem::teleop(void){
 			targetSeen = false;
 		}
 		oldCenterPhoto = centerPhoto.Get();
-		//Tote Alignment
+
+		//Bottom Tote Alignment
 			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
 				leftPhotoVar = leftPhoto.Get();
@@ -294,7 +268,7 @@ void DriveSubsystem::teleop(void){
 					alignOne = false;
 				}
 
-				//SmartDashboard Set
+				//SmartDashboard Set #Josh shenanigans
 				if (!alignError){
 					SmartDashboard::PutBoolean("leftPhoto", leftPhotoVar);
 					SmartDashboard::PutBoolean("middlePhoto", middlePhotoVar);
@@ -320,7 +294,7 @@ void DriveSubsystem::teleop(void){
 				SmartDashboard::PutBoolean("Tote align", false);
 			}
 
-			//Tote Alignment
+			//Top Tote Alignment
 				if ((robot.joystick.button("top_lift_align") || alignTwo) && drive_x == 0.0){
 					//set vars
 					tl = topLeftPhoto.Get();
@@ -350,7 +324,7 @@ void DriveSubsystem::teleop(void){
 						alignTwo = false;
 					}
 
-					//SmartDashboard Set
+					//SmartDashboard Set more #Josh shenanigains
 					if (!alignError){
 						SmartDashboard::PutBoolean("leftPhoto", tl);
 						SmartDashboard::PutBoolean("middlePhoto", tm);
@@ -380,13 +354,11 @@ void DriveSubsystem::teleop(void){
 
 		if(flag == false){
 			robot.outLog.throwLog("set to voltage");
-//			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
-//			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
-//			backRight.SetControlMode(CANSpeedController::kPercentVbus);
-//			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
 			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
 			flag = true;
 		}
+
+		// Drive modes
 		//robot.outLog.throwLog("drive motor norm");
 		if (simple){
 			if (!frontRight.GetControlMode() == CANSpeedController::kPercentVbus){
@@ -513,6 +485,7 @@ void DriveSubsystem::giveLog(std::string stringVar){
 	robot.outLog.throwLog(stringVar);
 }
 double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
+	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
@@ -521,7 +494,7 @@ double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
 		double output = (gyroPID.P*gyroPID.mistake);
 		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
 		drive_rotation = output;
-		gyroPID.lastError = gyroPID.mistake;
+//		gyroPID.lastError = gyroPID.mistake;
 		SmartDashboard::PutNumber("Gyro PID Out", output);
 	if (rot < .05 && rot > -.05){
 		rot = 0;
