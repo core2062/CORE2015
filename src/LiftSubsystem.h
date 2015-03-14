@@ -15,7 +15,7 @@
 
 using namespace CORE;
 
-class LiftSubsystem: public CORESubsystem {
+class LiftSubsystem : public CORESubsystem {
 	DriveSubsystem* drive;
 	enum state{
 		HUMAN,

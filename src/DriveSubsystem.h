@@ -6,6 +6,7 @@
 #include <cmath>
 #include "CORERobot/SpeedPID.h"
 #include <iostream>
+
 using namespace CORE;
 
 const int frontLeftInvert = 1;
@@ -14,16 +15,17 @@ const int frontRightInvert = -1;
 const int backRightInvert = -1;
 
 
-class DriveSubsystem : public CORESubsystem{
+class DriveSubsystem: public CORESubsystem{
 
+	Gyro gyro;
 	Timer timer;
 	Timer gyroTimer;
 	Timer ultraTimer;
 	double ultraTime = 0.0;
 	double gyroTime = 0.0;
 	bool oldCenter = false;
-	Gyro gyro;
 	
+
 	DigitalInput leftPhoto;
 	DigitalInput middlePhoto;
 	DigitalInput rightPhoto;
@@ -33,6 +35,10 @@ class DriveSubsystem : public CORESubsystem{
 	AnalogInput ultra;
 	AnalogInput jumper;
 	DigitalInput centerPhoto;
+	BuiltInAccelerometer accel;
+
+	DoubleSolenoid binPunch;
+
 
 	float drive_x = 0.0;
 	float ultraVoltageScale = (1024.0 / 2.54); //403.1496
@@ -69,6 +75,8 @@ class DriveSubsystem : public CORESubsystem{
 	bool targetSeen = false;
 	bool simple = true;
 	bool oldCenterPhoto = false;
+	int centerDirection = 1;
+	bool oldCenterButton = true;
 
 	double alignPowerLeft = -.5;
 	double alignPowerRight = .5;
@@ -109,6 +117,8 @@ public:
 		ultra(2),
 		jumper(3),
 		centerPhoto(8),
+		accel(),
+		binPunch(0,1),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
@@ -129,6 +139,10 @@ public:
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backRight.SetFeedbackDevice(CANTalon::QuadEncoder);
+			frontLeft.ConfigEncoderCodesPerRev(1024);
+			backLeft.ConfigEncoderCodesPerRev(1024);
+			frontRight.ConfigEncoderCodesPerRev(1024);
+			backRight.ConfigEncoderCodesPerRev(1024);
 
 			frontLeft.SetSensorDirection(true);
 			backLeft.SetSensorDirection(true);
@@ -162,7 +176,10 @@ public:
 	bool getLeftPhoto();
 	bool getMiddlePhoto();
 	bool getRightPhoto();
-
+	void punchSet(DoubleSolenoid::Value v = DoubleSolenoid::kOff);
+	void setMotorExpiration(bool position);
+	double rateTest(void);
+	void reconstructGyro(void);
 };
 
 class DriveAction : public Action{
@@ -186,7 +203,7 @@ public:
 		drive->resetDistance();
 		currentDistance = drive->getDistance();
 
-		drive->resetRot();
+//		drive->resetRot();
 		rotation = drive->getRot();
 		countTime = 0;
 	}
@@ -255,7 +272,7 @@ class StrafeAction : public Action{
 			drive->resetDistance();
 //			drive->setVoltageMode();
 			currentDistance = drive->getDistance();
-			drive->resetRot();
+//			drive->resetRot();
 
 		}
 		ControlFlow call(void){
@@ -304,7 +321,7 @@ public:
 		mult(mult)
 	{
 		rotation = 0;
-		seenNeed = (mult == 1)?2:3;
+		seenNeed = (mult == 1)?1:3;
 	}
 
 	void init(void){
@@ -360,7 +377,10 @@ public:
 
 class PhotoDriveAction : public Action{
 	DriveSubsystem* drive;
-		bool oldValue = true;
+		bool oldMidValue = true;
+		bool oldLeftValue = true;
+		bool oldRightValue = true;
+		int sideTicks = -1;
 		double rotation = 0.0;
 		double maxDist;
 		int timeTicks = 0;
@@ -378,9 +398,18 @@ public:
 	}
 	ControlFlow call(void){
 		rotation = drive->gyroPIDCalc(0,drive->getRot());
-		if(!oldValue && drive->getMiddlePhoto()){
+		if(!oldMidValue && drive->getMiddlePhoto()){
 			drive->mec_drive(0,0,0);
 			drive->giveLog("PhotoDriveAction Complete");
+			return END;
+		}else if((!oldRightValue && drive->getRightPhoto()) || (!oldLeftValue && drive->getLeftPhoto())){
+			drive->robot.outLog.throwLog("PHOTO SIDE SEEN");
+			sideTicks = 3;
+			return CONTINUE;
+		}else if (sideTicks == 0){
+			drive->mec_drive(0,0,0);
+			drive->robot.outLog.throwLog("PHOTO SIDE SEEN STOP", drive->getDistance());
+//			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
 			return END;
 		}else if (drive->getDistance()>maxDist && timeTicks >7){
 			drive->mec_drive(0,0,0);
@@ -389,7 +418,10 @@ public:
 			return END;
 		}
 		drive->mec_drive(0,0.9,rotation);
-		oldValue = drive->getMiddlePhoto();
+		oldMidValue = drive->getMiddlePhoto();
+		oldRightValue = drive->getRightPhoto();
+		oldLeftValue = drive->getLeftPhoto();
+		sideTicks--;
 		timeTicks++;
 		return CONTINUE;
 	}
@@ -425,7 +457,7 @@ class AlignAction: public Action{
 	bool middlePhotoVar = false;
 	bool leftPhotoVar = false;
 	double rotation = 0;
-	double strafe = 0;
+	double strafe = .6;
 public:
 	std::string name = "Align Action";
 	AlignAction(DriveSubsystem& drive):
@@ -445,11 +477,11 @@ public:
 
 			//different cases
 			if (leftPhotoVar && !rightPhotoVar){
-				strafe = -.6;
-				drive->mec_drive(strafe,0,rotation);
+				strafe += .05;
+				drive->mec_drive(-strafe,0,rotation);
 				return CONTINUE;
 			}else if (!leftPhotoVar && rightPhotoVar){
-				strafe = .6;
+				strafe += .05;
 				drive->mec_drive(strafe,0,rotation);
 				return CONTINUE;
 			}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
@@ -469,7 +501,38 @@ public:
 	}
 };
 
+class PunchAction : public WaitAction{
+	DriveSubsystem* drive;
+	double rotation = 0;
+	bool background;
+public:
+	PunchAction(DriveSubsystem& drive, double duration = .5, bool background = false):
+		WaitAction(duration),
+		drive(&drive),
+		background(background)
+	{	}
 
+	void init(void){
+		drive->giveLog("Bin Slap");
+	}
+
+	ControlFlow call(void){
+		rotation = drive->getRot();
+		rotation = drive->gyroPIDCalc(0, rotation);
+		ControlFlow flow = WaitAction::call();
+		if (flow == CONTINUE){
+			drive->mec_drive(0,0,rotation);
+			drive->punchSet(DoubleSolenoid::kForward);
+			return background?BACKGROUND:CONTINUE;
+		} else {
+			drive->giveLog("Bin Slapped");
+			drive->mec_drive(0,0,0);
+			drive->punchSet(DoubleSolenoid::kReverse);
+			return END;
+		}
+	}
+
+};
 
 
 

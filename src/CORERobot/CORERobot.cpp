@@ -20,6 +20,7 @@ void CORERobot::robotInit(void){
 			(*it)->robotInit();
 		}
 	outLog.throwLog("\n\n\n\n\n");
+	CD.updateSD();
 }
 
 void CORERobot::teleopInit(void){
@@ -32,6 +33,7 @@ void CORERobot::teleopInit(void){
 		(*it)->teleopInit();
 	}
 	outLog.throwLog("\n\n\n\n\n");
+	CD.updateSD();
 }
 
 void CORERobot::teleop(){
@@ -41,6 +43,7 @@ void CORERobot::teleop(){
 //		cout << "teleop " << (*it)->name() << endl;
 		(*it)->teleop();
 	}
+	CD.updateSD();
 }
 void CORERobot::teleopEnd(){
 	std::vector<CORESubsystem*>::iterator it;
@@ -49,6 +52,7 @@ void CORERobot::teleopEnd(){
 //		cout << "teleop " << (*it)->name() << endl;
 		(*it)->teleopEnd();
 	}
+	CD.updateSD();
 }
 
 std::string CORESubsystem::name(void){

@@ -51,6 +51,7 @@ void LiftSubsystem::setPID(double setPoint)
 }
 
 void LiftSubsystem::teleop(void){
+
 	beenSet = false;
 	toteHeight = SmartDashboard::GetNumber("toteHeight");
 	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");

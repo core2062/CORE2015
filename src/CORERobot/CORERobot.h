@@ -8,6 +8,7 @@
 #include "COREAuto.h"
 #include "COREDrive.h"
 #include "log.h"
+#include "COREDashboard.h"
 
 namespace CORE {
 
@@ -18,11 +19,13 @@ class CORERobot {
 public:
 	JoystickCache joystick;
 	OutLog outLog;
+	COREDash CD;
 	
 	CORERobot():
 		subsystems(),
 		joystick(),
-		outLog()
+		outLog(),
+		CD(outLog)
 	{}
 	
 	void add(CORESubsystem& subsystem);

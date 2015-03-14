@@ -9,7 +9,7 @@
 #define SUBSYSTEMS_H_
 #include "DriveSubsystem.h"
 #include "LiftSubsystem.h"
-
+#include"AuxiliarySubsystem.h"
 
 
 #endif /* SUBSYSTEMS_H_ */
