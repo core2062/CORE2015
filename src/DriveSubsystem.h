@@ -547,7 +547,7 @@ public:
 				drive->giveLog("ERROR IN PHOTO");
 				return END;
 			}
-			if (seen == 5){
+			if (seen == 2){
 				drive->giveLog("Tote Aligned");
 				return END;
 			}else{

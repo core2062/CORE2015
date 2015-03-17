@@ -342,7 +342,7 @@ public:
 				autoSeq.add_action(waitToSettle);
 				LiftAction binSlap_LiftDown4(lift, 100);
 				autoSeq.add_action(binSlap_LiftDown4);
-				DriveAction binSlap_Back(drive, -1.5, SmartDashboard::GetNumber("Small"));
+				DriveAction binSlap_Back(drive, -2, SmartDashboard::GetNumber("BinSlapDriveBack"));
 				autoSeq.add_action(binSlap_Back);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
