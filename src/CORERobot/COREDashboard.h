@@ -27,7 +27,12 @@ class COREDash{
 	public:
 		COREDash(OutLog& log):
 			outLog(log)
-	{}
+	{
+			names.push_back("test");
+			values.push_back(5);
+			types.push_back("num");
+
+	}
 
 	void putNum(std::string s, double value);
 

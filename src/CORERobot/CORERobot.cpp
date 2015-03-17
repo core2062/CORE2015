@@ -52,7 +52,7 @@ void CORERobot::teleopEnd(){
 //		cout << "teleop " << (*it)->name() << endl;
 		(*it)->teleopEnd();
 	}
-	CD.updateSD();
+//	CD.updateSD();
 }
 
 std::string CORESubsystem::name(void){

@@ -35,7 +35,8 @@ class DriveSubsystem: public CORESubsystem{
 	AnalogInput ultra;
 	AnalogInput jumper;
 	DigitalInput centerPhoto;
-	BuiltInAccelerometer accel;
+
+//	BuiltInAccelerometer accel;
 
 	DoubleSolenoid binPunch;
 
@@ -117,8 +118,8 @@ public:
 		ultra(2),
 		jumper(3),
 		centerPhoto(8),
-		accel(),
-		binPunch(0,1),
+//		accel(),
+		binPunch(1,0),
 		frontLeft(13),
 		backLeft(12),
 		frontRight(10),
@@ -321,7 +322,7 @@ public:
 		mult(mult)
 	{
 		rotation = 0;
-		seenNeed = (mult == 1)?1:3;
+		seenNeed = (mult == 2)?3:1;
 	}
 
 	void init(void){
@@ -341,6 +342,53 @@ public:
 				drive->giveLog("TurnAction Completed");
 				drive->mec_drive(0,0,0);
 				drive->resetRot();
+				drive->giveLog("Turn End");
+				drive->resetDistance();
+				return END;
+			}else{
+				return CONTINUE;
+			}
+		}else{
+			return CONTINUE;
+		}
+	}
+};
+
+class TurnActionNoReset : public Action{
+	DriveSubsystem* drive;
+	double degrees;
+	double rotation;
+	int mult;
+	int seen = 0;
+	int seenNeed;
+public:
+	std::string name = "Turn Action";
+	TurnActionNoReset(DriveSubsystem& drive, double degrees, int mult = 1):
+		drive(&drive),
+		degrees(degrees),
+		mult(mult)
+	{
+		rotation = 0;
+		seenNeed = (mult == 2)?3:1;
+	}
+
+	void init(void){
+//		drive->setVoltageMode();
+//		drive->resetRot();
+		drive->giveLog("Turn Init");
+		rotation = drive->getRot();
+	}
+	ControlFlow call(void){
+		drive->resetDistance();
+		rotation = drive->gyroPIDCalc(degrees,drive->getRot(),mult);
+		drive->mec_drive(0,0,rotation);
+		if (drive->getRot()>degrees-3.0 && drive->getRot()<degrees+3.0){
+			drive->giveLog("Target Hit");
+			seen++;
+			if (seen ==seenNeed){
+				drive->giveLog("TurnAction Completed");
+				drive->mec_drive(0,0,0);
+//				drive->resetRot();
 				drive->giveLog("Turn End");
 				drive->resetDistance();
 				return END;
@@ -384,10 +432,12 @@ class PhotoDriveAction : public Action{
 		double rotation = 0.0;
 		double maxDist;
 		int timeTicks = 0;
+		double speed;
 public:
-	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0):
+	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0, double speed = .9):
 		drive(&drive),
-		maxDist(maxDist)
+		maxDist(maxDist),
+		speed(speed)
 		{
 
 	}
@@ -417,7 +467,7 @@ public:
 //			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
 			return END;
 		}
-		drive->mec_drive(0,0.9,rotation);
+		drive->mec_drive(0,speed,rotation);
 		oldMidValue = drive->getMiddlePhoto();
 		oldRightValue = drive->getRightPhoto();
 		oldLeftValue = drive->getLeftPhoto();
@@ -458,6 +508,7 @@ class AlignAction: public Action{
 	bool leftPhotoVar = false;
 	double rotation = 0;
 	double strafe = .6;
+	int seen = 0;
 public:
 	std::string name = "Align Action";
 	AlignAction(DriveSubsystem& drive):
@@ -485,15 +536,22 @@ public:
 				drive->mec_drive(strafe,0,rotation);
 				return CONTINUE;
 			}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
-				strafe = 0;
-				drive->mec_drive(0,0,0);
-				drive->giveLog("Tote Aligned");
-				return END;
+				strafe = .5;
+				drive->mec_drive(0,0,rotation);
+				drive->giveLog("Tote Align Seen");
+				seen++;
+//				return CONTINUE;
 			}else /*if((!leftPhotoVar && !middlePhotoVar && !rightPhotoVar) || (leftPhotoVar && middlePhotoVar && rightPhotoVar))*/{
 				drive->mec_drive(0,0,0);
 				strafe = 0;
 				drive->giveLog("ERROR IN PHOTO");
 				return END;
+			}
+			if (seen == 5){
+				drive->giveLog("Tote Aligned");
+				return END;
+			}else{
+				return CONTINUE;
 			}
 
 
@@ -532,6 +590,25 @@ public:
 		}
 	}
 
+};
+
+class PuncherAction : public Action{
+	DriveSubsystem* drive;
+	DoubleSolenoid::Value val;
+public:
+	PuncherAction(DriveSubsystem& drive, DoubleSolenoid::Value v):
+		drive(&drive),
+		val(v)
+	{	}
+
+	void init(void){
+		drive->giveLog("Bin Slap");
+	}
+
+	ControlFlow call(void){
+		drive->punchSet(val);
+		return END;
+	}
 };
 
 

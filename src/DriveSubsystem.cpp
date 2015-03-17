@@ -29,6 +29,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("reset",1,3);
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
 	robot.joystick.register_button("centerDrive",1,1);
+	robot.joystick.register_button("punch",1,2,JoystickCache::RISING);
 	robot.joystick.joystick1.GetPOV();
 
 	timer.Start();
@@ -65,6 +66,13 @@ void DriveSubsystem::teleop(void){
 			SmartDashboard::GetNumber("BackRightIValue"),
 			SmartDashboard::GetNumber("BackRightDValue"),
 			SmartDashboard::GetNumber("BackRightFValue"));
+	}
+	if (robot.joystick.button("punch")){
+		if (binPunch.Get() == DoubleSolenoid::kReverse){
+			binPunch.Set(DoubleSolenoid::kForward);
+		}else{
+			binPunch.Set(DoubleSolenoid::kReverse);
+		}
 	}
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
@@ -107,8 +115,8 @@ void DriveSubsystem::teleop(void){
 
 	SmartDashboard::PutNumber("Ultra Dist", getUltra());
 
-	SmartDashboard::PutNumber("Accel X", accel.GetX());
-	SmartDashboard::PutNumber("Accel Y", accel.GetY());
+//	SmartDashboard::PutNumber("Accel X", accel.GetX());
+//	SmartDashboard::PutNumber("Accel Y", accel.GetY());
 
 
 //	SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
