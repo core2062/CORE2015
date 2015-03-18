@@ -166,12 +166,13 @@ public:
 		autoChooser.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
 		autoChooser.AddObject("One Tote", new std::string("One-Tote"));
 		autoChooser.AddObject("Bin Slap", new std::string("Bin-Slap"));
-		autoChooser.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
+//		autoChooser.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
 		autoChooser.AddObject("Two Tote", new std::string("Two-Tote"));
-		autoChooser.AddObject("Push Bin or Tote", new std::string("Push-to-Zone"));
-		autoChooser.AddObject("Three Tote No Bins",new std::string("Three-Tote-Norm"));
-		autoChooser.AddObject("Push Over", new std::string("Push-Over"));
+//		autoChooser.AddObject("Push Bin or Tote", new std::string("Push-to-Zone"));
+//		autoChooser.AddObject("Three Tote No Bins",new std::string("Three-Tote-Norm"));
+//		autoChooser.AddObject("Push Over", new std::string("Push-Over"));
 		autoChooser.AddObject("Two tote alt", new std::string("Two-Tote-Alt"));
+		autoChooser.AddObject("Do Nothing", new std::string("Do-Nothing"));
 
 		SmartDashboard::PutData("auto-choose", &autoChooser);
 
@@ -615,7 +616,6 @@ public:
 					}
 					timeVal.Reset();
 				}
-
 			}else{
 				std::cout<<"Bad auto type"<<std::endl;
 			}
