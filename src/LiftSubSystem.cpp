@@ -43,7 +43,7 @@ void LiftSubsystem::setPID(double setPoint)
 			liftMotor.SelectProfileSlot(1);
 			liftMotor.SetPID(Pd, Id, Dd);
 			liftMotor.SetControlMode(CANSpeedController::kPosition);
-			liftMotor.SetSensorDirection(true);
+//			liftMotor.SetSensorDirection(true);
 		}
 		liftMotor.SelectProfileSlot((liftMotor.GetEncPosition() >= setPoint) ? 1 : 0);
 		liftMotor.Set(setPoint);

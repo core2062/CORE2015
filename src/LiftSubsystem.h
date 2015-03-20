@@ -95,7 +95,7 @@ public:
 		liftMotor.Set(0.0);
 		liftMotor.SetSafetyEnabled(false);
 		liftMotor.SetExpiration(0.125);
-		liftMotor.SetSensorDirection(true);
+//		liftMotor.SetSensorDirection(true);
 	}
 
 	void robotInit(void);

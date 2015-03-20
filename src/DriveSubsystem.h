@@ -369,7 +369,7 @@ public:
 		mult(mult)
 	{
 		rotation = 0;
-		seenNeed = (mult == 2)?3:1;
+		seenNeed = 1;
 	}
 
 	void init(void){
@@ -397,6 +397,37 @@ public:
 			}
 		}else{
 			return CONTINUE;
+		}
+	}
+};
+
+class TurnSettleAction : public WaitAction{
+	DriveSubsystem* drive;
+	double rotation = 0;
+public:
+	std::string name = "Turn Action";
+	TurnSettleAction(DriveSubsystem& drive, double time):
+		WaitAction(time),
+		drive(&drive)
+	{
+	}
+
+	void init(void){
+//		drive->setVoltageMode();
+//		drive->resetRot();
+		drive->giveLog("Turn Init");
+		rotation = drive->getRot();
+	}
+	ControlFlow call(void){
+		drive->resetDistance();
+		rotation = drive->gyroPIDCalc(0,drive->getRot());
+		ControlFlow flow = WaitAction::call();
+		if (flow == CONTINUE){
+			drive->mec_drive(0,0,rotation);
+			return CONTINUE;
+		} else {
+			drive->mec_drive(0,0,0);
+			return END;
 		}
 	}
 };
@@ -454,7 +485,9 @@ public:
 			return END;
 		}else if((!oldRightValue && drive->getRightPhoto()) || (!oldLeftValue && drive->getLeftPhoto())){
 			drive->robot.outLog.throwLog("PHOTO SIDE SEEN");
-			sideTicks = 3;
+			if (sideTicks<0){
+				sideTicks = 1;
+			}
 			return CONTINUE;
 		}else if (sideTicks == 0){
 			drive->mec_drive(0,0,0);
