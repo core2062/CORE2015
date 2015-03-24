@@ -139,7 +139,7 @@ public:
 
 
 
-		SmartDashboard::PutNumber("TTBinSlapDrive-To-Autozone", 19000);
+		SmartDashboard::PutNumber("TTBinSlapDrive-To-Autozone", 21000);
 
 
 		//Two Tote Alt
