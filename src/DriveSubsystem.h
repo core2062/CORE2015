@@ -20,9 +20,13 @@ class DriveSubsystem: public CORESubsystem{
 	Gyro gyro;
 	Timer timer;
 	Timer gyroTimer;
-	Timer ultraTimer;
-	double ultraTime = 0.0;
+	Timer leftUltraTimer;
+	Timer rightUltraTimer;
+	Timer feederAlignTimer;
+	double leftUltraTime = 0.0;
+	double rightUltraTime = 0.0;
 	double gyroTime = 0.0;
+	double feederAlignTime = 0.0;
 	bool oldCenter = false;
 	
 
@@ -32,9 +36,15 @@ class DriveSubsystem: public CORESubsystem{
 	DigitalInput topLeftPhoto;
 	DigitalInput topMiddlePhoto;
 	DigitalInput topRightPhoto;
-	AnalogInput ultra;
+	AnalogInput leftUltra;
+	AnalogInput rightUltra;
+	AnalogInput leftFeederAlignUltra;
+	AnalogInput rightFeederAlignUltra;
 	AnalogInput jumper;
 	DigitalInput centerPhoto;
+
+
+	SendableChooser feederStationChooser;
 
 //	BuiltInAccelerometer accel;
 
@@ -47,6 +57,8 @@ class DriveSubsystem: public CORESubsystem{
 	float ultrasonicValue = 0.0;
 	float drive_rotation = 0.0;
 	float drive_y = 0.0;
+	float drive_left_y = 0.0;
+	float drive_right_y = 0.0;
 	float centerDrivePower = 0.0;
 	float frontLeftSet = 0.0;
 	float frontRightSet = 0.0;
@@ -57,7 +69,6 @@ class DriveSubsystem: public CORESubsystem{
 	int oldFrontLeft = 0;
 	int oldBackRight = 0;
 	int oldBackLeft = 0;
-	bool ultraCalculated = false;
 	bool isTested = false;
 	bool isBroken = true;
 	bool switchEncoderMode = false;
@@ -78,27 +89,30 @@ class DriveSubsystem: public CORESubsystem{
 	bool oldCenterPhoto = false;
 	int centerDirection = 1;
 	bool oldCenterButton = true;
+	bool rightFeederStation = true;
 
 	double alignPowerLeft = -.5;
 	double alignPowerRight = .5;
 
 	struct{
-		double P = 0.1;
-		double I = 0.001;
+		double P = 0.0;
+		double I = 0.0;
 		double D = 0.0;
 		double mistake;
 		double actualPosition;
 		double lastError;
-		double integral =0.0;
+		double integral = 0.0;
 		double derivative;
 		double setPoint = 0.0;
 		bool enabled = false;
-		}gyroPID, ultraPID;
+		}gyroPID, leftUltraPID, rightUltraPID, feederAlignPID;
 
 public:
 		bool alignTwo = false;
 		bool alignOne = false;
-		bool ultraDistCorrect = false;
+		bool leftUltraDistCorrect = false;
+		bool rightUltraDistCorrect = false;
+		bool feederAlignUltraDistCorrect = false;
 		bool ultraCenter = false;
 		// Drive Motors
 		CANTalon frontLeft;
@@ -115,7 +129,10 @@ public:
 		topLeftPhoto(5),
 		topMiddlePhoto(6),
 		topRightPhoto(7),
-		ultra(2),
+		leftUltra(2),
+		rightUltra(-1),
+		leftFeederAlignUltra(-1),
+		rightFeederAlignUltra(-1),
 		jumper(3),
 		centerPhoto(8),
 //		accel(),
@@ -149,6 +166,11 @@ public:
 			backLeft.SetSensorDirection(true);
 			frontRight.SetSensorDirection(true);
 			backRight.SetSensorDirection(true);
+
+			//UltraSonic Values
+			feederStationChooser.AddObject("Right Feeder Station", new std::string("right"));
+			feederStationChooser.AddObject("Left Feeder Station", new std::string("left"));
+			SmartDashboard::PutData("feederStation", &feederStationChooser);
 		}
 	void robotInit(void);
 	// Called before loop at start of Teleop period
@@ -157,7 +179,10 @@ public:
 	void teleop(void);
 	//Main teleop code
 
-	float getUltra(void);
+	float getJumper(void);
+	float getLeftUltra(void);
+	float getRightUltra(void);
+	float getFeederAlignUltra(void);
 	void teleopEnd(void);
 	double getDistance(void);
 	void resetDistance(void);
@@ -561,11 +586,11 @@ public:
 
 			//different cases
 			if (leftPhotoVar && !rightPhotoVar){
-				strafe += .05;
+//				strafe += .05;
 				drive->mec_drive(-strafe,0,rotation);
 				return CONTINUE;
 			}else if (!leftPhotoVar && rightPhotoVar){
-				strafe += .05;
+//				strafe += .05;
 				drive->mec_drive(strafe,0,rotation);
 				return CONTINUE;
 			}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){

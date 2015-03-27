@@ -5,6 +5,7 @@ const double MOTORUPDATEFREQUENCY = 0.005;
 
 using namespace CORE;
 
+
 class CORE2015: public SampleRobot {
 	CORERobot robot;
 	DriveSubsystem drive;
@@ -73,13 +74,23 @@ public:
 
 
 
-		//UltraSonic Values
-		SmartDashboard::PutNumber("ultraPValue",0.075);
-		SmartDashboard::PutNumber("ultraIValue",0.0);
-		SmartDashboard::PutNumber("ultraDValue",0.0);
-		SmartDashboard::PutNumber("ultraSetPoint", 26.0);
-		SmartDashboard::PutNumber("ultraVConst", 4.84);
+
+		//left side
+		SmartDashboard::PutNumber("leftUltraPValue",0.075);
+		SmartDashboard::PutNumber("leftUltraIValue",0.0);
+		SmartDashboard::PutNumber("leftUltraDValue",0.0);
+		SmartDashboard::PutNumber("leftUltraSetPoint", 26.0);
 		SmartDashboard::PutNumber("CenterSpeed",1.0);
+		//right side
+		SmartDashboard::PutNumber("rightUltraPValue",0.075);
+		SmartDashboard::PutNumber("rightUltraIValue",0.0);
+		SmartDashboard::PutNumber("rightUltraDValue",0.0);
+		SmartDashboard::PutNumber("rightUltraSetPoint", 26.0);
+
+		SmartDashboard::PutNumber("feederAlignUltraPValue",0.075);
+		SmartDashboard::PutNumber("feederAlignUltraIValue",0.0);
+		SmartDashboard::PutNumber("feederAlignUltraDValue",0.0);
+		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 26.0);
 
 		//Tote Heights
 		SmartDashboard::PutNumber("toteHeight", 7200.0);
