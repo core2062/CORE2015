@@ -33,6 +33,11 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("feederStationAlign",1,6);
 	robot.joystick.joystick1.GetPOV();
 
+	//UltraSonic Values
+//	feederStationChooser.AddDefault("Right Feeder Station", new std::string("right"));
+//	feederStationChooser.AddObject("Left Feeder Station", new std::string("left"));
+//	SmartDashboard::PutData("feederStation", &feederStationChooser);
+
 	timer.Start();
 	gyroTimer.Start();
 	gyroTimer.Reset();
@@ -59,15 +64,15 @@ float DriveSubsystem::getRightUltra(void)
 }
 float DriveSubsystem::getFeederAlignUltra(void)
 {
-	float currentGyroVoltage;
-	std::string choice = *(std::string*) feederStationChooser.GetSelected();
-	if(choice == "right") {
-		currentGyroVoltage = rightFeederAlignUltra.GetVoltage();
+	float currentUltraVoltage;
+//	std::string choice = *(std::string*) feederStationChooser.GetSelected();
+	if(!SmartDashboard::GetBoolean("LeftSideFeeder")){
+		currentUltraVoltage = rightFeederAlignUltra.GetVoltage();
 	}
 	else {
-		currentGyroVoltage = leftFeederAlignUltra.GetVoltage();
+		currentUltraVoltage = leftFeederAlignUltra.GetVoltage();
 	}
-	return ((1000.0 * currentGyroVoltage) / ((getJumper() * 1000.0) / ultraVoltageScale));
+	return ((1000.0 * currentUltraVoltage) / ((getJumper() * 1000.0) / ultraVoltageScale));
 }
 void DriveSubsystem::teleop(void){
 
@@ -97,6 +102,7 @@ void DriveSubsystem::teleop(void){
 			binPunch.Set(DoubleSolenoid::kReverse);
 		}
 	}
+SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
 	double gyroRate = gyro.GetAngle();
@@ -437,11 +443,6 @@ void DriveSubsystem::teleop(void){
 
 
 
-		if(flag == false){
-			robot.outLog.throwLog("set to voltage");
-			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
-			flag = true;
-		}
 
 		// Drive modes
 		//robot.outLog.throwLog("drive motor norm");

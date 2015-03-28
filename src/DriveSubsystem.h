@@ -42,14 +42,9 @@ class DriveSubsystem: public CORESubsystem{
 	AnalogInput rightFeederAlignUltra;
 	AnalogInput jumper;
 	DigitalInput centerPhoto;
-
-
-	SendableChooser feederStationChooser;
-
-//	BuiltInAccelerometer accel;
-
 	DoubleSolenoid binPunch;
 
+//	SendableChooser feederStationChooser;
 
 	float drive_x = 0.0;
 	float ultraVoltageScale = (1024.0 / 2.54); //403.1496
@@ -72,7 +67,6 @@ class DriveSubsystem: public CORESubsystem{
 	bool isTested = false;
 	bool isBroken = true;
 	bool switchEncoderMode = false;
-	bool flag = false;
 	bool shoulderSpeed = false;
 	bool oldRot = 0.0;
 	int resetQ = 0;
@@ -114,11 +108,13 @@ public:
 		bool rightUltraDistCorrect = false;
 		bool feederAlignUltraDistCorrect = false;
 		bool ultraCenter = false;
+
 		// Drive Motors
 		CANTalon frontLeft;
 		CANTalon backLeft;
 		CANTalon frontRight;
 		CANTalon backRight;
+
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
@@ -135,7 +131,6 @@ public:
 		rightFeederAlignUltra(-1),
 		jumper(3),
 		centerPhoto(8),
-//		accel(),
 		binPunch(1,0),
 		frontLeft(13),
 		backLeft(12),
@@ -152,7 +147,7 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-			gyro.SetDeadband(0.007); //TODO .005 on main bot tried .007
+			gyro.SetDeadband(0.007);
 			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
@@ -161,23 +156,15 @@ public:
 			backLeft.ConfigEncoderCodesPerRev(1024);
 			frontRight.ConfigEncoderCodesPerRev(1024);
 			backRight.ConfigEncoderCodesPerRev(1024);
-
 			frontLeft.SetSensorDirection(true);
 			backLeft.SetSensorDirection(true);
 			frontRight.SetSensorDirection(true);
 			backRight.SetSensorDirection(true);
-
-			//UltraSonic Values
-			feederStationChooser.AddObject("Right Feeder Station", new std::string("right"));
-			feederStationChooser.AddObject("Left Feeder Station", new std::string("left"));
-			SmartDashboard::PutData("feederStation", &feederStationChooser);
 		}
+
 	void robotInit(void);
-	// Called before loop at start of Teleop period
 	void teleopInit(void);
-	//Called sequentially during loop, interleaved with other subsystems
 	void teleop(void);
-	//Main teleop code
 
 	float getJumper(void);
 	float getLeftUltra(void);
@@ -234,6 +221,83 @@ public:
 		countTime = 0;
 	}
 	ControlFlow call(void){
+//		drive->frontLeft.SetSafetyEnabled(true);
+//		drive->frontLeft.Set(1.0);
+//		drive->giveLog("drive action iter");
+		rotation = drive->getRot();
+//		drive->giveLog("rot gotten");
+		rotation = drive->gyroPIDCalc(0, rotation);
+//		drive->giveLog("pid calced");
+		currentDistance = drive->getDistance();
+//		drive->robot.outLog.throwLog(currentDistance);
+//		drive->giveLog("dist got");
+		countTime++;
+		if(targetDistance>=0){
+			if(currentDistance<=targetDistance){
+//				drive->giveLog("set1");
+				drive->mec_drive(0,speed,rotation);
+//				drive->robot.outLog.throwLog(speed);
+//				drive->robot.outLog.throwLog(rotation);
+//				drive->giveLog("cont");
+				return CONTINUE;
+			}else if (countTime >3){
+				drive->mec_drive(0,0,0);
+				drive->giveLog("DriveAction Completed");
+				drive->robot.outLog.throwLog("Strafe end Enc:", drive->getDistance());
+				return END;
+			}else{
+				return CONTINUE;
+			}
+		}else{
+			if(currentDistance>=targetDistance){
+//				drive->giveLog("set2");
+				drive->mec_drive(0,speed,rotation);
+				drive->giveLog("cont");
+				return CONTINUE;
+			}else if (countTime >3){
+				drive->mec_drive(0,0,0);
+				drive->giveLog("DriveAction Completed");
+				return END;
+			}else{
+				return CONTINUE;
+			}
+		}
+
+	}
+};
+
+class DriveRampAction : public Action{
+	DriveSubsystem* drive;
+	double speed = 0;
+	double targetSpeed;
+	double targetDistance;
+	double currentDistance = 0.0;
+	double rotation = 0.0;
+	int countTime = 0;
+	double rampTime;
+public:
+	std::string name = "Drive Action";
+	DriveRampAction(DriveSubsystem& drive, double Tspeed, double targetDistance, double rampTime = 1):
+		drive(&drive),
+		targetSpeed(Tspeed),
+		targetDistance(targetDistance),
+		rampTime(rampTime){
+
+	}
+	void init(void){
+		drive->giveLog("drive action init");
+//		drive->setVoltageMode();
+		drive->resetDistance();
+		currentDistance = drive->getDistance();
+
+//		drive->resetRot();
+		rotation = drive->getRot();
+		countTime = 0;
+	}
+	ControlFlow call(void){
+		if (speed<targetSpeed){
+			speed+=(targetSpeed/(rampTime*10.0));
+		}
 //		drive->frontLeft.SetSafetyEnabled(true);
 //		drive->frontLeft.Set(1.0);
 //		drive->giveLog("drive action iter");
