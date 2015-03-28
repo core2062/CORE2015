@@ -388,7 +388,7 @@ public:
 
 				LiftAction binSlap_LiftUp(lift, SmartDashboard::GetNumber("OverToteHeight"), true);
 				autoSeq.add_action(binSlap_LiftUp);
-				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"));
+				DriveRampAction binSlap_MediumDriveForward(drive, 2.0, SmartDashboard::GetNumber("BinSlapMediumDriveForward"), 5.0);
 				autoSeq.add_action(binSlap_MediumDriveForward);
 //				WaitAction waitOne(.5);
 //				autoSeq.add_action(waitOne);

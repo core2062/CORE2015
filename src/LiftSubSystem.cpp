@@ -79,9 +79,9 @@ void LiftSubsystem::teleop(void){
 
 
 	if (liftMotor.GetStickyFaults() != 0){
-		robot.outLog.throwLog("Lift Flag");
-		robot.outLog.throwLog(liftMotor.GetStickyFaults());
-		liftMotor.Get();
+//		robot.outLog.throwLog("Lift Flag");
+//		robot.outLog.throwLog(liftMotor.GetStickyFaults());
+//		liftMotor.Get();
 	}
 	if (robot.joystick.button("stack")){
 		switch (stack.state){

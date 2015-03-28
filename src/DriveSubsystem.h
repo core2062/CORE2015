@@ -277,7 +277,7 @@ class DriveRampAction : public Action{
 	double rampTime;
 public:
 	std::string name = "Drive Action";
-	DriveRampAction(DriveSubsystem& drive, double Tspeed, double targetDistance, double rampTime = 1):
+	DriveRampAction(DriveSubsystem& drive, double Tspeed, double targetDistance, double rampTime = 1.0):
 		drive(&drive),
 		targetSpeed(Tspeed),
 		targetDistance(targetDistance),
@@ -569,32 +569,38 @@ public:
 	ControlFlow call(void){
 		rotation = drive->gyroPIDCalc(0,drive->getRot());
 		if(!oldMidValue && drive->getMiddlePhoto()){
-			drive->mec_drive(0,0,0);
-			drive->giveLog("PhotoDriveAction Complete");
-			return END;
+			drive->robot.outLog.throwLog("PHOTO MIDDLE SEEN");
+			if (sideTicks<0){
+				sideTicks = 3;
+			}
+//			return CONTINUE;
 		}else if((!oldRightValue && drive->getRightPhoto()) || (!oldLeftValue && drive->getLeftPhoto())){
 			drive->robot.outLog.throwLog("PHOTO SIDE SEEN");
 			if (sideTicks<0){
-				sideTicks = 1;
+				sideTicks = 4;
 			}
-			return CONTINUE;
-		}else if (sideTicks == 0){
+//			return CONTINUE;
+
+		}
+		drive->mec_drive(0,speed,rotation);
+		oldMidValue = drive->getMiddlePhoto();
+		oldRightValue = drive->getRightPhoto();
+		oldLeftValue = drive->getLeftPhoto();
+		timeTicks++;
+		if (sideTicks == 0){
 			drive->mec_drive(0,0,0);
-			drive->robot.outLog.throwLog("PHOTO SIDE SEEN STOP", drive->getDistance());
+			drive->robot.outLog.throwLog("PHOTO SEEN STOP", drive->getDistance());
 //			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
 			return END;
+			drive->robot.outLog.throwLog("You should never see this");
 		}else if (drive->getDistance()>maxDist && timeTicks >7){
 			drive->mec_drive(0,0,0);
 			drive->robot.outLog.throwLog("PHOTO MAX DIST", drive->getDistance());
 //			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
 			return END;
 		}
-		drive->mec_drive(0,speed,rotation);
-		oldMidValue = drive->getMiddlePhoto();
-		oldRightValue = drive->getRightPhoto();
-		oldLeftValue = drive->getLeftPhoto();
 		sideTicks--;
-		timeTicks++;
+
 		return CONTINUE;
 	}
 };
@@ -637,7 +643,7 @@ public:
 		drive(&drive)
 		{}
 	void init(void){
-
+		drive->robot.outLog.throwLog("Align Init");
 	}
 	ControlFlow call(void){
 			rotation = drive->getRot();
