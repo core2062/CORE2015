@@ -26,10 +26,10 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("shoulderSpeed", 1, 5);
 	robot.joystick.register_button("lift_align",1,7);
 	robot.joystick.register_button("top_lift_align",1,8);
-	robot.joystick.register_button("reset",1,3);
+	robot.joystick.register_button("rotate",1,3);
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
 	robot.joystick.register_button("centerDrive",1,1);
-	robot.joystick.register_button("punch",1,2,JoystickCache::RISING);
+	robot.joystick.register_button("punch",1,10,JoystickCache::RISING);
 	robot.joystick.register_button("feederStationAlign",1,6);
 	robot.joystick.joystick1.GetPOV();
 
@@ -49,6 +49,13 @@ void DriveSubsystem::teleopInit(void){
 	feederAlignTimer.Reset();
 	gyro.Reset();
 }
+void DriveSubsystem::Pulse(){
+	ultraPulse.SetVoltage(5.0);
+	Wait(.00002);
+	ultraPulse.SetVoltage(0.0);
+}
+
+
 float DriveSubsystem::getJumper(void)
 {
 	//Get Constant From Smart Dashboard
@@ -56,14 +63,23 @@ float DriveSubsystem::getJumper(void)
 }
 float DriveSubsystem::getLeftUltra(void)
 {
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
 	return ((1000.0 * leftUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
 }
 float DriveSubsystem::getRightUltra(void)
 {
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
 	return ((1000.0 * rightUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
 }
 float DriveSubsystem::getFeederAlignUltra(void)
 {
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
 	float currentUltraVoltage;
 //	std::string choice = *(std::string*) feederStationChooser.GetSelected();
 	if(!SmartDashboard::GetBoolean("LeftSideFeeder")){
@@ -106,9 +122,17 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
 	double gyroRate = gyro.GetAngle();
-	if (robot.joystick.button("reset")){
+/*	if (robot.joystick.button("reset")){
+
+		Pulse();
 		resetDistance();
 	}
+*/
+		SmartDashboard::PutNumber("Left Ultra Dist", getLeftUltra());
+		SmartDashboard::PutNumber("Right Ultra Dist", getRightUltra());
+		SmartDashboard::PutNumber("Feeder Ultra Dist", getFeederAlignUltra());
+
+
 	simple = SmartDashboard::GetBoolean("SimpleDrive");
 	gyro.SetDeadband(SmartDashboard::GetNumber("gyroDead"));
 //	if (gyroRate>-2 && gyroRate<2){
@@ -141,10 +165,9 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	SmartDashboard::PutNumber("BLV", backLeft.GetEncVel());
 	SmartDashboard::PutNumber("BRV", backRight.GetEncVel());
 
-	SmartDashboard::PutNumber("Ultra Dist", getLeftUltra());
-	SmartDashboard::PutNumber("Right Ultra Dist", getRightUltra());
 //	SmartDashboard::PutNumber("Accel X", accel.GetX());
 //	SmartDashboard::PutNumber("Accel Y", accel.GetY());
+	SmartDashboard::PutNumber("Jumper Voltage", getJumper());
 
 
 //	SmartDashboard::PutBoolean("Tote align", robot.joystick.button("lift_align"));
@@ -225,66 +248,109 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	}
 
 
-	if ((drive_rotation == 0) && (oldRot != 0.0)){
-		resetQ = 6;
-	}
-	if (resetQ != 0){
-		if (resetQ == 3){
-			gyro.Reset();
-		}
-		resetQ--;
-	}
-	oldRot = drive_rotation;
-
-	//Gyro PID
-		if((drive_rotation==0.0 && resetQ == 0 && !SmartDashboard::GetBoolean("disableGyro"))){
-			gyroTime = gyroTimer.Get();
-			gyroPID.mistake =  gyroPID.setPoint - gyroRate;
-//			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
-			gyroPID.integral += (gyroPID.mistake *gyroTime);
-			gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
-			double gyroOutput = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
-//			SmartDashboard::PutNumber("Gyro PID Out before", gyroOutput);
-			gyroOutput = gyroOutput > 1.0 ? 1.0 : (gyroOutput < -1.0 ? -1.0 : gyroOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_rotation = gyroOutput;
-			gyroPID.lastError = gyroPID.mistake;
-//			SmartDashboard::PutNumber("Gyro PID Out", gyroOutput);
-			gyroTimer.Reset();
-		}
 
 
+//TODO Tune
 	//Ultrasonic PID
 		if((robot.joystick.button("ultra") || leftUltraDistCorrect) && drive_y ==0) {
-			leftUltraTime = leftUltraTimer.Get();
-			leftUltraPID.mistake =  leftUltraPID.setPoint - getLeftUltra();
-//			SmartDashboard::PutNumber("Ultra PID Error", ultraPID.mistake);
-			leftUltraPID.integral += (leftUltraPID.mistake *leftUltraTime);
-			leftUltraPID.derivative = (leftUltraPID.mistake - leftUltraPID.lastError)/leftUltraTime;
-			double leftUltraOutput = (leftUltraPID.P*leftUltraPID.mistake) + (leftUltraPID.I*leftUltraPID.integral) + (leftUltraPID.D*leftUltraPID.derivative);
-//			SmartDashboard::PutNumber("Ultra PID Out before", ultraOutput);
-			leftUltraOutput = leftUltraOutput > 1.0 ? 1.0 : (leftUltraOutput < -1.0 ? -1.0 : leftUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_left_y = -leftUltraOutput;
-			leftUltraPID.lastError = leftUltraPID.mistake;
-//			SmartDashboard::PutNumber("Ultra PID Out", ultraOutput);
-			leftUltraTimer.Reset();
-			leftUltraDistCorrect = (leftUltraOutput > -.05 && leftUltraOutput < .05)?false:leftUltraDistCorrect;
+			leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+			if(leftUltraPID.actualPosition>70){
+				drive_y = 1.0;
+			}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
+				drive_y = .6;
+			}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+10){
+				drive_y = .45;
+			}else if (leftUltraPID.actualPosition >leftUltraPID.setPoint+5){
+				drive_y = .25;
+			}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+.5){
+				drive_y = .2;
+			}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint-.5){
+				drive_y = 0;
+			}else if (leftUltraPID.actualPosition > leftUltraPID.setPoint-5){
+				drive_y = -.2;
+			}
+//			leftUltraTime = leftUltraTimer.Get();
+//			leftUltraPID.mistake =  leftUltraPID.setPoint - (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+////			SmartDashboard::PutNumber("Ultra PID Error", ultraPID.mistake);
+//			leftUltraPID.integral += (leftUltraPID.mistake *leftUltraTime);
+//			leftUltraPID.derivative = (leftUltraPID.mistake - leftUltraPID.lastError)/leftUltraTime;
+//			double leftUltraOutput = (leftUltraPID.P*leftUltraPID.mistake) + (leftUltraPID.I*leftUltraPID.integral) + (leftUltraPID.D*leftUltraPID.derivative);
+////			SmartDashboard::PutNumber("Ultra PID Out before", ultraOutput);
+//			leftUltraOutput = leftUltraOutput > 1.0 ? 1.0 : (leftUltraOutput < -1.0 ? -1.0 : leftUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+//			drive_left_y = -leftUltraOutput;
+//			leftUltraPID.lastError = leftUltraPID.mistake;
+////			SmartDashboard::PutNumber("Ultra PID Out", ultraOutput);
+//			leftUltraTimer.Reset();
+//			leftUltraDistCorrect = (leftUltraOutput > -.05 && leftUltraOutput < .05)?false:leftUltraDistCorrect;
+			leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+//			rightUltraPID.actualPosition = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+//			if(rightUltraPID.actualPosition>70){
+//				drive_right_y = 1.0;
+//			}else if (rightUltraPID.actualPosition>50){
+//				drive_right_y = .7;
+//			}else if (rightUltraPID.actualPosition>40){
+//				drive_right_y = .6;
+//			}else if (rightUltraPID.actualPosition >35){
+//				drive_right_y = .5;
+//			}else if (rightUltraPID.actualPosition>31){
+//				drive_right_y = .4;
+//			}else if (rightUltraPID.actualPosition>29){
+//				drive_right_y = 0;
+//			}else if (rightUltraPID.actualPosition > 25){
+//				drive_right_y = -.4;
+//			}
+//			//Right side code
+//			rightUltraTime = rightUltraTimer.Get();
+//			rightUltraPID.mistake =  rightUltraPID.setPoint - (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+////			SmartDashboard::PutNumber("Ultra PID Error", rightUltraPID.mistake);
+//			rightUltraPID.integral += (rightUltraPID.mistake *rightUltraTime);
+//			rightUltraPID.derivative = (rightUltraPID.mistake - rightUltraPID.lastError)/rightUltraTime;
+//			double rightUltraOutput = (rightUltraPID.P*rightUltraPID.mistake) + (rightUltraPID.I*rightUltraPID.integral) + (rightUltraPID.D*rightUltraPID.derivative);
+////			SmartDashboard::PutNumber("Ultra PID Out before", rightUltraOutput);
+//			rightUltraOutput = rightUltraOutput > 1.0 ? 1.0 : (rightUltraOutput < -1.0 ? -1.0 : rightUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+//			drive_right_y = -rightUltraOutput;
+//			rightUltraPID.lastError = rightUltraPID.mistake;
+////			SmartDashboard::PutNumber("Ultra PID Out", rightUltraOutput);
+//			rightUltraTimer.Reset();
+//			rightUltraDistCorrect = (rightUltraOutput > -.05 && rightUltraOutput < .05)?false:rightUltraDistCorrect;
+//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
 
-			//Right side code
-			rightUltraTime = rightUltraTimer.Get();
-			rightUltraPID.mistake =  rightUltraPID.setPoint - getRightUltra();
-//			SmartDashboard::PutNumber("Ultra PID Error", rightUltraPID.mistake);
-			rightUltraPID.integral += (rightUltraPID.mistake *rightUltraTime);
-			rightUltraPID.derivative = (rightUltraPID.mistake - rightUltraPID.lastError)/rightUltraTime;
-			double rightUltraOutput = (rightUltraPID.P*rightUltraPID.mistake) + (rightUltraPID.I*rightUltraPID.integral) + (rightUltraPID.D*rightUltraPID.derivative);
-//			SmartDashboard::PutNumber("Ultra PID Out before", rightUltraOutput);
-			rightUltraOutput = rightUltraOutput > 1.0 ? 1.0 : (rightUltraOutput < -1.0 ? -1.0 : rightUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_right_y = -rightUltraOutput;
-			rightUltraPID.lastError = rightUltraPID.mistake;
-//			SmartDashboard::PutNumber("Ultra PID Out", rightUltraOutput);
-			rightUltraTimer.Reset();
-			rightUltraDistCorrect = (rightUltraOutput > -.05 && rightUltraOutput < .05)?false:rightUltraDistCorrect;
+
 		}
-		if((robot.joystick.button("feederStationAlign") || feederAlignUltraDistCorrect) && drive_x ==0) {
+		//TODO Tune
+		//Ultrasonic PID
+			if((robot.joystick.button("rotate")) && drive_rotation == 0) {
+				double error = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue)-(getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+				if(error>5.0){
+					drive_rotation = .6;
+				}else if (error>3){
+					drive_rotation = .5;
+				}else if (error>2){
+					drive_rotation = .4;
+				}else if (error >1){
+					drive_rotation = .3;
+				}else if (error>-1){
+					drive_rotation = 0;
+				}else if (error>-2){
+					drive_rotation = -.3;
+				}else if (error> -3){
+					drive_rotation = -.4;
+				}else if (error > -5){
+					drive_rotation = -.5;
+				}else if (error <=-5){
+					drive_rotation = -.6;
+				}else{
+					robot.outLog.throwLog("No value for turning to align to feeder station!");
+					drive_rotation = 0;
+				}
+
+				leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+				rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+
+
+			}
+			//TODO Tune
+		if((robot.joystick.button("centerDrive") || feederAlignUltraDistCorrect) && drive_x ==0) {
 			feederAlignTime = feederAlignTimer.Get();
 			feederAlignPID.mistake =  feederAlignPID.setPoint - getFeederAlignUltra();
 //			SmartDashboard::PutNumber("Ultra PID Error", rightUltraPID.mistake);
@@ -300,7 +366,34 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 			feederAlignUltraDistCorrect = (feederAlignOutput > -.05 && feederAlignOutput < .05)?false:feederAlignUltraDistCorrect;
 		}
 
-		//Center to Human Player Station
+		if ((drive_rotation == 0) && (oldRot != 0.0)){
+			resetQ = 6;
+		}
+		if (resetQ != 0){
+			if (resetQ == 3){
+				gyro.Reset();
+			}
+			resetQ--;
+		}
+		oldRot = drive_rotation;
+
+		//Gyro PID
+			if((drive_rotation==0.0 && resetQ == 0 && !SmartDashboard::GetBoolean("disableGyro"))){
+				gyroTime = gyroTimer.Get();
+				gyroPID.mistake =  gyroPID.setPoint - gyroRate;
+	//			SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
+				gyroPID.integral += (gyroPID.mistake *gyroTime);
+				gyroPID.derivative = (gyroPID.mistake - gyroPID.lastError)/gyroTime;
+				double gyroOutput = (gyroPID.P*gyroPID.mistake) + (gyroPID.I*gyroPID.integral) + (gyroPID.D*gyroPID.derivative);
+	//			SmartDashboard::PutNumber("Gyro PID Out before", gyroOutput);
+				gyroOutput = gyroOutput > 1.0 ? 1.0 : (gyroOutput < -1.0 ? -1.0 : gyroOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
+				drive_rotation = gyroOutput;
+				gyroPID.lastError = gyroPID.mistake;
+	//			SmartDashboard::PutNumber("Gyro PID Out", gyroOutput);
+				gyroTimer.Reset();
+			}
+
+/*		//Center to Human Player Station
 		if((robot.joystick.button("centerDrive")) && drive_x == 0.0) {
 			if (!oldCenterButton){
 				centerDrivePower = SmartDashboard::GetNumber("CenterSpeed");
@@ -328,7 +421,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 			targetSeen = false;
 		}
 		oldCenterPhoto = centerPhoto.Get();
-		oldCenterButton = robot.joystick.button("centerDrive");
+		oldCenterButton = robot.joystick.button("centerDrive");*/
 		//Bottom Tote Alignment
 			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
@@ -456,7 +549,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
 			}
 		/// RIP simplicity
-		if (!robot.joystick.button("ultra")){
+		if (/*!robot.joystick.button("ultra")*/true){
 			if(shoulderSpeed){
 				frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation));
 				frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation));

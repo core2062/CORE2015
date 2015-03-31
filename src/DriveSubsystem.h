@@ -41,6 +41,7 @@ class DriveSubsystem: public CORESubsystem{
 	AnalogInput leftFeederAlignUltra;
 	AnalogInput rightFeederAlignUltra;
 	AnalogInput jumper;
+	AnalogOutput ultraPulse;
 	DigitalInput centerPhoto;
 	DoubleSolenoid binPunch;
 
@@ -99,6 +100,7 @@ class DriveSubsystem: public CORESubsystem{
 		double derivative;
 		double setPoint = 0.0;
 		bool enabled = false;
+		double lastValue = 25.0;
 		}gyroPID, leftUltraPID, rightUltraPID, feederAlignPID;
 
 public:
@@ -125,11 +127,12 @@ public:
 		topLeftPhoto(5),
 		topMiddlePhoto(6),
 		topRightPhoto(7),
-		leftUltra(2),
-		rightUltra(-1),
-		leftFeederAlignUltra(-1),
-		rightFeederAlignUltra(-1),
+		leftUltra(5),
+		rightUltra(6),
+		leftFeederAlignUltra(4),
+		rightFeederAlignUltra(7),
 		jumper(3),
+		ultraPulse(0),
 		centerPhoto(8),
 		binPunch(1,0),
 		frontLeft(13),
@@ -160,12 +163,16 @@ public:
 			backLeft.SetSensorDirection(true);
 			frontRight.SetSensorDirection(true);
 			backRight.SetSensorDirection(true);
+			ultraPulse.SetVoltage(5.0);
+			Wait(.00002);
+			ultraPulse.SetVoltage(0.0);
 		}
 
 	void robotInit(void);
 	void teleopInit(void);
 	void teleop(void);
 
+	void Pulse(void);
 	float getJumper(void);
 	float getLeftUltra(void);
 	float getRightUltra(void);
@@ -268,7 +275,7 @@ public:
 
 class DriveRampAction : public Action{
 	DriveSubsystem* drive;
-	double speed = 0;
+	double speed = 0.15;
 	double targetSpeed;
 	double targetDistance;
 	double currentDistance = 0.0;
@@ -296,7 +303,7 @@ public:
 	}
 	ControlFlow call(void){
 		if (speed<targetSpeed){
-			speed+=(targetSpeed/(rampTime*10.0));
+			speed+=((targetSpeed-.15)/(rampTime*10.0));
 		}
 //		drive->frontLeft.SetSafetyEnabled(true);
 //		drive->frontLeft.Set(1.0);
@@ -553,11 +560,15 @@ class PhotoDriveAction : public Action{
 		double maxDist;
 		int timeTicks = 0;
 		double speed;
+		int ticksNeeded = 4;
+		bool waitExtra = false;
 public:
-	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0, double speed = .9):
+	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0, double speed = .9, int ticksNeed = 3, bool waitExtra = false):
 		drive(&drive),
 		maxDist(maxDist),
-		speed(speed)
+		speed(speed),
+		ticksNeeded(ticksNeed),
+		waitExtra(waitExtra)
 		{
 
 	}
@@ -571,13 +582,13 @@ public:
 		if(!oldMidValue && drive->getMiddlePhoto()){
 			drive->robot.outLog.throwLog("PHOTO MIDDLE SEEN");
 			if (sideTicks<0){
-				sideTicks = 3;
+				sideTicks = ticksNeeded;
 			}
 //			return CONTINUE;
 		}else if((!oldRightValue && drive->getRightPhoto()) || (!oldLeftValue && drive->getLeftPhoto())){
 			drive->robot.outLog.throwLog("PHOTO SIDE SEEN");
 			if (sideTicks<0){
-				sideTicks = 4;
+				sideTicks = ticksNeeded+1;
 			}
 //			return CONTINUE;
 
@@ -588,6 +599,9 @@ public:
 		oldLeftValue = drive->getLeftPhoto();
 		timeTicks++;
 		if (sideTicks == 0){
+			if (waitExtra){
+				Wait(.05);
+			}
 			drive->mec_drive(0,0,0);
 			drive->robot.outLog.throwLog("PHOTO SEEN STOP", drive->getDistance());
 //			drive->giveLog("PhotoDriveAction Complete, MAX DIST");
@@ -637,10 +651,12 @@ class AlignAction: public Action{
 	double rotation = 0;
 	double strafe = .6;
 	int seen = 0;
+//	bool volt = false;
 public:
 	std::string name = "Align Action";
-	AlignAction(DriveSubsystem& drive):
-		drive(&drive)
+	AlignAction(DriveSubsystem& drive/*, bool volts = false*/):
+		drive(&drive)//,
+//		volt(volts)
 		{}
 	void init(void){
 		drive->robot.outLog.throwLog("Align Init");
