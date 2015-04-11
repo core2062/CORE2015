@@ -148,7 +148,7 @@ public:
 		SmartDashboard::PutNumber("BinSlapPush",1000.0);
 
 
-		SmartDashboard::PutNumber("TTBinSlapDrive-To-Autozone", 21000);
+		SmartDashboard::PutNumber("TTBinSlapDrive-To-Autozone", 22600);
 
 
 		//Two Tote Alt
@@ -176,7 +176,7 @@ public:
 		SmartDashboard::PutNumber("PushOver-longDriveForward", 10000);
 
 		//Add Auto Choices
-		autoChooser.AddDefault("Drive to Zone", new std::string("Drive-to-Zone"));
+		autoChooser.AddObject("Drive to Zone", new std::string("Drive-to-Zone"));
 		autoChooser.AddObject("One Tote", new std::string("One-Tote"));
 		autoChooser.AddObject("Bin Slap", new std::string("Bin-Slap"));
 //		autoChooser.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
@@ -185,7 +185,7 @@ public:
 //		autoChooser.AddObject("Three Tote No Bins",new std::string("Three-Tote-Norm"));
 //		autoChooser.AddObject("Push Over", new std::string("Push-Over"));
 //		autoChooser.AddObject("Two tote alt", new std::string("Two-Tote-Alt"));
-		autoChooser.AddObject("Do Nothing", new std::string("Do-Nothing"));
+		autoChooser.AddDefault("Do Nothing", new std::string("Do-Nothing"));
 		autoChooser.AddObject("Two Tote Punch", new std::string("Two-Tote-Punch"));
 		SmartDashboard::PutData("auto-choose", &autoChooser);
 
@@ -407,7 +407,7 @@ public:
 //				autoSeq.add_action(waitOne);
 				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4);
 				autoSeq.add_action(photoOne);
-				AlignAction align(drive);
+				AlignAction align(drive,true);
 				autoSeq.add_action(align);
 
 				LiftAction binSlap_LiftDown2(lift, 300);

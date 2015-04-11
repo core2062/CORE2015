@@ -200,6 +200,7 @@ public:
 	void setMotorExpiration(bool position);
 	double rateTest(void);
 	void reconstructGyro(void);
+	void setMode(CANSpeedController::ControlMode m);
 };
 
 class DriveAction : public Action{
@@ -651,17 +652,22 @@ class AlignAction: public Action{
 	double rotation = 0;
 	double strafe = .6;
 	int seen = 0;
-//	bool volt = false;
+	bool volt = false;
 public:
 	std::string name = "Align Action";
-	AlignAction(DriveSubsystem& drive/*, bool volts = false*/):
-		drive(&drive)//,
-//		volt(volts)
+	AlignAction(DriveSubsystem& drive, bool volts = false):
+		drive(&drive),
+		volt(volts)
 		{}
 	void init(void){
 		drive->robot.outLog.throwLog("Align Init");
+		if (volt){
+			drive->setMode(CANSpeedController::kVoltage);
+			drive->robot.outLog.throwLog("Drive Set To VOLTAGE");
+		}
 	}
 	ControlFlow call(void){
+
 			rotation = drive->getRot();
 			rotation = drive->gyroPIDCalc(0, rotation);
 			//Tote Alignment
@@ -673,15 +679,15 @@ public:
 			//different cases
 			if (leftPhotoVar && !rightPhotoVar){
 //				strafe += .05;
-				drive->mec_drive(-strafe,0,rotation);
+				drive->mec_drive(-strafe*(volt?12:1),0,rotation*(volt?12:1));
 				return CONTINUE;
 			}else if (!leftPhotoVar && rightPhotoVar){
 //				strafe += .05;
-				drive->mec_drive(strafe,0,rotation);
+				drive->mec_drive(strafe*(volt?12:1),0,rotation*(volt?12:1));
 				return CONTINUE;
 			}else if (!leftPhotoVar && middlePhotoVar && !rightPhotoVar){
 				strafe = .5;
-				drive->mec_drive(0,0,rotation);
+				drive->mec_drive(0,0,rotation*(volt?12:1));
 				drive->giveLog("Tote Align Seen");
 				seen++;
 //				return CONTINUE;
@@ -689,10 +695,13 @@ public:
 				drive->mec_drive(0,0,0);
 				strafe = 0;
 				drive->giveLog("ERROR IN PHOTO");
+				drive->setMode(CANSpeedController::kPercentVbus);
 				return END;
 			}
 			if (seen == 2){
+				drive->mec_drive(0,0,0);
 				drive->giveLog("Tote Aligned");
+				drive->setMode(CANSpeedController::kPercentVbus);
 				return END;
 			}else{
 				return CONTINUE;

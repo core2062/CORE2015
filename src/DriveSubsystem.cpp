@@ -659,6 +659,12 @@ void DriveSubsystem::setVoltageMode(void){
 	frontRight.SetControlMode(CANSpeedController::kVoltage);
 	backRight.SetControlMode(CANSpeedController::kVoltage);
 }
+void DriveSubsystem::setMode(CANSpeedController::ControlMode m){
+
+}
+
+
+
 void DriveSubsystem::setSpeedMode(void){
 //	frontLeft.SetControlMode(CANSpeedController::kSpeed);
 //	backLeft.SetControlMode(CANSpeedController::kSpeed);
