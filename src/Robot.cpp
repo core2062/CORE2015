@@ -407,7 +407,7 @@ public:
 //				autoSeq.add_action(waitOne);
 				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4);
 				autoSeq.add_action(photoOne);
-				AlignAction align(drive,true);
+				AlignAction align(drive);
 				autoSeq.add_action(align);
 
 				LiftAction binSlap_LiftDown2(lift, 300);

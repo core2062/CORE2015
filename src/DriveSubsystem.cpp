@@ -67,47 +67,7 @@ void DriveSubsystem::teleopInit(void){
 	feederAlignTimer.Reset();
 	gyro.Reset();
 }
-void DriveSubsystem::Pulse(){
-	ultraPulse.SetVoltage(5.0);
-	Wait(.00002);
-	ultraPulse.SetVoltage(0.0);
-}
 
-
-float DriveSubsystem::getJumper(void)
-{
-	//Get Constant From Smart Dashboard
-	return jumper.GetVoltage();
-}
-float DriveSubsystem::getLeftUltra(void)
-{
-//	ultraPulse.SetVoltage(5.0);
-//	Wait(.00002);
-//	ultraPulse.SetVoltage(0.0);
-	return ((1000.0 * leftUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
-}
-float DriveSubsystem::getRightUltra(void)
-{
-//	ultraPulse.SetVoltage(5.0);
-//	Wait(.00002);
-//	ultraPulse.SetVoltage(0.0);
-	return ((1000.0 * rightUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
-}
-float DriveSubsystem::getFeederAlignUltra(void)
-{
-//	ultraPulse.SetVoltage(5.0);
-//	Wait(.00002);
-//	ultraPulse.SetVoltage(0.0);
-	float currentUltraVoltage;
-//	std::string choice = *(std::string*) feederStationChooser.GetSelected();
-	if(!SmartDashboard::GetBoolean("LeftSideFeeder")){
-		currentUltraVoltage = rightFeederAlignUltra.GetVoltage();
-	}
-	else {
-		currentUltraVoltage = leftFeederAlignUltra.GetVoltage();
-	}
-	return ((1000.0 * currentUltraVoltage) / ((getJumper() * 1000.0) / ultraVoltageScale));
-}
 void DriveSubsystem::teleop(void){
 
     SmartDashboard::PutBoolean( "IMU_Connected", imu->IsConnected());
@@ -581,38 +541,78 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		//robot.outLog.throwLog("drive motor norm");
 		if (simple){
 			if (!frontRight.GetControlMode() == mode){
-			robot.outLog.throwLog("set to voltage");
+			robot.outLog.throwLog("set to mode");
 			frontRight.SetControlMode(mode);
 			frontLeft.SetControlMode(mode);
 			backRight.SetControlMode(mode);
 			backLeft.SetControlMode(mode);
-			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
+			robot.outLog.throwLog("[CHANGE] Encoders were switched to ", mode);
 			}
 		/// RIP simplicity
 		if (/*!robot.joystick.button("ultra")*/true){
 			if(shoulderSpeed){
-				frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation));
-				frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation));
-				backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation));
-				backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation));
+				frontLeft.Set(frontLeftInvert
+						*(drive_x+drive_y+drive_rotation)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				frontRight.Set(frontRightInvert
+						*(-drive_x+drive_y-drive_rotation)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backLeft.Set(backLeftInvert
+						*(-drive_x+drive_y+drive_rotation)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backRight.Set(backRightInvert
+						*(drive_x+drive_y-drive_rotation)
+						*(mode == CANSpeedController::kVoltage?12:1));
 			}else{
-				frontLeft.Set(frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-				frontRight.Set(frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-				backLeft.Set(backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
-				backRight.Set(backRightInvert*(drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+				frontLeft.Set(frontLeftInvert
+						*(drive_x+drive_y+drive_rotation)
+						* SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				frontRight.Set(frontRightInvert
+						*(-drive_x+drive_y-drive_rotation)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backLeft.Set(backLeftInvert
+						*(-drive_x+drive_y+drive_rotation)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backRight.Set(backRightInvert
+						*(drive_x+drive_y-drive_rotation)
+						* SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
 			}
 		}else{
 			gyro.Reset();
 			if(shoulderSpeed){
-				frontLeft.Set(frontLeftInvert*(drive_x+drive_left_y));
-				frontRight.Set(frontRightInvert*(-drive_x+drive_right_y));
-				backLeft.Set(backLeftInvert*(-drive_x+drive_left_y));
-				backRight.Set(backRightInvert*(drive_x+drive_right_y));
+				frontLeft.Set(frontLeftInvert
+						*(drive_x+drive_left_y)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				frontRight.Set(frontRightInvert
+						*(-drive_x+drive_right_y)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backLeft.Set(backLeftInvert
+						*(-drive_x+drive_left_y)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backRight.Set(backRightInvert
+						*(drive_x+drive_right_y)
+						*(mode == CANSpeedController::kVoltage?12:1));
 			}else{
-				frontLeft.Set(frontLeftInvert*(drive_x+drive_left_y)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-				frontRight.Set(frontRightInvert*(-drive_x+drive_right_y)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-				backLeft.Set(backLeftInvert*(-drive_x+drive_left_y)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
-				backRight.Set(backRightInvert*(drive_x+drive_right_y)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+				frontLeft.Set(frontLeftInvert
+						*(drive_x+drive_left_y)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				frontRight.Set(frontRightInvert
+						*(-drive_x+drive_right_y)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backLeft.Set(backLeftInvert
+						*(-drive_x+drive_left_y)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
+				backRight.Set(backRightInvert
+						*(drive_x+drive_right_y)
+						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+						*(mode == CANSpeedController::kVoltage?12:1));
 			}
 		}
 		}else{
@@ -626,15 +626,35 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 				robot.outLog.throwLog("[CHANGE] Encoders were switched to  Speed Mode");
 //			}
 		if(shoulderSpeed){
-			frontLeft.Set(SmartDashboard::GetNumber("MaxVel")*frontLeftInvert*(drive_x+drive_y+drive_rotation));
-			frontRight.Set(SmartDashboard::GetNumber("MaxVel")*frontRightInvert*(-drive_x+drive_y-drive_rotation));
-			backLeft.Set(SmartDashboard::GetNumber("MaxVel")*backLeftInvert*(-drive_x+drive_y+drive_rotation));
-			backRight.Set(SmartDashboard::GetNumber("MaxVel")*backRightInvert*(drive_x+drive_y-drive_rotation));
+			frontLeft.Set(SmartDashboard::GetNumber("MaxVel")
+					*frontLeftInvert
+					*(drive_x+drive_y+drive_rotation));
+			frontRight.Set(SmartDashboard::GetNumber("MaxVel")
+					*frontRightInvert
+					*(-drive_x+drive_y-drive_rotation));
+			backLeft.Set(SmartDashboard::GetNumber("MaxVel")
+					*backLeftInvert
+					*(-drive_x+drive_y+drive_rotation));
+			backRight.Set(SmartDashboard::GetNumber("MaxVel")
+					*backRightInvert
+					*(drive_x+drive_y-drive_rotation));
 		}else{
-			frontLeft.Set(SmartDashboard::GetNumber("MaxVel")*frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-			frontRight.Set(SmartDashboard::GetNumber("MaxVel")*frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-			backLeft.Set(SmartDashboard::GetNumber("MaxVel")*backLeftInvert*(-drive_x+drive_y+drive_rotation)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
-			backRight.Set(SmartDashboard::GetNumber("MaxVel")*backRightInvert*(drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+			frontLeft.Set(SmartDashboard::GetNumber("MaxVel")
+					*frontLeftInvert
+					*(drive_x+drive_y+drive_rotation)
+					*SmartDashboard::GetNumber("JoystickMultiplier",.2));
+			frontRight.Set(SmartDashboard::GetNumber("MaxVel")
+					*frontRightInvert
+					*(-drive_x+drive_y-drive_rotation)
+					*SmartDashboard::GetNumber("JoystickMultiplier",.2));
+			backLeft.Set(SmartDashboard::GetNumber("MaxVel")
+					*backLeftInvert
+					*(-drive_x+drive_y+drive_rotation)
+					*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+			backRight.Set(SmartDashboard::GetNumber("MaxVel")
+					*backRightInvert
+					*(drive_x+drive_y-drive_rotation)
+					*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
 		}
 //		SmartDashboard::PutNumber("FrontLeftSetVel",SmartDashboard::GetNumber("MaxVel")*frontLeftInvert*(drive_x+drive_y+drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
 //		SmartDashboard::PutNumber("FrontRightSetVel",SmartDashboard::GetNumber("MaxVel")*frontRightInvert*(-drive_x+drive_y-drive_rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
@@ -656,6 +676,49 @@ void DriveSubsystem::teleopEnd(void){
 	backLeft.Set(0.0);
 	backRight.Set(0.0);
 }
+void DriveSubsystem::Pulse(){
+	ultraPulse.SetVoltage(5.0);
+	Wait(.00002);
+	ultraPulse.SetVoltage(0.0);
+}
+
+
+float DriveSubsystem::getJumper(void)
+{
+	//Get Constant From Smart Dashboard
+	return jumper.GetVoltage();
+}
+float DriveSubsystem::getLeftUltra(void)
+{
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
+	return ((1000.0 * leftUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
+}
+float DriveSubsystem::getRightUltra(void)
+{
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
+	return ((1000.0 * rightUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
+}
+float DriveSubsystem::getFeederAlignUltra(void)
+{
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
+	float currentUltraVoltage;
+//	std::string choice = *(std::string*) feederStationChooser.GetSelected();
+	if(!SmartDashboard::GetBoolean("LeftSideFeeder")){
+		currentUltraVoltage = rightFeederAlignUltra.GetVoltage();
+	}
+	else {
+		currentUltraVoltage = leftFeederAlignUltra.GetVoltage();
+	}
+	return ((1000.0 * currentUltraVoltage) / ((getJumper() * 1000.0) / ultraVoltageScale));
+}
+
+
 double DriveSubsystem::getDistance(void)
 {
 	double distance = (fabs(frontLeft.GetEncPosition())+fabs(frontRight.GetEncPosition())+fabs(backRight.GetEncPosition())+fabs(backLeft.GetEncPosition()))/4;
@@ -674,10 +737,22 @@ void DriveSubsystem::punchSet(DoubleSolenoid::Value v){
 
 void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 {
-	frontLeft.Set(frontLeftInvert*(drive_x+drive_y+rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-	frontRight.Set(frontRightInvert*(-drive_x+drive_y-rotation)* SmartDashboard::GetNumber("JoystickMultiplier",.2));
-	backLeft.Set(backLeftInvert*(-drive_x+drive_y+rotation)*SmartDashboard::GetNumber("JoystickMultiplier"),.2);
-	backRight.Set(backRightInvert*(drive_x+drive_y-rotation)* SmartDashboard::GetNumber("JoystickMultiplier"),.2);
+	frontLeft.Set(frontLeftInvert
+			*(drive_x+drive_y+rotation)
+			*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+			*(mode == CANSpeedController::kVoltage?12:1));
+	frontRight.Set(frontRightInvert
+			*(-drive_x+drive_y-rotation)
+			*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+			*(mode == CANSpeedController::kVoltage?12:1));
+	backLeft.Set(backLeftInvert
+			*(-drive_x+drive_y+rotation)
+			*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+			*(mode == CANSpeedController::kVoltage?12:1));
+	backRight.Set(backRightInvert
+			*(drive_x+drive_y-rotation)
+			*SmartDashboard::GetNumber("JoystickMultiplier",.2)
+			*(mode == CANSpeedController::kVoltage?12:1));
 }
 double DriveSubsystem::getRot(void)
 {
@@ -700,8 +775,12 @@ void DriveSubsystem::setVoltageMode(void){
 	backRight.SetControlMode(CANSpeedController::kVoltage);
 }
 void DriveSubsystem::setMode(CANSpeedController::ControlMode m){
-
+	frontLeft.SetControlMode(m);
+	backLeft.SetControlMode(m);
+	frontRight.SetControlMode(m);
+	backRight.SetControlMode(m);
 }
+
 
 
 
