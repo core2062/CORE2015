@@ -7,10 +7,26 @@ std::string DriveSubsystem::name(void){
 }
 
 void DriveSubsystem::robotInit(void){
+    serial_port = new SerialPort(57600,SerialPort::kMXP);
+    uint8_t update_rate_hz = 50;
+	#if defined(ENABLE_AHRS)
+    imu = new AHRS(serial_port,update_rate_hz);
+	#elif defined(ENABLE_IMU_ADVANCED)
+    imu = new IMUAdvanced(serial_port,update_rate_hz);
+	#else // ENABLE_IMU
+    imu = new IMU(serial_port,update_rate_hz);
+	#endif
+
 	robot.outLog.throwLog("DriveSubsystem: RobotInit Success");
 }
 void DriveSubsystem::teleopInit(void){
 	robot.outLog.throwLog("DriveSubsystem: TeleopInit Success");
+
+    bool is_calibrating = imu->IsCalibrating();
+    if ( !is_calibrating ) {
+        Wait( 0.3 );
+        imu->ZeroYaw();
+    }
 
 	frontLeft.SetSafetyEnabled(true);
 	backLeft.SetSafetyEnabled(true);
@@ -32,6 +48,8 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("punch",1,10,JoystickCache::RISING);
 	robot.joystick.register_button("feederStationAlign",1,6);
 	robot.joystick.joystick1.GetPOV();
+
+
 
 	//UltraSonic Values
 //	feederStationChooser.AddDefault("Right Feeder Station", new std::string("right"));
@@ -91,6 +109,28 @@ float DriveSubsystem::getFeederAlignUltra(void)
 	return ((1000.0 * currentUltraVoltage) / ((getJumper() * 1000.0) / ultraVoltageScale));
 }
 void DriveSubsystem::teleop(void){
+
+    SmartDashboard::PutBoolean( "IMU_Connected", imu->IsConnected());
+    SmartDashboard::PutNumber("IMU_Yaw", imu->GetYaw());
+    SmartDashboard::PutNumber("IMU_Pitch", imu->GetPitch());
+    SmartDashboard::PutNumber("IMU_Roll", imu->GetRoll());
+    SmartDashboard::PutNumber("IMU_CompassHeading", imu->GetCompassHeading());
+    SmartDashboard::PutNumber("IMU_Update_Count", imu->GetUpdateCount());
+    SmartDashboard::PutNumber("IMU_Byte_Count", imu->GetByteCount());
+
+	#if defined (ENABLE_IMU_ADVANCED) || defined(ENABLE_AHRS)
+    	SmartDashboard::PutNumber("IMU_Accel_X", imu->GetWorldLinearAccelX());
+    	SmartDashboard::PutNumber("IMU_Accel_Y", imu->GetWorldLinearAccelY());
+    	SmartDashboard::PutBoolean("IMU_IsMoving", imu->IsMoving());
+    	SmartDashboard::PutNumber("IMU_Temp_C", imu->GetTempC());
+    	SmartDashboard::PutBoolean("IMU_IsCalibrating", imu->IsCalibrating());
+	#if defined (ENABLE_AHRS)
+    	SmartDashboard::PutNumber("Velocity_X",             imu->GetVelocityX() );
+    	SmartDashboard::PutNumber("Velocity_Y",             imu->GetVelocityY() );
+    	SmartDashboard::PutNumber("Displacement_X",     imu->GetDisplacementX() );
+    	SmartDashboard::PutNumber("Displacement_Y",     imu->GetDisplacementY() );
+	#endif
+	#endif
 
 //	robot.outLog.throwLog("PID Sets");
 	if(!simple){
@@ -540,12 +580,12 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		// Drive modes
 		//robot.outLog.throwLog("drive motor norm");
 		if (simple){
-			if (!frontRight.GetControlMode() == CANSpeedController::kPercentVbus){
+			if (!frontRight.GetControlMode() == mode){
 			robot.outLog.throwLog("set to voltage");
-			frontRight.SetControlMode(CANSpeedController::kPercentVbus);
-			frontLeft.SetControlMode(CANSpeedController::kPercentVbus);
-			backRight.SetControlMode(CANSpeedController::kPercentVbus);
-			backLeft.SetControlMode(CANSpeedController::kPercentVbus);
+			frontRight.SetControlMode(mode);
+			frontLeft.SetControlMode(mode);
+			backRight.SetControlMode(mode);
+			backLeft.SetControlMode(mode);
 			robot.outLog.throwLog("[CHANGE] Encoders were switched to  Percent Mode");
 			}
 		/// RIP simplicity

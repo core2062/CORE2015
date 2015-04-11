@@ -7,6 +7,19 @@
 #include "CORERobot/SpeedPID.h"
 #include <iostream>
 
+//NavX stuff
+#include "navx/IMU.h"
+#include "navx/IMUAdvanced.h"
+#include "navx/AHRS.h"
+
+/* NOTE:  Comment in only ONE of the following definitions. */
+
+//#define ENABLE_IMU
+//#define ENABLE_IMU_ADVANCED
+#define ENABLE_AHRS
+
+
+
 using namespace CORE;
 
 const int frontLeftInvert = 1;
@@ -16,6 +29,15 @@ const int backRightInvert = -1;
 
 
 class DriveSubsystem: public CORESubsystem{
+
+#if defined(ENABLE_AHRS)
+        AHRS *imu;
+#elif defined(ENABLE_IMU_ADVANCED)
+        IMUAdvanced *imu;
+#else // ENABLE_IMU
+        IMU *imu;
+#endif
+        SerialPort *serial_port;
 
 	Gyro gyro;
 	Timer timer;
@@ -104,6 +126,7 @@ class DriveSubsystem: public CORESubsystem{
 		}gyroPID, leftUltraPID, rightUltraPID, feederAlignPID;
 
 public:
+		CANSpeedController::ControlMode mode = CANSpeedController::kPercentVbus;
 		bool alignTwo = false;
 		bool alignOne = false;
 		bool leftUltraDistCorrect = false;
