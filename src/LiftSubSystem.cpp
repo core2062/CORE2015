@@ -48,6 +48,8 @@ void LiftSubsystem::setPID(double setPoint)
 		liftMotor.SelectProfileSlot((liftMotor.GetEncPosition() >= setPoint) ? 1 : 0);
 		liftMotor.Set(setPoint);
 		beenSet = true;
+		topLatch = false;
+		bottomLatch = false;
 }
 
 void LiftSubsystem::teleop(void){
@@ -57,8 +59,7 @@ void LiftSubsystem::teleop(void){
 	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
 	bottomHeight = SmartDashboard::GetNumber("bottomHeight");
 	magicToteHeight = SmartDashboard::GetNumber("magicToteHeight");
-//	SmartDashboard::PutBoolean("botLimit", bottomLimit.Get());
-//	SmartDashboard::PutBoolean("topLimit", topLimit.Get());
+
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
 	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
 	liftValue = robot.joystick.axis("liftAxis");
@@ -76,13 +77,6 @@ void LiftSubsystem::teleop(void){
 		topLatch = false;
 	}
 
-
-
-	if (liftMotor.GetStickyFaults() != 0){
-//		robot.outLog.throwLog("Lift Flag");
-//		robot.outLog.throwLog(liftMotor.GetStickyFaults());
-//		liftMotor.Get();
-	}
 	if (robot.joystick.button("stack")){
 		switch (stack.state){
 		case HUMAN:
@@ -148,15 +142,6 @@ void LiftSubsystem::teleop(void){
 		}
 
 		SmartDashboard::PutNumber("Stack State", stack.state);
-
-
-
-
-
-
-
-
-
 	}else{
 	stack.state = HUMAN;
 	if (!bottomLimit.Get()){

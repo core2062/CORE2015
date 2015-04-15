@@ -24,7 +24,7 @@ void DriveSubsystem::teleopInit(void){
 
     bool is_calibrating = imu->IsCalibrating();
     if ( !is_calibrating ) {
-        Wait( 0.3 );
+//        Wait( 0.3 );
         imu->ZeroYaw();
     }
 
@@ -65,25 +65,26 @@ void DriveSubsystem::teleopInit(void){
 	rightUltraTimer.Reset();
 	feederAlignTimer.Start();
 	feederAlignTimer.Reset();
-	gyro.Reset();
+//	gyro.Reset();
+	imu->ResetDisplacement();
 }
 
 void DriveSubsystem::teleop(void){
 
-    SmartDashboard::PutBoolean( "IMU_Connected", imu->IsConnected());
+//    SmartDashboard::PutBoolean( "IMU_Connected", imu->IsConnected());
     SmartDashboard::PutNumber("IMU_Yaw", imu->GetYaw());
-    SmartDashboard::PutNumber("IMU_Pitch", imu->GetPitch());
-    SmartDashboard::PutNumber("IMU_Roll", imu->GetRoll());
-    SmartDashboard::PutNumber("IMU_CompassHeading", imu->GetCompassHeading());
-    SmartDashboard::PutNumber("IMU_Update_Count", imu->GetUpdateCount());
-    SmartDashboard::PutNumber("IMU_Byte_Count", imu->GetByteCount());
+//    SmartDashboard::PutNumber("IMU_Pitch", imu->GetPitch());
+//    SmartDashboard::PutNumber("IMU_Roll", imu->GetRoll());
+//    SmartDashboard::PutNumber("IMU_CompassHeading", imu->GetCompassHeading());
+//    SmartDashboard::PutNumber("IMU_Update_Count", imu->GetUpdateCount());
+//    SmartDashboard::PutNumber("IMU_Byte_Count", imu->GetByteCount());
 
 	#if defined (ENABLE_IMU_ADVANCED) || defined(ENABLE_AHRS)
     	SmartDashboard::PutNumber("IMU_Accel_X", imu->GetWorldLinearAccelX());
     	SmartDashboard::PutNumber("IMU_Accel_Y", imu->GetWorldLinearAccelY());
-    	SmartDashboard::PutBoolean("IMU_IsMoving", imu->IsMoving());
-    	SmartDashboard::PutNumber("IMU_Temp_C", imu->GetTempC());
-    	SmartDashboard::PutBoolean("IMU_IsCalibrating", imu->IsCalibrating());
+//    	SmartDashboard::PutBoolean("IMU_IsMoving", imu->IsMoving());
+//    	SmartDashboard::PutNumber("IMU_Temp_C", imu->GetTempC());
+//    	SmartDashboard::PutBoolean("IMU_IsCalibrating", imu->IsCalibrating());
 	#if defined (ENABLE_AHRS)
     	SmartDashboard::PutNumber("Velocity_X",             imu->GetVelocityX() );
     	SmartDashboard::PutNumber("Velocity_Y",             imu->GetVelocityY() );
@@ -121,7 +122,7 @@ void DriveSubsystem::teleop(void){
 SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
-	double gyroRate = gyro.GetAngle();
+	double gyroRate = imu->GetYaw();
 /*	if (robot.joystick.button("reset")){
 
 		Pulse();
@@ -134,7 +135,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 
 
 	simple = SmartDashboard::GetBoolean("SimpleDrive");
-	gyro.SetDeadband(SmartDashboard::GetNumber("gyroDead"));
+//	gyro.SetDeadband(SmartDashboard::GetNumber("gyroDead"));
 //	if (gyroRate>-2 && gyroRate<2){
 //		gyroRate = 0.0;
 //	}
@@ -150,10 +151,12 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	SmartDashboard::PutNumber("Front Right Set", frontRight.Get());
 	SmartDashboard::PutNumber("Back Left Set", backLeft.Get());
 	SmartDashboard::PutNumber("Back Right Set", backRight.Get());
-	SmartDashboard::PutNumber("Gyro Rate", gyro.GetRate());
-	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
+//	SmartDashboard::PutNumber("Gyro Rate", gyro.GetRate());
+	SmartDashboard::PutNumber("Gyro Angle", imu->GetYaw());
 //	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
 	SmartDashboard::PutBoolean("Centering Photo", centerPhoto.Get());
+
+	SmartDashboard::PutNumber("AutoUltra", getAutoUltra());
 
 	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
 	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
@@ -191,7 +194,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	feederAlignPID.setPoint = (SmartDashboard::GetNumber("feederAlignUltraSetPoint"));
 
 	if (POV == -1){
-
+		dPad = false;
 //Simple Dead-banding
 		drive_x = robot.joystick.axis("drive_x");
 		if (drive_x < 0.05 && drive_x > -.05){
@@ -203,42 +206,52 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		}
 		drive_y *= -1;
 	}else{
+		dPad = true;
 		switch (POV){
 		case 0:
 			drive_x = 0;
 			drive_y = 1;
+			dPad = true;
 			break;
 		case 45:
 			drive_x = 1;
 			drive_y = 1;
+			dPad = false;
 			break;
 		case 90:
 			drive_x = 1.0;
 			drive_y = 0;
+			dPad = true;
 			break;
 		case 135:
 			drive_x = 1;
 			drive_y = -1;
+			dPad = false;
 			break;
 		case 180:
 			drive_x = 0.0;
 			drive_y = -1;
+			dPad = true;
 			break;
 		case 225:
 			drive_x = -1;
 			drive_y = -1;
+			dPad = false;
 			break;
 		case 270:
 			drive_x = -1.0;
 			drive_y = 0;
+			dPad = true;
 			break;
 		case 315:
 			drive_x = -1;
 			drive_y = 1;
+			dPad = false;
 			break;
 		default:
 			drive_x = 0;
 			drive_y = 0;
+			dPad = false;
 			break;
 		}
 	}
@@ -246,8 +259,6 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	if (drive_rotation < .05 && drive_rotation > -.05){
 		drive_rotation = 0;
 	}
-
-
 
 
 //TODO Tune
@@ -268,58 +279,14 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 				drive_y = 0;
 			}else if (leftUltraPID.actualPosition > leftUltraPID.setPoint-5){
 				drive_y = -.2;
+			}else{
+				drive_y = -.3;
 			}
-//			leftUltraTime = leftUltraTimer.Get();
-//			leftUltraPID.mistake =  leftUltraPID.setPoint - (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
-////			SmartDashboard::PutNumber("Ultra PID Error", ultraPID.mistake);
-//			leftUltraPID.integral += (leftUltraPID.mistake *leftUltraTime);
-//			leftUltraPID.derivative = (leftUltraPID.mistake - leftUltraPID.lastError)/leftUltraTime;
-//			double leftUltraOutput = (leftUltraPID.P*leftUltraPID.mistake) + (leftUltraPID.I*leftUltraPID.integral) + (leftUltraPID.D*leftUltraPID.derivative);
-////			SmartDashboard::PutNumber("Ultra PID Out before", ultraOutput);
-//			leftUltraOutput = leftUltraOutput > 1.0 ? 1.0 : (leftUltraOutput < -1.0 ? -1.0 : leftUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-//			drive_left_y = -leftUltraOutput;
-//			leftUltraPID.lastError = leftUltraPID.mistake;
-////			SmartDashboard::PutNumber("Ultra PID Out", ultraOutput);
-//			leftUltraTimer.Reset();
-//			leftUltraDistCorrect = (leftUltraOutput > -.05 && leftUltraOutput < .05)?false:leftUltraDistCorrect;
 			leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
-//			rightUltraPID.actualPosition = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-//			if(rightUltraPID.actualPosition>70){
-//				drive_right_y = 1.0;
-//			}else if (rightUltraPID.actualPosition>50){
-//				drive_right_y = .7;
-//			}else if (rightUltraPID.actualPosition>40){
-//				drive_right_y = .6;
-//			}else if (rightUltraPID.actualPosition >35){
-//				drive_right_y = .5;
-//			}else if (rightUltraPID.actualPosition>31){
-//				drive_right_y = .4;
-//			}else if (rightUltraPID.actualPosition>29){
-//				drive_right_y = 0;
-//			}else if (rightUltraPID.actualPosition > 25){
-//				drive_right_y = -.4;
-//			}
-//			//Right side code
-//			rightUltraTime = rightUltraTimer.Get();
-//			rightUltraPID.mistake =  rightUltraPID.setPoint - (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-////			SmartDashboard::PutNumber("Ultra PID Error", rightUltraPID.mistake);
-//			rightUltraPID.integral += (rightUltraPID.mistake *rightUltraTime);
-//			rightUltraPID.derivative = (rightUltraPID.mistake - rightUltraPID.lastError)/rightUltraTime;
-//			double rightUltraOutput = (rightUltraPID.P*rightUltraPID.mistake) + (rightUltraPID.I*rightUltraPID.integral) + (rightUltraPID.D*rightUltraPID.derivative);
-////			SmartDashboard::PutNumber("Ultra PID Out before", rightUltraOutput);
-//			rightUltraOutput = rightUltraOutput > 1.0 ? 1.0 : (rightUltraOutput < -1.0 ? -1.0 : rightUltraOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-//			drive_right_y = -rightUltraOutput;
-//			rightUltraPID.lastError = rightUltraPID.mistake;
-////			SmartDashboard::PutNumber("Ultra PID Out", rightUltraOutput);
-//			rightUltraTimer.Reset();
-//			rightUltraDistCorrect = (rightUltraOutput > -.05 && rightUltraOutput < .05)?false:rightUltraDistCorrect;
-//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-
-
 		}
 		//TODO Tune
-		//Ultrasonic PID
-			if((robot.joystick.button("rotate")) && drive_rotation == 0) {
+		//Ultrasonic Rotation
+			if((robot.joystick.button("rotate"))/* && drive_rotation == 0*/) {
 				double error = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue)-(getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
 				if(error>5.0){
 					drive_rotation = .6;
@@ -327,9 +294,9 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 					drive_rotation = .5;
 				}else if (error>2){
 					drive_rotation = .4;
-				}else if (error >1){
+				}else if (error > .5){
 					drive_rotation = .3;
-				}else if (error>-1){
+				}else if (error>-.5){
 					drive_rotation = 0;
 				}else if (error>-2){
 					drive_rotation = -.3;
@@ -371,7 +338,8 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		}
 		if (resetQ != 0){
 			if (resetQ == 3){
-				gyro.Reset();
+				imu->ZeroYaw();
+//				gyroPID.setPoint = imu->GetYaw();
 			}
 			resetQ--;
 		}
@@ -391,37 +359,23 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 				gyroPID.lastError = gyroPID.mistake;
 	//			SmartDashboard::PutNumber("Gyro PID Out", gyroOutput);
 				gyroTimer.Reset();
-			}
-
-/*		//Center to Human Player Station
-		if((robot.joystick.button("centerDrive")) && drive_x == 0.0) {
-			if (!oldCenterButton){
-				centerDrivePower = SmartDashboard::GetNumber("CenterSpeed");
-				centerDirection = 1;
-			}
-
-//				centerDrivePower -= 0.025;
-				if(centerPhoto.Get() && !oldCenterPhoto){
-					centerDrivePower = 0.0;
-					targetSeen = true;
-//					ultraCenter = true;
-					SmartDashboard::PutBoolean("driveCentered", true);
-				}else if (!centerPhoto.Get() && oldCenterPhoto){
-					centerDrivePower = SmartDashboard::GetNumber("CenterSpeed");
-					centerDirection *= -1;
-					centerDrivePower *= centerDirection;
-
-				}else{
-					//add more power
-					SmartDashboard::PutBoolean("driveCentered", false);
+				if (drive_rotation < .05 && drive_rotation > -.05){
+					drive_rotation = 0;
 				}
-			drive_x = centerDrivePower;
+				if(dPad && SmartDashboard::GetBoolean("useDPad")){
+					//Modify the y if perfect x is wanted
+					if((drive_x != 0.0) && (drive_y == 0.0)){
+						drive_y = (gyroPID.mistake * SmartDashboard::GetNumber("DPadYPValue"));
+					}else if (drive_y != 0.0){
+						drive_x = (gyroPID.mistake * SmartDashboard::GetNumber("DPadXPValue"));
+					}
+				}
 
-		}else{
-			targetSeen = false;
-		}
-		oldCenterPhoto = centerPhoto.Get();
-		oldCenterButton = robot.joystick.button("centerDrive");*/
+
+
+
+			}
+
 		//Bottom Tote Alignment
 			if ((robot.joystick.button("lift_align") || alignOne) && drive_x == 0.0){
 				//set vars
@@ -534,55 +488,56 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 					SmartDashboard::PutBoolean("Top Tote align", false);
 				}
 
-
-
+				if (/*!frontRight.GetControlMode() == mode*/!modeSet){
+					robot.outLog.throwLog("set to mode");
+					frontRight.SetControlMode(mode);
+					frontLeft.SetControlMode(mode);
+					backRight.SetControlMode(mode);
+					backLeft.SetControlMode(mode);
+					robot.outLog.throwLog("[CHANGE] Motors were switched to ", (int)mode);
+					modeSet = true;
+					}
+//				robot.outLog.throwLog("test");
 
 		// Drive modes
 		//robot.outLog.throwLog("drive motor norm");
 		if (simple){
-			if (!frontRight.GetControlMode() == mode){
-			robot.outLog.throwLog("set to mode");
-			frontRight.SetControlMode(mode);
-			frontLeft.SetControlMode(mode);
-			backRight.SetControlMode(mode);
-			backLeft.SetControlMode(mode);
-			robot.outLog.throwLog("[CHANGE] Encoders were switched to ", mode);
-			}
+
 		/// RIP simplicity
 		if (/*!robot.joystick.button("ultra")*/true){
 			if(shoulderSpeed){
 				frontLeft.Set(frontLeftInvert
 						*(drive_x+drive_y+drive_rotation)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				frontRight.Set(frontRightInvert
 						*(-drive_x+drive_y-drive_rotation)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				backLeft.Set(backLeftInvert
 						*(-drive_x+drive_y+drive_rotation)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				backRight.Set(backRightInvert
 						*(drive_x+drive_y-drive_rotation)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 			}else{
 				frontLeft.Set(frontLeftInvert
 						*(drive_x+drive_y+drive_rotation)
 						* SmartDashboard::GetNumber("JoystickMultiplier",.2)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				frontRight.Set(frontRightInvert
 						*(-drive_x+drive_y-drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				backLeft.Set(backLeftInvert
 						*(-drive_x+drive_y+drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 				backRight.Set(backRightInvert
 						*(drive_x+drive_y-drive_rotation)
 						* SmartDashboard::GetNumber("JoystickMultiplier",.2)
-						*(mode == CANSpeedController::kVoltage?12:1));
+						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 			}
 		}else{
-			gyro.Reset();
+			imu->ZeroYaw();
 			if(shoulderSpeed){
 				frontLeft.Set(frontLeftInvert
 						*(drive_x+drive_left_y)
@@ -702,6 +657,15 @@ float DriveSubsystem::getRightUltra(void)
 //	ultraPulse.SetVoltage(0.0);
 	return ((1000.0 * rightUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
 }
+
+float DriveSubsystem::getAutoUltra(void)
+{
+//	ultraPulse.SetVoltage(5.0);
+//	Wait(.00002);
+//	ultraPulse.SetVoltage(0.0);
+	return ((1000.0 * autoUltra.GetVoltage()) / ((getJumper() * 1000.0) / ultraVoltageScale));
+}
+
 float DriveSubsystem::getFeederAlignUltra(void)
 {
 //	ultraPulse.SetVoltage(5.0);
@@ -756,11 +720,12 @@ void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 }
 double DriveSubsystem::getRot(void)
 {
-	return gyro.GetAngle();
+	return imu->GetYaw();
 }
 void DriveSubsystem::resetRot(void)
 {
-	gyro.Reset();
+	imu->ZeroYaw();
+//	gyroPID.setPoint = imu->GetYaw();
 }
 void DriveSubsystem::setPositionMode(void){
 	frontLeft.SetControlMode(CANSpeedController::kPosition);
@@ -809,11 +774,11 @@ void DriveSubsystem::giveLog(std::string stringVar){
 	robot.outLog.throwLog(stringVar);
 }
 double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
-	SmartDashboard::PutNumber("Gyro Angle", gyro.GetAngle());
+	SmartDashboard::PutNumber("Gyro Angle", imu->GetYaw());
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue"));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroAutoIValue"));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue"));
-		gyroPID.mistake =  set - rot;
+		gyroPID.mistake =  (set+gyroPID.setPoint) - rot;
 		SmartDashboard::PutNumber("Gyro PID Error", gyroPID.mistake);
 		double output = (gyroPID.P*gyroPID.mistake);
 		output = output > 1.0 ? 1.0 : (output < -1.0 ? -1.0 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1
@@ -826,6 +791,21 @@ double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
 	output*=mult;
 	return output;
 }
+
+double DriveSubsystem::autoUltraPIDCalc(double set){
+	double mistake =  (set) - getAutoUltra();
+	double output = (fabs(mistake)>1.0)?(SmartDashboard::GetNumber("AutoUltraPValue")*mistake):0.0;
+	output = output > .5 ? .5 : (output < -.5 ? -.5 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1 TODO Change?
+	drive_rotation = output;
+	if (output < .05 && output > -.05){
+		output = 0;
+	}
+	if (output != 0){
+		robot.outLog.throwLog("Auto Ultra Correcting at: ", output);
+	}
+	return output;
+}
+
 bool DriveSubsystem::getLeftPhoto(){
 	return leftPhoto.Get();
 }
@@ -844,11 +824,17 @@ void DriveSubsystem::setMotorExpiration(bool position){
 double DriveSubsystem::rateTest(void){
 	double gyroSum = 0.0;
 	for(int i = 0; i<11; i++){
-		gyroSum += fabs(gyro.GetRate());
+//		gyroSum += fabs(gyro.GetRate());
 	}
 	robot.outLog.throwLog("Gyro Average Rate",gyroSum/10.0);
 	return gyroSum/10.0;
 }
 void DriveSubsystem::reconstructGyro(void){
-	gyro.InitGyro();
+//	gyro.InitGyro();
 }
+void DriveSubsystem::setHeading(double val){
+	gyroPID.setPoint = val;
+
+//	gyro.InitGyro();
+}
+

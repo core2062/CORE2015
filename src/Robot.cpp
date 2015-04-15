@@ -71,20 +71,25 @@ public:
 		SmartDashboard::PutBoolean("disableGyro", false);
 		SmartDashboard::PutBoolean("deconstructGyro", false);
 
+		//EXPERIMENTAL perfect strafe values
+		SmartDashboard::PutBoolean("useDPad", false);
+		SmartDashboard::PutNumber("DPadXPValue",0.025);
+		SmartDashboard::PutNumber("DPadYPValue",0.04);
 
+		SmartDashboard::PutNumber("AutoUltraPValue",0.1);
 
 
 		//left side ultra
 		SmartDashboard::PutNumber("leftUltraPValue",0.075);
 		SmartDashboard::PutNumber("leftUltraIValue",0.0);
 		SmartDashboard::PutNumber("leftUltraDValue",0.0);
-		SmartDashboard::PutNumber("leftUltraSetPoint", 26.0);
+		SmartDashboard::PutNumber("leftUltraSetPoint", 32.0);
 		SmartDashboard::PutNumber("CenterSpeed",1.0);
 		//right side ultra
 		SmartDashboard::PutNumber("rightUltraPValue",0.075);
 		SmartDashboard::PutNumber("rightUltraIValue",0.0);
 		SmartDashboard::PutNumber("rightUltraDValue",0.0);
-		SmartDashboard::PutNumber("rightUltraSetPoint", 26.0);
+		SmartDashboard::PutNumber("rightUltraSetPoint", 32.0);
 		//feeder ultasonic values
 		SmartDashboard::PutNumber("feederAlignUltraPValue",0.3);
 		SmartDashboard::PutNumber("feederAlignUltraIValue",0.0);
@@ -175,10 +180,18 @@ public:
 		SmartDashboard::PutNumber("PushOver-strafeBack", 300);
 		SmartDashboard::PutNumber("PushOver-longDriveForward", 10000);
 
+		//Shakn Bake REVIVED!!!!!
+		SmartDashboard::PutBoolean("SNBR", false);
+		SmartDashboard::PutNumber("SNBRForwardDist", 7500);
+
+
+
+
 		//Add Auto Choices
 		autoChooser.AddObject("Drive to Zone", new std::string("Drive-to-Zone"));
 		autoChooser.AddObject("One Tote", new std::string("One-Tote"));
 		autoChooser.AddObject("Bin Slap", new std::string("Bin-Slap"));
+		autoChooser.AddObject("SNBR", new std::string("SNBR"));
 //		autoChooser.AddObject("Shake n' Bake", new std::string("Shake-n'-Bake"));
 //		autoChooser.AddObject("Two Tote", new std::string("Two-Tote"));
 //		autoChooser.AddObject("Push Bin or Tote", new std::string("Push-to-Zone"));
@@ -261,7 +274,6 @@ public:
 				}
 			}else if (choice=="Bin-Slap"){
 				robot.outLog.throwLog("Auto Choice: Slaperino");
-
 				// move all the totes.....#smackattack
 //				LiftAction binSlap_LiftDown(lift, 100);
 //				autoSeq.add_action(binSlap_LiftDown);
@@ -293,11 +305,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward);
 
 				//We gon knock that bin now
-				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0);
+				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
 				autoSeq.add_action(binSlap_MediumDriveForward);
 //				WaitAction waitOne(.5);
 //				autoSeq.add_action(waitOne);
-				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true);
+				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, drive.getAutoUltra());
 				autoSeq.add_action(photoOne);
 				AlignAction align(drive);
 				autoSeq.add_action(align);
@@ -305,11 +317,6 @@ public:
 
 				LiftAction binSlap_LiftDown2(lift, SmartDashboard::GetNumber("pickupToteHeight"),true);
 				autoSeq.add_action(binSlap_LiftDown2);
-
-
-
-
-
 
 
 
@@ -347,11 +354,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward2);
 
 				//We gon knock that bin now 2
-				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0);
+				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
 				autoSeq.add_action(binSlap_MediumDriveForward2);
 //				WaitAction waitTwo(.5);
 //				autoSeq.add_action(waitTwo);
-				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1);
+				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, drive.getAutoUltra());
 				autoSeq.add_action(photoTwo);
 				AlignAction align2(drive);
 				autoSeq.add_action(align2);
@@ -373,6 +380,133 @@ public:
 				autoSeq.add_action(binSlap_Back);
 				autoSeq.init();
 				while (IsAutonomous() and !IsDisabled()) {
+//					robot.outLog.throwLog("auto iter");
+					autoSeq.iter();
+					loopTime = timeVal.Get()<.1?0.1-timeVal.Get():0.0;
+					Wait(loopTime); // wait for a motor update time
+					SmartDashboard::PutNumber("Timer", timeVal.Get());
+					if (timeVal.Get() >= .12){
+						robot.outLog.throwLog("[PROBLEM] Loop Time High! Timer at: ",timeVal.Get());
+					}
+					timeVal.Reset();
+				}
+			}else if (choice == "SNBR"){
+				robot.outLog.throwLog("SNBR");
+				// move all the totes.....#smackattack
+//				LiftAction binSlap_LiftDown(lift, 100);
+//				autoSeq.add_action(binSlap_LiftDown);
+				LiftAction binSlap_LiftUpInit(lift, SmartDashboard::GetNumber("magicToteHeight"), true);
+				autoSeq.add_action(binSlap_LiftUpInit);
+//					PuncherAction punchOut(drive,DoubleSolenoid::kForward);
+//					autoSeq.add_action(punchOut);
+//				TurnActionNoReset turnOne(drive,15.0);
+//				autoSeq.add_action(turnOne);
+//				PunchAction punchOne(drive,1.5,true);
+//				autoSeq.add_action(punchOne);
+				SloppyTurnAction turnTwo(drive,-45.0);
+				autoSeq.add_action(turnTwo);
+
+				LiftAction binSlap_LiftUp(lift, SmartDashboard::GetNumber("OverToteHeight"), true);
+				autoSeq.add_action(binSlap_LiftUp);
+
+				DriveRampAction SNBRDrive(drive,1.0,SmartDashboard::GetNumber("SNBRForwardDist"),1.0);
+				autoSeq.add_action(SNBRDrive);
+//					WaitAction TTTWaitOne (1);
+//					autoSeq.add_action(TTTWaitOne);
+//					PuncherAction punchInOne(drive,DoubleSolenoid::kReverse);
+//					autoSeq.add_action(punchInOne);
+
+//				TurnSettleAction settleTwo(drive,.65);
+//				autoSeq.add_action(settleTwo);
+//				WaitAction waitBumpOne(1);
+//				autoSeq.add_action(waitBumpOne);
+
+
+//				StrafeAction correctOne(drive,2.0,SmartDashboard::GetNumber("BinSlapStrafeDist"));
+//				autoSeq.add_action(correctOne);
+//				DriveAction binSlap_SmallDriveForward(drive, 0.9, SmartDashboard::GetNumber("Small"));
+//				autoSeq.add_action(binSlap_SmallDriveForward);
+
+				//We gon knock that bin now
+				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, drive.getAutoUltra());
+				autoSeq.add_action(binSlap_MediumDriveForward);
+//				WaitAction waitOne(.5);
+//				autoSeq.add_action(waitOne);
+				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, drive.getAutoUltra());
+				autoSeq.add_action(photoOne);
+				AlignAction align(drive);
+				autoSeq.add_action(align);
+
+
+				LiftAction binSlap_LiftDown2(lift, SmartDashboard::GetNumber("pickupToteHeight"),true);
+				autoSeq.add_action(binSlap_LiftDown2);
+
+				SloppyTurnAction turnTwoTwo(drive,-45.0);
+				autoSeq.add_action(turnTwoTwo);
+//					WaitAction TTTWaitOne (1);
+//					autoSeq.add_action(TTTWaitOne);
+//					PuncherAction punchInOne(drive,DoubleSolenoid::kReverse);
+//					autoSeq.add_action(punchInOne);
+				LiftAction binSlap_LiftUpTwo(lift, SmartDashboard::GetNumber("OverToteHeight"), true);
+				autoSeq.add_action(binSlap_LiftUp);
+
+				DriveRampAction SNBRDriveTwo(drive,1.0,SmartDashboard::GetNumber("SNBRForwardDist"),1.0);
+				autoSeq.add_action(SNBRDriveTwo);
+//				TurnSettleAction settleTwo(drive,.65);
+//				autoSeq.add_action(settleTwo);
+//				WaitAction waitBumpOne(1);
+//				autoSeq.add_action(waitBumpOne);
+
+
+//				StrafeAction correctOne(drive,2.0,SmartDashboard::GetNumber("BinSlapStrafeDist"));
+//				autoSeq.add_action(correctOne);
+//				DriveAction binSlap_SmallDriveForward(drive, 0.9, SmartDashboard::GetNumber("Small"));
+//				autoSeq.add_action(binSlap_SmallDriveForward);
+
+				//We gon knock that bin now
+				DriveRampAction binSlap_MediumDriveForwardTwo(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, drive.getAutoUltra());
+				autoSeq.add_action(binSlap_MediumDriveForwardTwo);
+
+
+//				TurnSettleAction settleOne(drive,.65);
+//				autoSeq.add_action(settleOne);
+//				WaitAction waitBumpTwo(1);
+//				autoSeq.add_action(waitBumpTwo);
+
+
+//				StrafeAction correctTwo(drive,2.0,SmartDashboard::GetNumber("BinSlapStrafeDist"));
+//				autoSeq.add_action(correctTwo);
+//				DriveAction binSlap_SmallDriveForward2(drive, 0.9, SmartDashboard::GetNumber("Small"));
+//				autoSeq.add_action(binSlap_SmallDriveForward2);
+
+				//We gon knock that bin now 2
+				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
+				autoSeq.add_action(binSlap_MediumDriveForward2);
+//				WaitAction waitTwo(.5);
+//				autoSeq.add_action(waitTwo);
+				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, drive.getAutoUltra());
+				autoSeq.add_action(photoTwo);
+				AlignAction align2(drive);
+				autoSeq.add_action(align2);
+				LiftAction binSlap_LiftDown3(lift, SmartDashboard::GetNumber("pickupToteHeight"));
+				autoSeq.add_action(binSlap_LiftDown3);
+				LiftAction binSlap_LiftUp3(lift, SmartDashboard::GetNumber("magicToteHeight", true));
+				autoSeq.add_action(binSlap_LiftUp3);
+//				TurnAction binSlap_Turn(drive, 90);
+//				autoSeq.add_action(binSlap_Turn);
+				StrafeAction binSlap_DriveToAutozone(drive, 2, SmartDashboard::GetNumber("BinSlapDrive-To-Autozone")/*/2*/);
+				autoSeq.add_action(binSlap_DriveToAutozone);
+//				DriveAction binSlap_DriveToAutozoneTwo(drive, .5, SmartDashboard::GetNumber("BinSlapDrive-To-Autozone")/2);
+//				autoSeq.add_action(binSlap_DriveToAutozoneTwo);
+				WaitAction waitToSettle(.5);
+				autoSeq.add_action(waitToSettle);
+				LiftAction binSlap_LiftDown4(lift, 100);
+				autoSeq.add_action(binSlap_LiftDown4);
+				DriveAction binSlap_Back(drive, -2, SmartDashboard::GetNumber("BinSlapDriveBack"));
+				autoSeq.add_action(binSlap_Back);
+				autoSeq.init();
+				while (IsAutonomous() and !IsDisabled()) {
+//					robot.outLog.throwLog("auto iter");
 					autoSeq.iter();
 					loopTime = timeVal.Get()<.1?0.1-timeVal.Get():0.0;
 					Wait(loopTime); // wait for a motor update time

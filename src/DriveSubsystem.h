@@ -39,7 +39,7 @@ class DriveSubsystem: public CORESubsystem{
 #endif
         SerialPort *serial_port;
 
-	Gyro gyro;
+//	Gyro gyro;
 	Timer timer;
 	Timer gyroTimer;
 	Timer leftUltraTimer;
@@ -63,6 +63,7 @@ class DriveSubsystem: public CORESubsystem{
 	AnalogInput leftFeederAlignUltra;
 	AnalogInput rightFeederAlignUltra;
 	AnalogInput jumper;
+	AnalogInput autoUltra;
 	AnalogOutput ultraPulse;
 	DigitalInput centerPhoto;
 	DoubleSolenoid binPunch;
@@ -107,7 +108,8 @@ class DriveSubsystem: public CORESubsystem{
 	int centerDirection = 1;
 	bool oldCenterButton = true;
 	bool rightFeederStation = true;
-
+	bool modeSet = false;
+	bool dPad = false;
 	double alignPowerLeft = -.5;
 	double alignPowerRight = .5;
 
@@ -127,6 +129,7 @@ class DriveSubsystem: public CORESubsystem{
 
 public:
 		CANSpeedController::ControlMode mode = CANSpeedController::kPercentVbus;
+//		CANSpeedController::ControlMode mode = CANSpeedController::kVoltage;
 		bool alignTwo = false;
 		bool alignOne = false;
 		bool leftUltraDistCorrect = false;
@@ -143,7 +146,7 @@ public:
 	std::string name(void);
 	DriveSubsystem(CORERobot& robot):
 		CORESubsystem(robot),
-		gyro(1),
+//		gyro(1),
 		leftPhoto(2),
 		middlePhoto(3),
 		rightPhoto(4),
@@ -155,6 +158,7 @@ public:
 		leftFeederAlignUltra(4),
 		rightFeederAlignUltra(7),
 		jumper(3),
+		autoUltra(1),
 		ultraPulse(0),
 		centerPhoto(8),
 		binPunch(1,0),
@@ -173,7 +177,7 @@ public:
 			frontRight.Set(0.0);
 			backLeft.Set(0.0);
 			backRight.Set(0.0);
-			gyro.SetDeadband(0.007);
+//			gyro.SetDeadband(0.007);
 			frontLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			backLeft.SetFeedbackDevice(CANTalon::QuadEncoder);
 			frontRight.SetFeedbackDevice(CANTalon::QuadEncoder);
@@ -189,6 +193,7 @@ public:
 			ultraPulse.SetVoltage(5.0);
 			Wait(.00002);
 			ultraPulse.SetVoltage(0.0);
+			binPunch.Set(DoubleSolenoid::kReverse);
 		}
 
 	void robotInit(void);
@@ -199,6 +204,7 @@ public:
 	float getJumper(void);
 	float getLeftUltra(void);
 	float getRightUltra(void);
+	float getAutoUltra(void);
 	float getFeederAlignUltra(void);
 	void teleopEnd(void);
 	double getDistance(void);
@@ -216,6 +222,7 @@ public:
 	double getJoystickMultiplier(void);
 	void giveLog(std::string stringVar);
 	double gyroPIDCalc(double set, double rot, int mult= 1);
+	double autoUltraPIDCalc(double set);
 	bool getLeftPhoto();
 	bool getMiddlePhoto();
 	bool getRightPhoto();
@@ -224,6 +231,7 @@ public:
 	double rateTest(void);
 	void reconstructGyro(void);
 	void setMode(CANSpeedController::ControlMode m);
+	void setHeading(double val);
 };
 
 class DriveAction : public Action{
@@ -306,15 +314,17 @@ class DriveRampAction : public Action{
 	double rotation = 0.0;
 	int countTime = 0;
 	double rampTime;
+	double setPoint;
+	double strafe = 0;
 public:
 	std::string name = "Drive Action";
-	DriveRampAction(DriveSubsystem& drive, double Tspeed, double targetDistance, double rampTime = 1.0):
+	DriveRampAction(DriveSubsystem& drive, double Tspeed, double targetDistance, double rampTime = 1.0, double ultraSetPoint = -1):
 		drive(&drive),
 		targetSpeed(Tspeed),
 		targetDistance(targetDistance),
-		rampTime(rampTime){
-
-	}
+		rampTime(rampTime),
+		setPoint(ultraSetPoint)
+	{}
 	void init(void){
 		drive->giveLog("drive action init");
 //		drive->setVoltageMode();
@@ -329,6 +339,7 @@ public:
 		if (speed<targetSpeed){
 			speed+=((targetSpeed-.15)/(rampTime*10.0));
 		}
+		strafe = (setPoint == -1)?0.0:drive->autoUltraPIDCalc(setPoint);
 //		drive->frontLeft.SetSafetyEnabled(true);
 //		drive->frontLeft.Set(1.0);
 //		drive->giveLog("drive action iter");
@@ -343,7 +354,7 @@ public:
 		if(targetDistance>=0){
 			if(currentDistance<=targetDistance){
 //				drive->giveLog("set1");
-				drive->mec_drive(0,speed,rotation);
+				drive->mec_drive(strafe,speed,rotation);
 //				drive->robot.outLog.throwLog(speed);
 //				drive->robot.outLog.throwLog(rotation);
 //				drive->giveLog("cont");
@@ -359,7 +370,7 @@ public:
 		}else{
 			if(currentDistance>=targetDistance){
 //				drive->giveLog("set2");
-				drive->mec_drive(0,speed,rotation);
+				drive->mec_drive(strafe,speed,rotation);
 				drive->giveLog("cont");
 				return CONTINUE;
 			}else if (countTime >3){
@@ -521,6 +532,44 @@ public:
 	}
 };
 
+class SloppyTurnAction: public Action{
+	DriveSubsystem* drive;
+	double degrees;
+	double rotation;
+public:
+	std::string name = "Turn Action";
+	SloppyTurnAction(DriveSubsystem& drive, double degrees):
+		drive(&drive),
+		degrees(degrees)
+	{
+		rotation = 0;
+	}
+
+	void init(void){
+//		drive->setVoltageMode();
+//		drive->resetRot();
+		drive->setHeading(degrees);
+		drive->giveLog("Sloppy Turn Init");
+		rotation = drive->getRot();
+	}
+	ControlFlow call(void){
+		drive->resetDistance();
+		rotation = drive->gyroPIDCalc(degrees,drive->getRot());
+		drive->mec_drive(0,0,rotation);
+		if ((degrees > 0) && drive->getRot() > degrees){
+			drive->mec_drive(0,0,0);
+			return END;
+		}else if ((degrees < 0) && drive->getRot() < degrees){
+			drive->mec_drive(0,0,0);
+			return END;
+		}else{
+
+			return CONTINUE;
+		}
+	}
+};
+
+
 class TurnSettleAction : public WaitAction{
 	DriveSubsystem* drive;
 	double rotation = 0;
@@ -586,13 +635,16 @@ class PhotoDriveAction : public Action{
 		double speed;
 		int ticksNeeded = 4;
 		bool waitExtra = false;
+		double setpoint;
+		double strafe = 0;
 public:
-	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0, double speed = .9, int ticksNeed = 3, bool waitExtra = false):
+	PhotoDriveAction(DriveSubsystem& drive, double maxDist = 10000.0, double speed = .9, int ticksNeed = 3, bool waitExtra = false, double ultraSetpoint = -1.0):
 		drive(&drive),
 		maxDist(maxDist),
 		speed(speed),
 		ticksNeeded(ticksNeed),
-		waitExtra(waitExtra)
+		waitExtra(waitExtra),
+		setpoint(ultraSetpoint)
 		{
 
 	}
@@ -602,6 +654,7 @@ public:
 		timeTicks = 0;
 	}
 	ControlFlow call(void){
+		strafe = (setpoint == -1)?0.0:drive->autoUltraPIDCalc(setpoint);
 		rotation = drive->gyroPIDCalc(0,drive->getRot());
 		if(!oldMidValue && drive->getMiddlePhoto()){
 			drive->robot.outLog.throwLog("PHOTO MIDDLE SEEN");
@@ -617,7 +670,7 @@ public:
 //			return CONTINUE;
 
 		}
-		drive->mec_drive(0,speed,rotation);
+		drive->mec_drive(strafe,speed,rotation);
 		oldMidValue = drive->getMiddlePhoto();
 		oldRightValue = drive->getRightPhoto();
 		oldLeftValue = drive->getLeftPhoto();
@@ -676,6 +729,8 @@ class AlignAction: public Action{
 	double strafe = .6;
 	int seen = 0;
 	bool volt = false;
+	double oldDist = 0;
+
 public:
 	std::string name = "Align Action";
 	AlignAction(DriveSubsystem& drive, bool volts = false):
@@ -688,6 +743,7 @@ public:
 			drive->setMode(CANSpeedController::kVoltage);
 			drive->robot.outLog.throwLog("Drive Set To VOLTAGE");
 		}
+		drive->resetDistance();
 	}
 	ControlFlow call(void){
 
@@ -698,6 +754,14 @@ public:
 			leftPhotoVar = drive->getLeftPhoto();
 			middlePhotoVar = drive->getMiddlePhoto();
 			rightPhotoVar = drive->getRightPhoto();
+//			drive->robot.outLog.throwLog("dist", drive->getDistance());
+//			drive->robot.outLog.throwLog("oldDist", oldDist);
+//			drive->robot.outLog.throwLog("delta dist", fabs(drive->getDistance()-fabs(oldDist)));
+			if (fabs(drive->getDistance()-fabs(oldDist))<1000){
+				strafe+=.075;
+				drive->robot.outLog.throwLog("Align Ramped Up with enc diff of",fabs(drive->getDistance()-oldDist));
+			}
+			oldDist = drive->getDistance();
 
 			//different cases
 			if (leftPhotoVar && !rightPhotoVar){
@@ -787,7 +851,26 @@ public:
 	}
 };
 
+class ChangeHeadingAction : public Action{
+	DriveSubsystem* drive;
+	double value;
+public:
+	ChangeHeadingAction(DriveSubsystem& drive, double v):
+		drive(&drive),
+		value(v)
+	{	}
 
+	void init(void){
+		drive->robot.outLog.throwLog("heading changed: ", value);
+	}
+
+	ControlFlow call(void){
+		drive->setHeading(value);
+		return END;
+	}
+
+
+};
 
 
 
