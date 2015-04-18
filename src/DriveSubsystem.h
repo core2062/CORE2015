@@ -6,7 +6,7 @@
 #include <cmath>
 #include "CORERobot/SpeedPID.h"
 #include <iostream>
-
+#include <math.h>
 
 //NavX stuff
 #include "navx/IMU.h"
@@ -20,6 +20,7 @@
 #define ENABLE_AHRS
 
 
+#define PI 3.14159265
 
 using namespace CORE;
 
@@ -51,6 +52,11 @@ class DriveSubsystem: public CORESubsystem{
 	double gyroTime = 0.0;
 	double feederAlignTime = 0.0;
 	bool oldCenter = false;
+	bool polar = false;
+	double polarMag = 0.0;
+	double polarAngle = 0.0;
+	bool polarLast = false;
+	int polarState = 0;
 	
 
 	DigitalInput leftPhoto;

@@ -47,6 +47,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("centerDrive",1,1);
 	robot.joystick.register_button("punch",1,10,JoystickCache::RISING);
 	robot.joystick.register_button("alignEverything",1,6);
+	robot.joystick.register_button("polarAlign",1,2);
 	robot.joystick.joystick1.GetPOV();
 
 
@@ -72,26 +73,26 @@ void DriveSubsystem::teleopInit(void){
 void DriveSubsystem::teleop(void){
 
 //    SmartDashboard::PutBoolean( "IMU_Connected", imu->IsConnected());
-    SmartDashboard::PutNumber("IMU_Yaw", imu->GetYaw());
+//    SmartDashboard::PutNumber("IMU_Yaw", imu->GetYaw());
 //    SmartDashboard::PutNumber("IMU_Pitch", imu->GetPitch());
 //    SmartDashboard::PutNumber("IMU_Roll", imu->GetRoll());
 //    SmartDashboard::PutNumber("IMU_CompassHeading", imu->GetCompassHeading());
 //    SmartDashboard::PutNumber("IMU_Update_Count", imu->GetUpdateCount());
 //    SmartDashboard::PutNumber("IMU_Byte_Count", imu->GetByteCount());
 
-	#if defined (ENABLE_IMU_ADVANCED) || defined(ENABLE_AHRS)
-    	SmartDashboard::PutNumber("IMU_Accel_X", imu->GetWorldLinearAccelX());
-    	SmartDashboard::PutNumber("IMU_Accel_Y", imu->GetWorldLinearAccelY());
+//	#if defined (ENABLE_IMU_ADVANCED) || defined(ENABLE_AHRS)
+//    	SmartDashboard::PutNumber("IMU_Accel_X", imu->GetWorldLinearAccelX());
+//    	SmartDashboard::PutNumber("IMU_Accel_Y", imu->GetWorldLinearAccelY());
 //    	SmartDashboard::PutBoolean("IMU_IsMoving", imu->IsMoving());
 //    	SmartDashboard::PutNumber("IMU_Temp_C", imu->GetTempC());
 //    	SmartDashboard::PutBoolean("IMU_IsCalibrating", imu->IsCalibrating());
-	#if defined (ENABLE_AHRS)
-    	SmartDashboard::PutNumber("Velocity_X",             imu->GetVelocityX() );
-    	SmartDashboard::PutNumber("Velocity_Y",             imu->GetVelocityY() );
-    	SmartDashboard::PutNumber("Displacement_X",     imu->GetDisplacementX() );
-    	SmartDashboard::PutNumber("Displacement_Y",     imu->GetDisplacementY() );
-	#endif
-	#endif
+//	#if defined (ENABLE_AHRS)
+//    	SmartDashboard::PutNumber("Velocity_X",             imu->GetVelocityX() );
+//    	SmartDashboard::PutNumber("Velocity_Y",             imu->GetVelocityY() );
+//    	SmartDashboard::PutNumber("Displacement_X",     imu->GetDisplacementX() );
+//    	SmartDashboard::PutNumber("Displacement_Y",     imu->GetDisplacementY() );
+//	#endif
+//	#endif
 
 //	robot.outLog.throwLog("PID Sets");
 
@@ -120,7 +121,7 @@ void DriveSubsystem::teleop(void){
 			binPunch.Set(DoubleSolenoid::kReverse);
 		}
 	}
-SmartDashboard::PutNumber("Punch Set",binPunch.Get());
+//SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
 	double gyroRate = imu->GetYaw();
@@ -142,7 +143,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	}
 //	robot.outLog.throwLog("gyro and simple set");
 	POV = robot.joystick.joystick1.GetPOV();
-	SmartDashboard::PutNumber("POV", POV);
+//	SmartDashboard::PutNumber("POV", POV);
 	shoulderSpeed = robot.joystick.button("shoulderSpeed");
 	SmartDashboard::PutNumber("drive x", drive_x);
 	SmartDashboard::PutNumber("drive y", drive_y);
@@ -159,7 +160,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 
 	SmartDashboard::PutNumber("AutoUltra", getAutoUltra());
 
-
+	SmartDashboard::PutNumber("FeederX", (getFeederAlignUltra()/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))));
 
 
 	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
@@ -167,10 +168,10 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	SmartDashboard::PutNumber("BLE", backLeft.GetEncPosition());
 	SmartDashboard::PutNumber("BRE", backRight.GetEncPosition());
 
-	SmartDashboard::PutNumber("FLV", frontLeft.GetEncVel());
-	SmartDashboard::PutNumber("FRV", frontRight.GetEncVel());
-	SmartDashboard::PutNumber("BLV", backLeft.GetEncVel());
-	SmartDashboard::PutNumber("BRV", backRight.GetEncVel());
+//	SmartDashboard::PutNumber("FLV", frontLeft.GetEncVel());
+//	SmartDashboard::PutNumber("FRV", frontRight.GetEncVel());
+//	SmartDashboard::PutNumber("BLV", backLeft.GetEncVel());
+//	SmartDashboard::PutNumber("BRV", backRight.GetEncVel());
 
 //	SmartDashboard::PutNumber("Accel X", accel.GetX());
 //	SmartDashboard::PutNumber("Accel Y", accel.GetY());
@@ -435,6 +436,174 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		feederAlignPID.lastValue = getFeederAlignUltra();
 	}
 //////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////Will Be One Button Polar Align//////////////////////////////////////////////////////////
+		if(false){
+						polar = true;
+						if(error<-2 || error>2) {
+							if(error>5.0){
+								drive_rotation = .6;
+							}else if (error>3){
+								drive_rotation = .5;
+							}else if (error>2){
+								drive_rotation = .4;
+							}else if (error > .5){
+								drive_rotation = .3;
+							}else if (error>-.5){
+								drive_rotation = 0;
+							}else if (error>-2){
+								drive_rotation = -.3;
+							}else if (error> -3){
+								drive_rotation = -.4;
+							}else if (error > -5){
+								drive_rotation = -.5;
+							}else if (error <=-5){
+								drive_rotation = -.6;
+							}else{
+								robot.outLog.throwLog("No value for turning to align to feeder station!");
+								drive_rotation = 0;
+							}
+
+						}else{
+							polar = true;
+							double yDifference = ((((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue) - leftUltraPID.setPoint);
+							double xDifference = ((((getFeederAlignUltra()<150?getFeederAlignUltra():feederAlignPID.lastValue)*sin((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"));
+							double distanceDifference = (pow(pow(yDifference,2)+pow(xDifference,2),(1.0/2.0)));
+							polarAngle = atan(yDifference/xDifference);
+
+							if(distanceDifference>8){
+								//more than 8
+								polarMag = 1.2;
+							}else if (distanceDifference>5){
+								//8-5
+								polarMag = 1;
+							}else if (distanceDifference>3){
+								//3-5
+								polarMag = .9;
+							}else if (distanceDifference > .5){
+								//.5-3
+								polarMag = .8;
+							}else{
+								polarMag= 0;
+							}
+				//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+				//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+							leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+							rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+							feederAlignPID.lastValue = getFeederAlignUltra();
+						}
+
+			feederAlignPID.lastValue = getFeederAlignUltra();
+					//TODO Tune Polar Drive
+			}else if((robot.joystick.button("polarAlign")) && (drive_x == 0 && drive_y == 0)) {
+			if (polarState == 0){
+				polar = true;
+				double yDifference = ((((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue) - leftUltraPID.setPoint);
+				double xDifference = ((((getFeederAlignUltra()<150?getFeederAlignUltra():feederAlignPID.lastValue)/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"));
+				yDifference = (yDifference<.25 && yDifference >-.25)?0.01:yDifference;
+				xDifference = (xDifference<.25 && xDifference >-.25)?0.0:xDifference;
+
+				double distanceDifference = (pow(pow(yDifference,2)+pow(xDifference,2),(1.0/2.0)));
+
+				if (xDifference == 0 && yDifference == 0){
+					polarAngle = 0;
+					distanceDifference = 0;
+				}else if (xDifference == 0 && yDifference > 0){
+					polarAngle = 0;
+				}else if (xDifference == 0 && yDifference <=0){
+					polarAngle = PI;
+				}else if (yDifference == 0 && xDifference > 0){
+					polarAngle = (3*PI/2);
+				}else if (yDifference == 0 && xDifference <= 0){
+					polarAngle = (PI/2);
+				}else{
+					if (yDifference > 0 ){
+						polarAngle = atan((xDifference/yDifference));
+					}else{
+						polarAngle = ((PI/2)+((PI/2)-atan(-xDifference/yDifference)));
+					}
+				}
+
+				if (polarAngle<0.0){
+					polarAngle+=(2*PI);
+				}
+
+
+				SmartDashboard::PutNumber("Polar Y Diff", yDifference);
+				SmartDashboard::PutNumber("Polar X Diff", xDifference);
+				SmartDashboard::PutNumber("Polar distanceDiff", distanceDifference);
+
+
+				if(distanceDifference>8){
+					//more than 8
+					polarMag = .2;
+				}else if (distanceDifference>5){
+					//8-5
+					polarMag = .2;
+				}else if (distanceDifference>3){
+					//3-5
+					polarMag = .2;
+				}else if (distanceDifference > .5){
+					//.5-3
+					polarMag = .2;
+				}else{
+					polarMag= 0;
+				}
+//				if (((polarAngle * (180/PI))>65 && (polarAngle * (180/PI))<115)||(((polarAngle * (180/PI))>255 && (polarAngle * (180/PI))<=270) || ((polarAngle * (180/PI))<-65 && (polarAngle * (180/PI))>=-90))){
+//					polarMag+=.7;
+//				}
+				if (polarAngle == (PI/2) || polarAngle == (3*PI/2)){
+					polarMag *= 4;
+				}else if (polarAngle == 0 || polarAngle == (PI)){
+					polarMag *= .9;
+				}
+				else if (polarAngle > 0 && polarAngle < PI){
+					polarMag*=((90-abs(90-(polarAngle*(180/PI))))*.045)+1;
+				}else {
+					polarMag*=((90-abs(270-(polarAngle*(180/PI))))*.045)+1;
+				}
+
+
+				if (abs(xDifference) < .5 && abs(yDifference) < .5){
+					polarState = 1;
+					polarMag = 0;
+				}
+
+				SmartDashboard::PutNumber("Polar Mag", polarMag);
+				SmartDashboard::PutNumber("Polar Angle", polarAngle * (180/PI));
+
+	//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+	//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+				leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+				rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+				feederAlignPID.lastValue = getFeederAlignUltra();
+			}else{
+				polar = false;
+				leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+				if(leftUltraPID.actualPosition>70){
+					drive_y = 1.0;
+				}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
+					drive_y = .6;
+				}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+10){
+					drive_y = .45;
+				}else if (leftUltraPID.actualPosition >leftUltraPID.setPoint+5){
+					drive_y = .25;
+				}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+.5){
+					drive_y = .2;
+				}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint-.5){
+					drive_y = 0;
+				}else if (leftUltraPID.actualPosition > leftUltraPID.setPoint-5){
+					drive_y = -.2;
+				}else{
+					drive_y = -.3;
+				}
+				leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+			}
+			}else{
+				polarState = 0;
+				polarLast = false;
+				polar = false;
+			}
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 		if((robot.joystick.button("ultra") || leftUltraDistCorrect) && drive_y ==0) {
 			leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
 			if(leftUltraPID.actualPosition>70){
@@ -698,7 +867,7 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		if (simple){
 
 		/// RIP simplicity
-		if (/*!robot.joystick.button("ultra")*/true){
+		if (!polar){
 			if(shoulderSpeed){
 				frontLeft.Set(frontLeftInvert
 						*(drive_x+drive_y+drive_rotation)
@@ -731,38 +900,25 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 						*((mode == CANSpeedController::kVoltage)?12.0:1.0));
 			}
 		}else{
-			imu->ZeroYaw();
-			if(shoulderSpeed){
+//			imu->ZeroYaw();
+
 				frontLeft.Set(frontLeftInvert
-						*(drive_x+drive_left_y)
-						*(mode == CANSpeedController::kVoltage?12:1));
-				frontRight.Set(frontRightInvert
-						*(-drive_x+drive_right_y)
-						*(mode == CANSpeedController::kVoltage?12:1));
-				backLeft.Set(backLeftInvert
-						*(-drive_x+drive_left_y)
-						*(mode == CANSpeedController::kVoltage?12:1));
-				backRight.Set(backRightInvert
-						*(drive_x+drive_right_y)
-						*(mode == CANSpeedController::kVoltage?12:1));
-			}else{
-				frontLeft.Set(frontLeftInvert
-						*(drive_x+drive_left_y)
+						*(polarMag*sin(polarAngle+(PI/4.0)) + drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
 						*(mode == CANSpeedController::kVoltage?12:1));
 				frontRight.Set(frontRightInvert
-						*(-drive_x+drive_right_y)
+						*(polarMag*cos(polarAngle+(PI/4.0)) - drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
 						*(mode == CANSpeedController::kVoltage?12:1));
 				backLeft.Set(backLeftInvert
-						*(-drive_x+drive_left_y)
+						*(polarMag*cos(polarAngle+(PI/4.0)) + drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
 						*(mode == CANSpeedController::kVoltage?12:1));
 				backRight.Set(backRightInvert
-						*(drive_x+drive_right_y)
+						*(polarMag*sin(polarAngle+(PI/4.0)) - drive_rotation)
 						*SmartDashboard::GetNumber("JoystickMultiplier",.2)
 						*(mode == CANSpeedController::kVoltage?12:1));
-			}
+
 		}
 		}else{
 

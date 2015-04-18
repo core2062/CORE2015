@@ -96,8 +96,8 @@ public:
 		SmartDashboard::PutNumber("feederAlignUltraDValue",0.0);
 		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 40.5);
 
-		SmartDashboard::PutNumber("feederWallAngle", 135);
-		SmartDashboard::PutNumber("feederXSet", 29);
+		SmartDashboard::PutNumber("feederWallAngle", 122);
+		SmartDashboard::PutNumber("feederXSet", 44.3);
 
 
 		//Tote Heights
