@@ -7,6 +7,7 @@
 #include "CORERobot/SpeedPID.h"
 #include <iostream>
 
+
 //NavX stuff
 #include "navx/IMU.h"
 #include "navx/IMUAdvanced.h"
@@ -437,6 +438,62 @@ class StrafeAction : public Action{
 
 		}
 	};
+
+class StrafeCorrectAction : public Action{
+		DriveSubsystem* drive;
+		double speed;
+		double targetDistance;
+		double currentDistance = 0.0;
+		double rotation = 0.0;
+		double driveY = 0.0;
+	public:
+		std::string name = "Strafe Action";
+		StrafeCorrectAction(DriveSubsystem& drive, double speed, double targetDistance, double vert = 0):
+			drive(&drive),
+			speed(speed),
+			targetDistance(targetDistance),
+			driveY(vert)
+		{
+
+		}
+		void init(void){
+			drive->resetDistance();
+//			drive->setVoltageMode();
+			currentDistance = drive->getDistance();
+//			drive->resetRot();
+
+		}
+		ControlFlow call(void){
+			rotation = drive->getRot();
+			rotation = drive->gyroPIDCalc(0, rotation);
+			currentDistance = drive->getDistance();
+			if(targetDistance>0){
+				if(currentDistance<targetDistance){
+					drive->mec_drive(speed,driveY,rotation);
+					return CONTINUE;
+				}else{
+					drive->mec_drive(0,0,0);
+
+					drive->giveLog("StrafeAction Completed");
+					drive->robot.outLog.throwLog("Strafe end Enc:", drive->getDistance());
+					drive->resetDistance();
+					return END;
+				}
+			}else{
+				if(currentDistance>targetDistance){
+					drive->mec_drive(speed,driveY,rotation);
+					return CONTINUE;
+				}else{
+					drive->mec_drive(0,0,0);
+					drive->giveLog("DriveAction Completed");
+					drive->resetDistance();
+					return END;
+				}
+			}
+
+		}
+	};
+
 
 class TurnAction : public Action{
 	DriveSubsystem* drive;

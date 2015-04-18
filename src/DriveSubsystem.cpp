@@ -46,7 +46,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
 	robot.joystick.register_button("centerDrive",1,1);
 	robot.joystick.register_button("punch",1,10,JoystickCache::RISING);
-	robot.joystick.register_button("feederStationAlign",1,6);
+	robot.joystick.register_button("alignEverything",1,6);
 	robot.joystick.joystick1.GetPOV();
 
 
@@ -94,6 +94,7 @@ void DriveSubsystem::teleop(void){
 	#endif
 
 //	robot.outLog.throwLog("PID Sets");
+
 	if(!simple){
 		frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"),
 			SmartDashboard::GetNumber("FrontLeftIValue"),
@@ -157,6 +158,9 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	SmartDashboard::PutBoolean("Centering Photo", centerPhoto.Get());
 
 	SmartDashboard::PutNumber("AutoUltra", getAutoUltra());
+
+
+
 
 	SmartDashboard::PutNumber("FLE", frontLeft.GetEncPosition());
 	SmartDashboard::PutNumber("FRE", frontRight.GetEncPosition());
@@ -261,8 +265,176 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 	}
 
 
+
 //TODO Tune
 	//Ultrasonic PID
+	double error = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue)-(getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+	double xError = getFeederAlignUltra()-feederAlignPID.setPoint;
+////////////////////////////////////////////////////////////////////////////////////////////////
+	if(robot.joystick.button("alignEverything")){
+		leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+		if(((leftUltraPID.actualPosition >leftUltraPID.setPoint+5 || leftUltraPID.actualPosition < leftUltraPID.setPoint-5) || leftUltraDistCorrect) && drive_y ==0) {
+					leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+					if(leftUltraPID.actualPosition>70){
+						drive_y = 1.0;
+					}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
+						drive_y = .6;
+					}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+10){
+						drive_y = .45;
+					}else if (leftUltraPID.actualPosition >leftUltraPID.setPoint+5){
+						drive_y = .25;
+					}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+.5){
+						drive_y = .2;
+					}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint-.5){
+						drive_y = 0;
+					}else if (leftUltraPID.actualPosition > leftUltraPID.setPoint-5){
+						drive_y = -.2;
+					}else{
+						drive_y = -.3;
+					}
+
+					}else if(error<-2 || error>2) {
+						if(error>5.0){
+							drive_rotation = .6;
+						}else if (error>3){
+							drive_rotation = .5;
+						}else if (error>2){
+							drive_rotation = .4;
+						}else if (error > .5){
+							drive_rotation = .3;
+						}else if (error>-.5){
+							drive_rotation = 0;
+						}else if (error>-2){
+							drive_rotation = -.3;
+						}else if (error> -3){
+							drive_rotation = -.4;
+						}else if (error > -5){
+							drive_rotation = -.5;
+						}else if (error <=-5){
+							drive_rotation = -.6;
+						}else{
+							robot.outLog.throwLog("No value for turning to align to feeder station!");
+							drive_rotation = 0;
+						}
+
+					}else if(((xError>3 || xError<-3) || feederAlignUltraDistCorrect) && drive_x ==0) {
+
+
+					if(xError>8){
+						//more than 8
+						drive_x = 1.2;
+					}else if (xError>5){
+						//8-5
+						drive_x = 1;
+					}else if (xError>3){
+						//3-5
+						drive_x = .9;
+					}else if (xError > .5){
+						//.5-3
+						drive_x = .8;
+					}else if (xError>-.5){
+						//-.5-.5
+						drive_x = 0;
+					}else if (xError>-3){
+						//-.5--3
+						drive_x = -.8;
+					}else if (xError> -5){
+						//-3--5
+						drive_x = -.9;
+					}else if (xError >-8){
+						//-5--8
+						drive_x = -1;
+					}else if (xError <=-8){
+						//less than 8
+						drive_x = -1.2;
+					}else{
+						drive_x= 0;
+					}
+	}else if(((leftUltraPID.actualPosition >leftUltraPID.setPoint+1 || leftUltraPID.actualPosition < leftUltraPID.setPoint-1) || leftUltraDistCorrect) && drive_y ==0) {
+						leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+						if(leftUltraPID.actualPosition>70){
+							drive_y = 1.0;
+						}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
+							drive_y = .6;
+						}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+10){
+							drive_y = .45;
+						}else if (leftUltraPID.actualPosition >leftUltraPID.setPoint+5){
+							drive_y = .25;
+						}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+.5){
+							drive_y = .2;
+						}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint-.5){
+							drive_y = 0;
+						}else if (leftUltraPID.actualPosition > leftUltraPID.setPoint-5){
+							drive_y = -.2;
+						}else{
+							drive_y = -.3;
+						}
+						leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+						}
+					else if(((xError>.5 || xError<-.5) || feederAlignUltraDistCorrect) && drive_x ==0) {
+
+			//			SmartDashboard::PutNumber("Feeder Ultra Error", error);
+						if(xError>8){
+							//more than 8
+							drive_x = 1.2;
+						}else if (xError>5){
+							//8-5
+							drive_x = 1;
+						}else if (xError>3){
+							//3-5
+							drive_x = .9;
+						}else if (xError > .5){
+							//.5-3
+							drive_x = .8;
+						}else if (xError>-.5){
+							//-.5-.5
+							drive_x = 0;
+						}else if (xError>-3){
+							//-.5--3
+							drive_x = -.8;
+						}else if (xError> -5){
+							//-3--5
+							drive_x = -.9;
+						}else if (xError >-8){
+							//-5--8
+							drive_x = -1;
+						}else if (xError <=-8){
+							//less than 8
+							drive_x = -1.2;
+						}else{
+							drive_x= 0;
+						}
+					}
+			else if(error<-.5 || error>.5) {
+							if(error>5.0){
+								drive_rotation = .6;
+							}else if (error>3){
+								drive_rotation = .5;
+							}else if (error>2){
+								drive_rotation = .4;
+							}else if (error > .5){
+								drive_rotation = .3;
+							}else if (error>-.5){
+								drive_rotation = 0;
+							}else if (error>-2){
+								drive_rotation = -.3;
+							}else if (error> -3){
+								drive_rotation = -.4;
+							}else if (error > -5){
+								drive_rotation = -.5;
+							}else if (error <=-5){
+								drive_rotation = -.6;
+							}else{
+								robot.outLog.throwLog("No value for turning to align to feeder station!");
+								drive_rotation = 0;
+							}
+							leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+							rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+						}
+
+		feederAlignPID.lastValue = getFeederAlignUltra();
+	}
+//////////////////////////////////////////////////////////////////////////////////////////////////
 		if((robot.joystick.button("ultra") || leftUltraDistCorrect) && drive_y ==0) {
 			leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
 			if(leftUltraPID.actualPosition>70){
@@ -287,7 +459,6 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 		//TODO Tune
 		//Ultrasonic Rotation
 			if((robot.joystick.button("rotate"))/* && drive_rotation == 0*/) {
-				double error = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue)-(getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
 				if(error>5.0){
 					drive_rotation = .6;
 				}else if (error>3){
@@ -316,22 +487,45 @@ SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 
 
 			}
-			//TODO Tune
+			//TODO Tune Side To Side
 		if((robot.joystick.button("centerDrive") || feederAlignUltraDistCorrect) && drive_x ==0) {
-			feederAlignTime = feederAlignTimer.Get();
-			feederAlignPID.mistake =  feederAlignPID.setPoint - getFeederAlignUltra();
-//			SmartDashboard::PutNumber("Ultra PID Error", rightUltraPID.mistake);
-			feederAlignPID.integral += (feederAlignPID.mistake *feederAlignTime);
-			feederAlignPID.derivative = (feederAlignPID.mistake - feederAlignPID.lastError)/feederAlignTime;
-			double feederAlignOutput = (feederAlignPID.P*feederAlignPID.mistake) + (feederAlignPID.I*feederAlignPID.integral) + (feederAlignPID.D*feederAlignPID.derivative);
-//			SmartDashboard::PutNumber("Ultra PID Out before", rightUltraOutput);
-			feederAlignOutput = feederAlignOutput > 1.0 ? 1.0 : (feederAlignOutput < -1.0 ? -1.0 : feederAlignOutput); //Conditional (Tenerary) Operator limiting values to between 1 and -1
-			drive_x = -feederAlignOutput;
-			feederAlignPID.lastError = feederAlignPID.mistake;
-//			SmartDashboard::PutNumber("Ultra PID Out", rightUltraOutput);
-			feederAlignTimer.Reset();
-			feederAlignUltraDistCorrect = (feederAlignOutput > -.05 && feederAlignOutput < .05)?false:feederAlignUltraDistCorrect;
+//			SmartDashboard::PutNumber("Feeder Ultra Error", error);
+			if(xError>8){
+				//more than 8
+				drive_x = 1.2;
+			}else if (xError>5){
+				//8-5
+				drive_x = 1;
+			}else if (xError>3){
+				//3-5
+				drive_x = .9;
+			}else if (xError > .5){
+				//.5-3
+				drive_x = .8;
+			}else if (xError>-.5){
+				//-.5-.5
+				drive_x = 0;
+			}else if (xError>-3){
+				//-.5--3
+				drive_x = -.8;
+			}else if (xError> -5){
+				//-3--5
+				drive_x = -.9;
+			}else if (xError >-8){
+				//-5--8
+				drive_x = -1;
+			}else if (xError <=-8){
+				//less than 8
+				drive_x = -1.2;
+			}else{
+				drive_x= 0;
+			}
+//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+
 		}
+		feederAlignPID.lastValue = getFeederAlignUltra();
+
 
 		if ((drive_rotation == 0) && (oldRot != 0.0)){
 			resetQ = 6;
@@ -793,8 +987,10 @@ double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
 }
 
 double DriveSubsystem::autoUltraPIDCalc(double set){
-	double mistake =  (set) - getAutoUltra();
+	double ultraVal = getAutoUltra();
+	double mistake =  ((set) - ((ultraVal<150)?ultraVal:set));
 	double output = (fabs(mistake)>1.0)?(SmartDashboard::GetNumber("AutoUltraPValue")*mistake):0.0;
+	robot.outLog.throwLog("\nUndeadbanded Ultra Output", output);
 	output = output > .5 ? .5 : (output < -.5 ? -.5 : output); //Conditional (Tenerary) Operator limiting values to between 1 and -1 TODO Change?
 	drive_rotation = output;
 	if (output < .05 && output > -.05){
@@ -802,6 +998,7 @@ double DriveSubsystem::autoUltraPIDCalc(double set){
 	}
 	if (output != 0){
 		robot.outLog.throwLog("Auto Ultra Correcting at: ", output);
+		robot.outLog.throwLog("Ultra At:", ultraVal);
 	}
 	return output;
 }

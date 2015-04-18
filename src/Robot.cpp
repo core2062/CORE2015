@@ -83,18 +83,22 @@ public:
 		SmartDashboard::PutNumber("leftUltraPValue",0.075);
 		SmartDashboard::PutNumber("leftUltraIValue",0.0);
 		SmartDashboard::PutNumber("leftUltraDValue",0.0);
-		SmartDashboard::PutNumber("leftUltraSetPoint", 32.0);
+		SmartDashboard::PutNumber("leftUltraSetPoint", 33.0);
 		SmartDashboard::PutNumber("CenterSpeed",1.0);
 		//right side ultra
 		SmartDashboard::PutNumber("rightUltraPValue",0.075);
 		SmartDashboard::PutNumber("rightUltraIValue",0.0);
 		SmartDashboard::PutNumber("rightUltraDValue",0.0);
-		SmartDashboard::PutNumber("rightUltraSetPoint", 32.0);
+		SmartDashboard::PutNumber("rightUltraSetPoint", 33.0);
 		//feeder ultasonic values
 		SmartDashboard::PutNumber("feederAlignUltraPValue",0.3);
 		SmartDashboard::PutNumber("feederAlignUltraIValue",0.0);
 		SmartDashboard::PutNumber("feederAlignUltraDValue",0.0);
-		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 26.0);
+		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 40.5);
+
+		SmartDashboard::PutNumber("feederWallAngle", 135);
+		SmartDashboard::PutNumber("feederXSet", 29);
+
 
 		//Tote Heights
 		SmartDashboard::PutNumber("toteHeight", 7200.0);
@@ -113,7 +117,7 @@ public:
 		SmartDashboard::PutNumber("Lift-D-Down-Value", 0.0);
 		SmartDashboard::PutNumber("Lift-Speed",-1.0);
 
-		SmartDashboard::PutBoolean("LeftSideFeeder", true);
+		SmartDashboard::PutBoolean("LeftSideFeeder", false);
 
 		///////////////////////////////////////////
 		//                 Auto Values           //
@@ -274,6 +278,11 @@ public:
 				}
 			}else if (choice=="Bin-Slap"){
 				robot.outLog.throwLog("Auto Choice: Slaperino");
+				double ultraInitVal = drive.getAutoUltra();
+				for (int i = 0; ((i < 10) && (ultraInitVal>150)); i++){
+					ultraInitVal = (i!=9)?drive.getAutoUltra():-1;
+				}
+				robot.outLog.throwLog("Initial Ultra", ultraInitVal);
 				// move all the totes.....#smackattack
 //				LiftAction binSlap_LiftDown(lift, 100);
 //				autoSeq.add_action(binSlap_LiftDown);
@@ -305,11 +314,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward);
 
 				//We gon knock that bin now
-				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
+				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, ultraInitVal);
 				autoSeq.add_action(binSlap_MediumDriveForward);
 //				WaitAction waitOne(.5);
 //				autoSeq.add_action(waitOne);
-				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, drive.getAutoUltra());
+				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, ultraInitVal);
 				autoSeq.add_action(photoOne);
 				AlignAction align(drive);
 				autoSeq.add_action(align);
@@ -354,11 +363,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward2);
 
 				//We gon knock that bin now 2
-				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
+				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, ultraInitVal);
 				autoSeq.add_action(binSlap_MediumDriveForward2);
 //				WaitAction waitTwo(.5);
 //				autoSeq.add_action(waitTwo);
-				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, drive.getAutoUltra());
+				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, ultraInitVal);
 				autoSeq.add_action(photoTwo);
 				AlignAction align2(drive);
 				autoSeq.add_action(align2);
@@ -392,6 +401,11 @@ public:
 				}
 			}else if (choice == "SNBR"){
 				robot.outLog.throwLog("SNBR");
+				double ultraInitVal = drive.getAutoUltra();
+				for (int i = 0; ((i < 10) && (ultraInitVal>150)); i++){
+					ultraInitVal = (i!=9)?drive.getAutoUltra():-1;
+				}
+				robot.outLog.throwLog("Initial Ultra", ultraInitVal);
 				// move all the totes.....#smackattack
 //				LiftAction binSlap_LiftDown(lift, 100);
 //				autoSeq.add_action(binSlap_LiftDown);
@@ -428,11 +442,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward);
 
 				//We gon knock that bin now
-				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, drive.getAutoUltra());
+				DriveRampAction binSlap_MediumDriveForward(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, ultraInitVal);
 				autoSeq.add_action(binSlap_MediumDriveForward);
 //				WaitAction waitOne(.5);
 //				autoSeq.add_action(waitOne);
-				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, drive.getAutoUltra());
+				PhotoDriveAction photoOne(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1,true, ultraInitVal);
 				autoSeq.add_action(photoOne);
 				AlignAction align(drive);
 				autoSeq.add_action(align);
@@ -464,7 +478,7 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward);
 
 				//We gon knock that bin now
-				DriveRampAction binSlap_MediumDriveForwardTwo(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, drive.getAutoUltra());
+				DriveRampAction binSlap_MediumDriveForwardTwo(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward")*.8,2.0, ultraInitVal);
 				autoSeq.add_action(binSlap_MediumDriveForwardTwo);
 
 
@@ -480,11 +494,11 @@ public:
 //				autoSeq.add_action(binSlap_SmallDriveForward2);
 
 				//We gon knock that bin now 2
-				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
-				autoSeq.add_action(binSlap_MediumDriveForward2);
+//				DriveRampAction binSlap_MediumDriveForward2(drive, 2, SmartDashboard::GetNumber("BinSlapMediumDriveForward"),2.0, drive.getAutoUltra());
+//				autoSeq.add_action(binSlap_MediumDriveForward2);
 //				WaitAction waitTwo(.5);
 //				autoSeq.add_action(waitTwo);
-				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, drive.getAutoUltra());
+				PhotoDriveAction photoTwo(drive,SmartDashboard::GetNumber("BinSlapMediumDriveForward")+2000,.4,1, ultraInitVal);
 				autoSeq.add_action(photoTwo);
 				AlignAction align2(drive);
 				autoSeq.add_action(align2);
