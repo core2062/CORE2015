@@ -83,18 +83,18 @@ public:
 		SmartDashboard::PutNumber("leftUltraPValue",0.075);
 		SmartDashboard::PutNumber("leftUltraIValue",0.0);
 		SmartDashboard::PutNumber("leftUltraDValue",0.0);
-		SmartDashboard::PutNumber("leftUltraSetPoint", 33.0);
+		SmartDashboard::PutNumber("leftUltraSetPoint", 35.5);
 		SmartDashboard::PutNumber("CenterSpeed",1.0);
 		//right side ultra
 		SmartDashboard::PutNumber("rightUltraPValue",0.075);
 		SmartDashboard::PutNumber("rightUltraIValue",0.0);
 		SmartDashboard::PutNumber("rightUltraDValue",0.0);
-		SmartDashboard::PutNumber("rightUltraSetPoint", 33.0);
+		SmartDashboard::PutNumber("rightUltraSetPoint", 35.5);
 		//feeder ultasonic values
 		SmartDashboard::PutNumber("feederAlignUltraPValue",0.3);
 		SmartDashboard::PutNumber("feederAlignUltraIValue",0.0);
 		SmartDashboard::PutNumber("feederAlignUltraDValue",0.0);
-		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 40.5);
+		SmartDashboard::PutNumber("feederAlignUltraSetPoint", 47.5);
 
 		SmartDashboard::PutNumber("feederWallAngle", 122);
 		SmartDashboard::PutNumber("feederXSet", 41.1);

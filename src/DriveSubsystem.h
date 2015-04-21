@@ -57,6 +57,10 @@ class DriveSubsystem: public CORESubsystem{
 	double polarAngle = 0.0;
 	bool polarLast = false;
 	int polarState = 0;
+	double leftUltraVal = 0;
+	double rightUltraVal = 0;
+	double feederUltraVal = 0;
+
 	
 
 	DigitalInput leftPhoto;

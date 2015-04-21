@@ -45,6 +45,7 @@ void DriveSubsystem::teleopInit(void){
 	robot.joystick.register_button("rotate",1,3);
 	robot.joystick.register_button("ultra",1,4); //TODO Find Permanent Button for Ultra PID
 	robot.joystick.register_button("centerDrive",1,1);
+	robot.joystick.register_button("ultraSet",1,9,JoystickCache::RISING);
 	robot.joystick.register_button("punch",1,10,JoystickCache::RISING);
 	robot.joystick.register_button("alignEverything",1,6);
 	robot.joystick.register_button("polarAlign",1,2);
@@ -93,8 +94,36 @@ void DriveSubsystem::teleop(void){
 //    	SmartDashboard::PutNumber("Displacement_Y",     imu->GetDisplacementY() );
 //	#endif
 //	#endif
+	leftUltraVal = getLeftUltra();
+	if (leftUltraVal > 150 || leftUltraVal<23){
+		leftUltraVal = leftUltraPID.lastValue;
+	}
+	rightUltraVal = getRightUltra();
+	if (rightUltraVal > 150 || rightUltraVal<23){
+		rightUltraVal = rightUltraPID.lastValue;
+	}
+	feederUltraVal = getFeederAlignUltra();
+	if (feederUltraVal > 150 || feederUltraVal<23){
+		feederUltraVal = feederAlignPID.lastValue;
+	}
+
+
 
 //	robot.outLog.throwLog("PID Sets");
+if (robot.joystick.button("ultraSet")){
+	double FrontLeftUltra = leftUltraVal;
+	robot.outLog.throwLog("Left Ultra New Value: ", FrontLeftUltra);
+	double FrontRightUltra = rightUltraVal;
+	robot.outLog.throwLog("Right Ultra New Value: ", FrontRightUltra);
+	double FeederUltra = ((feederUltraVal/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))));
+	robot.outLog.throwLog("Feeder Ultra New Value: ", FeederUltra);
+	SmartDashboard::PutNumber("leftUltraSetPoint", FrontLeftUltra);
+	SmartDashboard::PutNumber("rightUltraSetPoint", FrontRightUltra);
+	SmartDashboard::PutNumber("feederXSet", FeederUltra);
+}
+
+
+
 
 	if(!simple){
 		frontLeft.SetPID(SmartDashboard::GetNumber("FrontLeftPValue"),
@@ -131,9 +160,9 @@ void DriveSubsystem::teleop(void){
 		resetDistance();
 	}
 */
-		SmartDashboard::PutNumber("Left Ultra Dist", getLeftUltra());
-		SmartDashboard::PutNumber("Right Ultra Dist", getRightUltra());
-		SmartDashboard::PutNumber("Feeder Ultra Dist", getFeederAlignUltra());
+		SmartDashboard::PutNumber("Left Ultra Dist", leftUltraVal);
+		SmartDashboard::PutNumber("Right Ultra Dist", rightUltraVal);
+		SmartDashboard::PutNumber("Feeder Ultra Dist", feederUltraVal);
 
 
 	simple = SmartDashboard::GetBoolean("SimpleDrive");
@@ -269,8 +298,8 @@ void DriveSubsystem::teleop(void){
 
 //TODO Tune
 	//Ultrasonic PID
-	double error = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue)-(getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-	double xError = getFeederAlignUltra()-feederAlignPID.setPoint;
+	double error = (leftUltraVal)-(rightUltraVal);
+	double xError = feederUltraVal-feederAlignPID.setPoint;
 ////////////////////////////////////////////////////////////////////////////////////////////////
 	if(false){
 		leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
@@ -438,121 +467,130 @@ void DriveSubsystem::teleop(void){
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////Will Be One Button Polar Align//////////////////////////////////////////////////////////
 		if(robot.joystick.button("alignEverything")){
-						polar = true;
+//						polar = true;
+					drive_x = 0;
+					drive_y = 0;
 						if(error<-.5 || error>.5) {
+							polar = false;
 							if(error>5.0){
-								drive_rotation = .6;
+								drive_rotation = .7;
 							}else if (error>3){
-								drive_rotation = .5;
+								drive_rotation = .6;
 							}else if (error>2){
+								drive_rotation = .5;
+							}else if (error > .25){
 								drive_rotation = .4;
-							}else if (error > .5){
-								drive_rotation = .3;
-							}else if (error>-.5){
+							}else if (error>-.25){
 								drive_rotation = 0;
 							}else if (error>-2){
-								drive_rotation = -.3;
-							}else if (error> -3){
 								drive_rotation = -.4;
-							}else if (error > -5){
+							}else if (error> -3){
 								drive_rotation = -.5;
-							}else if (error <=-5){
+							}else if (error > -5){
 								drive_rotation = -.6;
+							}else if (error <=-5){
+								drive_rotation = -.7;
 							}else{
 								robot.outLog.throwLog("No value for turning to align to feeder station!");
 								drive_rotation = 0;
 							}
 
 						}else{
-							polar = true;
-							double yDifference = ((((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue) - leftUltraPID.setPoint);
-							double xDifference = ((((getFeederAlignUltra()<150?getFeederAlignUltra():feederAlignPID.lastValue)/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"))* SmartDashboard::GetBoolean("LeftSideFeeder")?-1:1;
-							yDifference = (yDifference<.25 && yDifference >-.25)?0.01:yDifference;
-							xDifference = (xDifference<.25 && xDifference >-.25)?0.0:xDifference;
+							if (polarState == 0){
+								polar = true;
+								double yDifference = (((leftUltraVal+rightUltraVal)/2) - leftUltraPID.setPoint);
+								double xDifference = (((feederUltraVal/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"));
+								xDifference *= (SmartDashboard::GetBoolean("LeftSideFeeder")?-1:1);
+								yDifference = (yDifference<.25 && yDifference >-.25)?0.01:yDifference;
+								xDifference = (xDifference<.25 && xDifference >-.25)?0.0:xDifference;
 
-							double distanceDifference = (pow(pow(yDifference,2)+pow(xDifference,2),(1.0/2.0)));
+								double distanceDifference = (pow(pow(yDifference,2)+pow(xDifference,2),(1.0/2.0)));
 
-							if (xDifference == 0 && yDifference == 0){
-								polarAngle = 0;
-								distanceDifference = 0;
-							}else if (xDifference == 0 && yDifference > 0){
-								polarAngle = 0;
-							}else if (xDifference == 0 && yDifference <=0){
-								polarAngle = PI;
-							}else if (yDifference == 0 && xDifference > 0){
-								polarAngle = (3*PI/2);
-							}else if (yDifference == 0 && xDifference <= 0){
-								polarAngle = (PI/2);
-							}else{
-								if (yDifference > 0 ){
-									polarAngle = atan((xDifference/yDifference));
+								if (xDifference == 0 && yDifference == 0){
+									polarAngle = 0;
+									distanceDifference = 0;
+								}else if (xDifference == 0 && yDifference > 0){
+									polarAngle = 0;
+								}else if (xDifference == 0 && yDifference <=0){
+									polarAngle = PI;
+								}else if (yDifference == 0 && xDifference > 0){
+									polarAngle = (3*PI/2);
+								}else if (yDifference == 0 && xDifference <= 0){
+									polarAngle = (PI/2);
 								}else{
-									polarAngle = ((PI/2)+((PI/2)-atan(-xDifference/yDifference)));
+									if (yDifference > 0 ){
+										polarAngle = atan((xDifference/yDifference));
+									}else{
+										polarAngle = ((PI/2)+((PI/2)-atan(-xDifference/yDifference)));
+									}
 								}
-							}
 
-							if (polarAngle<0.0){
-								polarAngle+=(2*PI);
-							}
-
-
-							SmartDashboard::PutNumber("Polar Y Diff", yDifference);
-							SmartDashboard::PutNumber("Polar X Diff", xDifference);
-							SmartDashboard::PutNumber("Polar distanceDiff", distanceDifference);
+								if (polarAngle<0.0){
+									polarAngle+=(2*PI);
+								}
 
 
-							if(distanceDifference>8){
-								//more than 8
-								polarMag = .2;
-							}else if (distanceDifference>5){
-								//8-5
-								polarMag = .2;
-							}else if (distanceDifference>3){
-								//3-5
-								polarMag = .2;
-							}else if (distanceDifference > .5){
-								//.5-3
-								polarMag = .2;
-							}else{
-								polarMag= 0;
-							}
-			//				if (((polarAngle * (180/PI))>65 && (polarAngle * (180/PI))<115)||(((polarAngle * (180/PI))>255 && (polarAngle * (180/PI))<=270) || ((polarAngle * (180/PI))<-65 && (polarAngle * (180/PI))>=-90))){
-			//					polarMag+=.7;
-			//				}
-							if (polarAngle == (PI/2) || polarAngle == (3*PI/2)){
-								polarMag *= 4;
-							}else if (polarAngle == 0 || polarAngle == (PI)){
-								polarMag *= .9;
-							}
-							else if (polarAngle > 0 && polarAngle < PI){
-								polarMag*=((90-abs(90-(polarAngle*(180/PI))))*.055)+1;
-							}else {
-								polarMag*=((90-abs(270-(polarAngle*(180/PI))))*.055)+1;
-							}
+								SmartDashboard::PutNumber("Polar Y Diff", yDifference);
+								SmartDashboard::PutNumber("Polar X Diff", xDifference);
+								SmartDashboard::PutNumber("Polar distanceDiff", distanceDifference);
 
 
-							if (abs(xDifference) < .5 && abs(yDifference) < .5){
-								polarState = 1;
-								polarMag = 0;
-							}
+								if(distanceDifference>8){
+									//more than 8
+									polarMag = .2;
+								}else if (distanceDifference>5){
+									//8-5
+									polarMag = .2;
+								}else if (distanceDifference>3){
+									//3-5
+									polarMag = .2;
+								}else if (distanceDifference > .5){
+									//.5-3
+									polarMag = .2;
+								}else{
+									polarMag= 0;
+								}
+				//				if (((polarAngle * (180/PI))>65 && (polarAngle * (180/PI))<115)||(((polarAngle * (180/PI))>255 && (polarAngle * (180/PI))<=270) || ((polarAngle * (180/PI))<-65 && (polarAngle * (180/PI))>=-90))){
+				//					polarMag+=.7;
+				//				}
+								if (polarAngle == (PI/2) || polarAngle == (3*PI/2)){
+									polarMag *= 4;
+								}else if (polarAngle == 0 || polarAngle == (PI)){
+									polarMag *= .9;
+								}
+								else if (polarAngle > 0 && polarAngle < PI){
+									polarMag*=((90-abs(90-(polarAngle*(180/PI))))*.055)+1;
+								}else {
+									polarMag*=((90-abs(270-(polarAngle*(180/PI))))*.055)+1;
+								}
 
-							SmartDashboard::PutNumber("Polar Mag", polarMag);
-							SmartDashboard::PutNumber("Polar Angle", polarAngle * (180/PI));
 
-				//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
-				//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-							leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
-							rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-							feederAlignPID.lastValue = getFeederAlignUltra();
+								if (abs(xDifference) < .5 && abs(yDifference) < .5){
+									polarState = 1;
+									polarMag = 0;
+								}
+
+								SmartDashboard::PutNumber("Polar Mag", polarMag);
+								SmartDashboard::PutNumber("Polar Angle", polarAngle * (180/PI));
+
+					//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
+					//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+								leftUltraPID.lastValue = (leftUltraVal);
+								rightUltraPID.lastValue = (rightUltraVal);
+								feederAlignPID.lastValue = feederUltraVal;
+
+
+
 						}
-
+						}
 			feederAlignPID.lastValue = getFeederAlignUltra();
 					//TODO Tune Polar Drive
 			}else if((robot.joystick.button("polarAlign")) && (drive_x == 0 && drive_y == 0)) {
 			if (polarState == 0){
 				polar = true;
-				double yDifference = ((((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue) - leftUltraPID.setPoint);
-				double xDifference = ((((getFeederAlignUltra()<150?getFeederAlignUltra():feederAlignPID.lastValue)/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"))* SmartDashboard::GetBoolean("LeftSideFeeder")?-1:1;
+				double yDifference = (((leftUltraVal+rightUltraVal)/2) - leftUltraPID.setPoint);
+				double xDifference = (((feederUltraVal/cos((SmartDashboard::GetNumber("feederWallAngle")-90)*(PI/180))))-SmartDashboard::GetNumber("feederXSet"));
+				xDifference *= (SmartDashboard::GetBoolean("LeftSideFeeder")?-1:1);
 				yDifference = (yDifference<.25 && yDifference >-.25)?0.01:yDifference;
 				xDifference = (xDifference<.25 && xDifference >-.25)?0.0:xDifference;
 
@@ -627,12 +665,12 @@ void DriveSubsystem::teleop(void){
 
 	//			leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
 	//			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-				leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
-				rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
-				feederAlignPID.lastValue = getFeederAlignUltra();
+				leftUltraPID.lastValue = (leftUltraVal);
+				rightUltraPID.lastValue = (rightUltraVal);
+				feederAlignPID.lastValue = feederUltraVal;
 			}else{
 				polar = false;
-				leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+				leftUltraPID.actualPosition = ((leftUltraVal+rightUltraVal)/2);
 				if(leftUltraPID.actualPosition>70){
 					drive_y = 1.0;
 				}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
@@ -650,7 +688,7 @@ void DriveSubsystem::teleop(void){
 				}else{
 					drive_y = -.3;
 				}
-				leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+				leftUltraPID.lastValue = ((leftUltraVal+rightUltraVal)/2);
 			}
 			}else{
 				polarState = 0;
@@ -659,7 +697,7 @@ void DriveSubsystem::teleop(void){
 			}
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 		if((robot.joystick.button("ultra") || leftUltraDistCorrect) && drive_y ==0) {
-			leftUltraPID.actualPosition = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+			leftUltraPID.actualPosition = (((leftUltraVal+rightUltraVal)/2));
 			if(leftUltraPID.actualPosition>70){
 				drive_y = 1.0;
 			}else if (leftUltraPID.actualPosition>leftUltraPID.setPoint+20){
@@ -677,36 +715,36 @@ void DriveSubsystem::teleop(void){
 			}else{
 				drive_y = -.3;
 			}
-			leftUltraPID.lastValue = (((getLeftUltra()+getRightUltra())/2)>23.0?((getLeftUltra()+getRightUltra())/2):leftUltraPID.lastValue);
+			leftUltraPID.lastValue = (((leftUltraVal+rightUltraVal)/2));
 		}
 		//TODO Tune
 		//Ultrasonic Rotation
 			if((robot.joystick.button("rotate"))/* && drive_rotation == 0*/) {
 				if(error>5.0){
-					drive_rotation = .6;
-				}else if (error>3){
 					drive_rotation = .5;
 				}else if (error>2){
+					drive_rotation = .45;
+				}else if (error>1){
 					drive_rotation = .4;
-				}else if (error > .5){
+				}else if (error > .25){
 					drive_rotation = .3;
-				}else if (error>-.5){
-					drive_rotation = 0;
-				}else if (error>-2){
+				}else if (error>-.25){
+					drive_rotation = 0.0;
+				}else if (error>-1){
 					drive_rotation = -.3;
-				}else if (error> -3){
+				}else if (error> -2){
 					drive_rotation = -.4;
 				}else if (error > -5){
-					drive_rotation = -.5;
+					drive_rotation = -.45;
 				}else if (error <=-5){
-					drive_rotation = -.6;
+					drive_rotation = -.5;
 				}else{
 					robot.outLog.throwLog("No value for turning to align to feeder station!");
 					drive_rotation = 0;
 				}
 
-				leftUltraPID.lastValue = (getLeftUltra()>23.0?getLeftUltra():leftUltraPID.lastValue);
-				rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
+				leftUltraPID.lastValue = (leftUltraVal);
+				rightUltraPID.lastValue = (rightUltraVal);
 
 
 			}
@@ -747,7 +785,7 @@ void DriveSubsystem::teleop(void){
 //			rightUltraPID.lastValue = (getRightUltra()>23.0?getRightUltra():rightUltraPID.lastValue);
 
 		}
-		feederAlignPID.lastValue = getFeederAlignUltra();
+		feederAlignPID.lastValue = feederUltraVal;
 
 
 		if ((drive_rotation == 0) && (oldRot != 0.0)){
