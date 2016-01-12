@@ -65,9 +65,9 @@ void COREDash::updateSD(void){
 	//get
 	for (uint32_t i = 0; i <= names.size(); i++){
 		if (types[i] == "bool"){
-			values[i] = (double)SmartDashboard::GetBoolean(names[i]);
+			values[i] = (double)SmartDashboard::GetBoolean(names[i],false);
 		}else if (types[i] == "num"){
-			values[i] = SmartDashboard::GetNumber(names[i]);
+			values[i] = SmartDashboard::GetNumber(names[i],false);
 		}
 	}
 

@@ -55,10 +55,10 @@ void LiftSubsystem::setPID(double setPoint)
 void LiftSubsystem::teleop(void){
 
 	beenSet = false;
-	toteHeight = SmartDashboard::GetNumber("toteHeight");
-	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight");
-	bottomHeight = SmartDashboard::GetNumber("bottomHeight");
-	magicToteHeight = SmartDashboard::GetNumber("magicToteHeight");
+	toteHeight = SmartDashboard::GetNumber("toteHeight",0);
+	twoToteHeight = SmartDashboard::GetNumber("twoToteHeight",0);
+	bottomHeight = SmartDashboard::GetNumber("bottomHeight",0);
+	magicToteHeight = SmartDashboard::GetNumber("magicToteHeight",0);
 
 	SmartDashboard::PutBoolean("Top Latch", topLatch);
 	SmartDashboard::PutBoolean("Bot Latch", bottomLatch);
@@ -162,14 +162,14 @@ void LiftSubsystem::teleop(void){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 		}
 		bottomLatch = false;
-		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed",0));
 		beenSet = true;
 	}else if (liftValue > 0.0 && bottomLatch == false){
 		if(liftMotor.GetControlMode() != CANSpeedController::kPercentVbus){
 			liftMotor.SetControlMode(CANSpeedController::kPercentVbus);
 		}
 		topLatch = false;
-		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed"));
+		liftMotor.Set(liftValue * SmartDashboard::GetNumber("Lift-Speed",0));
 		beenSet = true;
 	}else if (twoToteHeightButton == true){
 		setPID(twoToteHeight);
