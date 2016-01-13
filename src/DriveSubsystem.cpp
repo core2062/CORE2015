@@ -7,27 +7,23 @@ std::string DriveSubsystem::name(void){
 }
 
 void DriveSubsystem::robotInit(void){
-    serial_port = new SerialPort(57600,SerialPort::kMXP);
-    uint8_t update_rate_hz = 50;
-	#if defined(ENABLE_AHRS)
-    imu = new AHRS(serial_port,update_rate_hz);
-	#elif defined(ENABLE_IMU_ADVANCED)
-    imu = new IMUAdvanced(serial_port,update_rate_hz);
-	#else // ENABLE_IMU
-    imu = new IMU(serial_port,update_rate_hz);
-	#endif
-
+    try {
+            ahrs = new AHRS(SerialPort::Port::kMXP);
+        } catch (std::exception ex ) {
+            std::string err_string = "Error instantiating navX-MXP:  ";
+            err_string += ex.what();
+            DriverStation::ReportError(err_string.c_str());
+        }
 	robot.outLog.throwLog("DriveSubsystem: RobotInit Success");
 }
 void DriveSubsystem::teleopInit(void){
 	robot.outLog.throwLog("DriveSubsystem: TeleopInit Success");
 
-    bool is_calibrating = imu->IsCalibrating();
+    bool is_calibrating = ahrs->IsCalibrating();
     if ( !is_calibrating ) {
 //        Wait( 0.3 );
-        imu->ZeroYaw();
+        ahrs->ZeroYaw();
     }
-
 	frontLeft.SetSafetyEnabled(true);
 	backLeft.SetSafetyEnabled(true);
 	frontRight.SetSafetyEnabled(true);
@@ -68,7 +64,7 @@ void DriveSubsystem::teleopInit(void){
 	feederAlignTimer.Start();
 	feederAlignTimer.Reset();
 //	gyro.Reset();
-	imu->ResetDisplacement();
+	ahrs->ResetDisplacement();
 }
 
 void DriveSubsystem::teleop(void){
@@ -153,7 +149,7 @@ if (robot.joystick.button("ultraSet")){
 //SmartDashboard::PutNumber("Punch Set",binPunch.Get());
 //	robot.outLog.throwLog("PID Sets Done");
 	//robot.outLog.throwLog("start and smt dshbrd");
-	double gyroRate = imu->GetYaw();
+	double gyroRate = ahrs->GetYaw();
 /*	if (robot.joystick.button("reset")){
 
 		Pulse();
@@ -183,7 +179,7 @@ if (robot.joystick.button("ultraSet")){
 	SmartDashboard::PutNumber("Back Left Set", backLeft.Get());
 	SmartDashboard::PutNumber("Back Right Set", backRight.Get());
 //	SmartDashboard::PutNumber("Gyro Rate", gyro.GetRate());
-	SmartDashboard::PutNumber("Gyro Angle", imu->GetYaw());
+	SmartDashboard::PutNumber("Gyro Angle", ahrs->GetYaw());
 //	SmartDashboard::PutNumber("Shoulder Speed", shoulderSpeed);
 	SmartDashboard::PutBoolean("Centering Photo", centerPhoto.Get());
 
@@ -793,7 +789,7 @@ if (robot.joystick.button("ultraSet")){
 		}
 		if (resetQ != 0){
 			if (resetQ == 3){
-				imu->ZeroYaw();
+				ahrs->ZeroYaw();
 //				gyroPID.setPoint = imu->GetYaw();
 			}
 			resetQ--;
@@ -1163,11 +1159,11 @@ void DriveSubsystem::mec_drive(double drive_x, double drive_y, double rotation)
 }
 double DriveSubsystem::getRot(void)
 {
-	return imu->GetYaw();
+	return ahrs->GetYaw();
 }
 void DriveSubsystem::resetRot(void)
 {
-	imu->ZeroYaw();
+	ahrs->ZeroYaw();
 //	gyroPID.setPoint = imu->GetYaw();
 }
 void DriveSubsystem::setPositionMode(void){
@@ -1217,7 +1213,7 @@ void DriveSubsystem::giveLog(std::string stringVar){
 	robot.outLog.throwLog(stringVar);
 }
 double DriveSubsystem::gyroPIDCalc(double set, double rot, int mult){
-	SmartDashboard::PutNumber("Gyro Angle", imu->GetYaw());
+	SmartDashboard::PutNumber("Gyro Angle", ahrs->GetYaw());
 	gyroPID.P=(SmartDashboard::GetNumber("gyroPValue",0));
 	gyroPID.I=(SmartDashboard::GetNumber("gyroAutoIValue",0));
 	gyroPID.D=(SmartDashboard::GetNumber("gyroDValue",0));

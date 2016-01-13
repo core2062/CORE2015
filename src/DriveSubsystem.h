@@ -9,9 +9,7 @@
 #include <math.h>
 
 //NavX stuff
-#include "navx/IMU.h"
-#include "navx/IMUAdvanced.h"
-#include "navx/AHRS.h"
+#include <navx2.0/AHRS.h>
 
 /* NOTE:  Comment in only ONE of the following definitions. */
 
@@ -33,11 +31,11 @@ const int backRightInvert = -1;
 class DriveSubsystem: public CORESubsystem{
 
 #if defined(ENABLE_AHRS)
-        AHRS *imu;
+        AHRS *ahrs;
 #elif defined(ENABLE_IMU_ADVANCED)
-        IMUAdvanced *imu;
+        IMUAdvanced *ahrs;
 #else // ENABLE_IMU
-        IMU *imu;
+        IMU *ahrs;
 #endif
         SerialPort *serial_port;
 
