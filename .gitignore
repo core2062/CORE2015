@@ -42,3 +42,4 @@ Simulate/
 sysProps.xml
 *.cproject
 build.xml
+.settings/
