@@ -1,104 +1,39 @@
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
 
-# Folder config file
-Desktop.ini
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
 
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
 
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Windows shortcuts
-*.lnk
-
-# =========================
-# Operating System Files
-# =========================
-
-# OSX
-# =========================
-
+# OS generated files #
+######################
 .DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
+.DS_Store?
 ._*
-
-# Files that might appear on external disk
 .Spotlight-V100
 .Trashes
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-sysProps.xml
-*.o
-Debug/FRCUserProgram
-*.o
-/Debug/
-*.xml
-*.mark
-src/.metadata/.plugins/org.eclipse.jdt.core/invalidArchivesCache
-src/.metadata/.plugins/org.eclipse.cdt.make.core/specs.c
-src/.metadata/.plugins/org.eclipse.core.resources/.projects/RemoteSystemsTempFiles/.indexes/properties.index
-*.properties
-src/.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources
-*.prefs
-*.prefs
-src/.metadata/.plugins/org.eclipse.e4.workbench/workbench.xmi
-*.dat
-src/.metadata/.plugins/org.eclipse.rse.core/.log
-*.log
-src/.metadata/version.ini
-*.version
-.metadata/.plugins/org.eclipse.cdt.make.core/specs.cpp
-*.zip
-.metadata/.lock
-*.project
-src/.metadata/.plugins/org.eclipse.jdt.core/nonChainingJarsCache
-*.tree
-src/.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index
-*.lock
-.metadata/.plugins/org.eclipse.jdt.core/nonChainingJarsCache
-.metadata/.plugins/org.eclipse.cdt.make.core/specs.c
-*.index
-.metadata/.plugins/org.eclipse.core.resources/.safetable/org.eclipse.core.resources
-*.xmi
-.metadata/.plugins/org.eclipse.jdt.core/externalFilesCache
-*.ini
-src/.metadata/.plugins/org.eclipse.jdt.core/assumedExternalFilesCache
-.metadata/.plugins/org.eclipse.jdt.core/assumedExternalFilesCache
-
-.settings/language.settings.xml
-.cproject
-*.mk
-Debug/src/CORERobot/CORERobot.o
-*.o
-*.o
-Debug/src/CORERobot/CORERobot.o
-*.o
-Debug/src/CORERobot/CORERobot.o
-*.o
-Debug/src/CORERobot/CORERobot.o
-*.o
-Debug/src/CORERobot/COREAuto.o
-*.o
-.settings/language.settings.xml
-Debug/src/CORERobot/COREAuto.o
-Simulate/makefile
-*.o
-Debug/src/DriveSubsystem.o
-*.o
-Debug/src/CORERobot/JoystickCache.o
-*.o
-Debug/src/CORERobot/COREAuto.o
+ehthumbs.db
+Thumbs.db
+Debug/
+Simulate/
